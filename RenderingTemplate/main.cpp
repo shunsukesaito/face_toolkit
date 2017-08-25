@@ -8,8 +8,20 @@
 
 #include <iostream>
 
-int main(int argc, const char * argv[]) {
+#include "gui.hpp"
+
+int main(int argc, const char * argv[]) try
+{
     // insert code here...
-    std::cout << "Hello, World!\n";
+    GUI *gui = GUI::getInstance();
+    
+    gui->init(512,512);
+    gui->loop();
+    
     return 0;
+}
+catch (const std::exception& e)
+{
+    std::cout << "Halted: " << e.what() << std::endl;
+    return EXIT_FAILURE;
 }
