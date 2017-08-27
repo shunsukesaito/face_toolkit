@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "gui.hpp"
+#include "obj_loader.hpp"
 
 int main(int argc, const char * argv[]) try
 {

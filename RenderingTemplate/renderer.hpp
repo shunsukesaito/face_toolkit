@@ -82,6 +82,8 @@ struct Renderer {
     FramebufferPtr fb_depth_;
     std::unordered_map<std::string, GLProgram> programs_;
     Camera camera_;
+    glMesh mesh_;
+    Eigen::Vector3f center_;
     
     int frame_;
     std::chrono::time_point<std::chrono::system_clock> cur_time_;

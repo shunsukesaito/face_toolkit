@@ -105,7 +105,7 @@ class GLProgram {
 public:
     GLProgram() {}
     GLProgram(std::string vertShader, std::string geomShader, std::string fragShader, DrawMode drawMode_);
-    GLProgram(std::string vertShader, std::string fragShader);
+    GLProgram(std::string vertShader, std::string fragShader, DrawMode drawMode_);
     
     void draw(bool wire = false);
     

@@ -27,6 +27,9 @@ protected:
     GUI() {};
     static GUI *instance;
     
+    enum MouseButton{Left,Right,Middle};
+    enum MouseMode{Rotation, Translation, Zoom, None};
+    
 public:
     static void setInstance(GUI *gui);
     static GUI* getInstance(){ return instance;}
@@ -44,6 +47,8 @@ public:
     virtual void charMods(unsigned int c, int m);
     virtual void mouseMotion(double x, double y);
     virtual void mousePressed(int button, int s, int m);
+    virtual void mouseDown(MouseButton mb, int m);
+    virtual void mouseUp(MouseButton mb, int m);
     virtual void mouseScroll(double x, double y);
 
     void init(int w, int h);
@@ -57,6 +62,15 @@ private:
     nanogui::FormHelper* ngui_ = nullptr;
     nanogui::Screen* screen_ = nullptr;
 #endif
+    
+    int width_, height_;
+    MouseMode mouse_mode = MouseMode::None;
+    bool mouse_down = false;
+    Eigen::Matrix4f curRT;
+    Eigen::Vector3f rotCenter = Eigen::Vector3f::Zero();
+    Eigen::Vector3f up, right;
+    double current_mouse_x, current_mouse_y;
+    double down_mouse_x, down_mouse_y;
 };
 
 #endif /* GUI_hpp */

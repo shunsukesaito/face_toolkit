@@ -39,45 +39,91 @@ Camera::Camera(const Camera& other)
     height_ = other.height_;
 }
 
-void Camera::intializeUniforms(GLProgram& program)
+void Camera::intializeUniforms(GLProgram& program, bool with_mv, bool with_bias)
 {
     program.createUniform("u_mvp", DataType::MATRIX44);
-    program.createUniform("u_modelview", DataType::MATRIX44);
-    program.createUniform("u_shadow_mvp", DataType::MATRIX44);
+    if(with_mv)
+        program.createUniform("u_modelview", DataType::MATRIX44);
+    if(with_bias)
+        program.createUniform("u_shadow_mvp", DataType::MATRIX44);
 }
 
-void Camera::updateUniforms(GLProgram& program)
+void Camera::updateUniforms(GLProgram& program, bool with_mv, bool with_bias)
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
     
     Eigen::Matrix4f MVP;
     perspective_ = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    
-    MVP = perspective_ * extrinsic_;
-    
-    Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
-    
-    program.setUniformData("u_mvp", MVP);
-    program.setUniformData("u_modelview", extrinsic_);
-    program.setUniformData("u_shadow_mvp", shadowMVP);
-}
-
-void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT)
-{
-    static const Eigen::Matrix4f biasMatrix =
-    (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
-
-    Eigen::Matrix4f MVP;
-    perspective_ = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-
-    Eigen::Matrix4f MV = extrinsic_ * RT;
+    Eigen::Matrix4f MV = extrinsic_.inverse();
     MVP = perspective_ * MV;
     
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     
     program.setUniformData("u_mvp", MVP);
-    program.setUniformData("u_modelview", extrinsic_);
-    program.setUniformData("u_shadow_mvp", shadowMVP);
+    if(with_mv)
+        program.setUniformData("u_modelview", MV);
+    if(with_bias)
+        program.setUniformData("u_shadow_mvp", shadowMVP);
+}
+
+void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias)
+{
+    static const Eigen::Matrix4f biasMatrix =
+    (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
+
+    Eigen::Matrix4f MVP;
+    perspective_ = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
+
+    Eigen::Matrix4f MV = extrinsic_.inverse() * RT;
+    MVP = perspective_ * MV;
+    
+    Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
+    
+    program.setUniformData("u_mvp", MVP);
+    if(with_mv)
+        program.setUniformData("u_modelview", MV);
+    if(with_bias)
+        program.setUniformData("u_shadow_mvp", shadowMVP);
+}
+
+Eigen::Matrix4f Camera::loadKFromTxt(std::string filename)
+{
+    std::ifstream fin(filename);
+    Eigen::Matrix4f K = Eigen::Matrix4f::Identity();
+    if(fin.is_open()){
+        for(int i = 0; i < 3; ++i)
+        {
+            for(int j = 0; j < 3; ++j)
+            {
+                fin >> K(i,j);
+            }
+        }
+    }
+    else{
+        std::cout << "Warning: file does not exist. " << filename << std::endl;
+    }
+    
+    return K;
+}
+
+Eigen::Matrix4f Camera::loadRTFromTxt(std::string filename)
+{
+    std::ifstream fin(filename);
+    Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
+    if(fin.is_open()){
+        for(int i = 0; i < 3; ++i)
+        {
+            for(int j = 0; j < 4; ++j)
+            {
+                fin >> RT(i,j);
+            }
+        }
+    }
+    else{
+        std::cout << "Warning: file does not exist. " << filename << std::endl;
+    }
+    
+    return RT;
 }
 

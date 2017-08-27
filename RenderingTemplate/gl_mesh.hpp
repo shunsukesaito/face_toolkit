@@ -17,13 +17,15 @@
 #include "gl_core.hpp"
 #include "gl_utils.h"
 
-struct Mesh
+struct glMesh
 {
     std::vector<glm::vec2> uvs_;
     std::vector<glm::vec3> pts_;
     std::vector<glm::vec3> nml_;
     
     void init(GLProgram&, const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::Matrix2f&, const Eigen::MatrixX3i&, const Eigen::MatrixX3i&);
+    void init(GLProgram&, const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::MatrixX3i&);
+    
     void update(GLProgram&,const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::MatrixX3i&);
 };
 

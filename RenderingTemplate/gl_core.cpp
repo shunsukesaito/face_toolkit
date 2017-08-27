@@ -85,8 +85,8 @@ void printProgramInfoLog(GLuint handle)
     }
 }
 
-GLProgram::GLProgram(std::string vertShader, std::string fragShader)
-: GLProgram(vertShader, "", fragShader, DrawMode::TRIANGLES)
+GLProgram::GLProgram(std::string vertShader, std::string fragShader, DrawMode drawMode_)
+: GLProgram(vertShader, "", fragShader, drawMode_)
 {
 }
 
@@ -95,6 +95,7 @@ GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string
 : drawMode(drawMode_)
 {
     vertShaderHandle = glCreateShader(GL_VERTEX_SHADER);
+    fragShaderHandle = glCreateShader(GL_FRAGMENT_SHADER);
     CHECK_GL_ERROR();
     
     const char *vertShaderTmp = textFileRead(vertShader.c_str());
@@ -103,6 +104,7 @@ GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string
     printShaderInfoLog(vertShaderHandle);
     
     if(!geomShader.empty()){
+        geomShaderHandle = glCreateShader(GL_GEOMETRY_SHADER);
         const char *geomShaderTmp = textFileRead(geomShader.c_str());
         glShaderSource(geomShaderHandle, 1, &geomShaderTmp, nullptr);
         glCompileShader(geomShaderHandle);
@@ -120,8 +122,8 @@ GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string
         glAttachShader(programHandle, geomShaderHandle);
     }
     glAttachShader(programHandle, fragShaderHandle);
-    
-    glBindFragDataLocation(programHandle, 0, "outputF");
+
+    glBindFragDataLocation(programHandle, 0, "frag_color");
     
     // link the program
     glLinkProgram(programHandle);
@@ -462,10 +464,10 @@ GLUniform::GLUniform(GLProgram* parentProgram_, std::string name_, DataType type
 : parentProgram(parentProgram_), name(name_), type(type_)
 {
     glUseProgram(parentProgram->programHandle);
-    
+
     location = glGetUniformLocation(parentProgram->programHandle, name.c_str());
     if(location == -1){
-        cerr << "ERROR: Uniform " << name << "does not appear in this shader program." << endl;
+        cerr << "ERROR: Uniform " << name << " does not appear in this shader program." << endl;
         throw std::runtime_error("Tried to create uniform with invalid name");
     }
 }

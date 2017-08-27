@@ -11,6 +11,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <fstream>
 
 #include "gl_core.hpp"
 
@@ -29,9 +30,12 @@ struct Camera
     Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w = false);
     Camera(const Camera&);
     
-    void intializeUniforms(GLProgram& programs);
-    void updateUniforms(GLProgram& program);
-    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT);
+    void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias);
+    void updateUniforms(GLProgram& program, bool with_mv, bool with_bias);
+    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias);
+    
+    static Eigen::Matrix4f loadKFromTxt(std::string filename);
+    static Eigen::Matrix4f loadRTFromTxt(std::string filename);
 };
 
 #endif /* camera_hpp */

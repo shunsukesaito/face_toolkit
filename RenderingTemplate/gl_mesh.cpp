@@ -8,7 +8,7 @@
 
 #include "gl_mesh.hpp"
 
-void Mesh::init(GLProgram& program,
+void glMesh::init(GLProgram& program,
                 const Eigen::VectorXf& pts,
                 const Eigen::MatrixX3f& nml,
                 const Eigen::Matrix2f& uvs,
@@ -52,7 +52,36 @@ void Mesh::init(GLProgram& program,
     program.setAttributeData("v_texcoord", uvs_);
 }
 
-void Mesh::update(GLProgram& program,
+void glMesh::init(GLProgram& program,
+                  const Eigen::VectorXf& pts,
+                  const Eigen::MatrixX3f& nml,
+                  const Eigen::MatrixX3i& tri_pts)
+{
+    program.createAttribute("v_position", DataType::VECTOR3, true);
+    program.createAttribute("v_normal", DataType::VECTOR3, true);
+    
+    pts_.resize(tri_pts.size());
+    nml_.resize(tri_pts.size());
+    for(int i = 0; i < tri_pts.rows(); ++i)
+    {
+        const int& idx0 = tri_pts(i, 0);
+        const int& idx1 = tri_pts(i, 1);
+        const int& idx2 = tri_pts(i, 2);
+        
+        pts_[i * 3 + 0] = glm::vec3(pts(idx0*3+0), pts(idx0*3+1), pts(idx0*3+2));
+        pts_[i * 3 + 1] = glm::vec3(pts(idx1*3+0), pts(idx1*3+1), pts(idx1*3+2));
+        pts_[i * 3 + 2] = glm::vec3(pts(idx2*3+0), pts(idx2*3+1), pts(idx2*3+2));
+        
+        nml_[i * 3 + 0] = glm::vec3(nml(idx0, 0), nml(idx0, 1), nml(idx0, 2));
+        nml_[i * 3 + 1] = glm::vec3(nml(idx1, 0), nml(idx1, 1), nml(idx1, 2));
+        nml_[i * 3 + 2] = glm::vec3(nml(idx2, 0), nml(idx2, 1), nml(idx2, 2));
+    }
+    
+    program.setAttributeData("v_position", pts_);
+    program.setAttributeData("v_normal", nml_);
+}
+
+void glMesh::update(GLProgram& program,
                   const Eigen::VectorXf& pts,
                   const Eigen::MatrixX3f& nml,
                   const Eigen::MatrixX3i& tri)
