@@ -74,7 +74,6 @@ void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool 
 
     Eigen::Matrix4f MVP;
     perspective_ = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-
     Eigen::Matrix4f MV = extrinsic_.inverse() * RT;
     MVP = perspective_ * MV;
     

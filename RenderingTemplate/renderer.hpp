@@ -17,6 +17,8 @@
 #include "framebuffer.hpp"
 #include "gl_mesh.hpp"
 #include "camera.hpp"
+#include "face_model.hpp"
+#include "f2f_renderer.hpp"
 
 #include "gl_utils.h"
 
@@ -83,6 +85,9 @@ struct Renderer {
     std::unordered_map<std::string, GLProgram> programs_;
     Camera camera_;
     glMesh mesh_;
+    FaceModel facemodel_;
+    
+    
     Eigen::Vector3f center_;
     
     int frame_;
@@ -107,26 +112,6 @@ struct Renderer {
     
     void init(int w, int h, std::string data_dir = "./");
     
-    enum COLOR{
-        COLOR_WHITE, COLOR_GREY, COLOR_GREEN, COLOR_ALPHA
-    };
-    void clear(COLOR mode) {
-        switch(mode){
-            case COLOR_WHITE:
-                glClearColor(1.f, 1.f, 1.f, 1.f);
-                break;
-            case COLOR_GREY:
-                glClearColor(0.5f, 0.5f, 0.5f, 1.f);
-                break;
-            case COLOR_GREEN:
-                glClearColor(0.f, 1.f, 0.f, 1.f);
-                break;
-            case COLOR_ALPHA:
-                glClearColor(0.f, 0.f, 0.f, 0.f);
-                break;
-        }
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
     void flush() {
         glfwSwapBuffers(windows_[WINDOW::MAIN]);
     }

@@ -17,16 +17,95 @@
 #include "gl_core.hpp"
 #include "gl_utils.h"
 
+struct glPlane
+{
+    std::vector<glm::vec2> uvs_;
+    std::vector<glm::vec3> pts_;
+    
+    void init(GLProgram&);
+};
+
+struct glPoint2D
+{
+    std::vector<glm::vec2> pts_;
+    std::vector<glm::vec4> clr_;
+    
+    void init(GLProgram&,
+              int width,
+              int height,
+              const std::vector<Eigen::Vector2f>&,
+              const Eigen::Vector4f&);
+};
+
 struct glMesh
 {
     std::vector<glm::vec2> uvs_;
     std::vector<glm::vec3> pts_;
     std::vector<glm::vec3> nml_;
+    std::vector<glm::vec4> clr_;
     
-    void init(GLProgram&, const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::Matrix2f&, const Eigen::MatrixX3i&, const Eigen::MatrixX3i&);
-    void init(GLProgram&, const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::MatrixX3i&);
+    std::vector<unsigned int> tri_;
     
-    void update(GLProgram&,const Eigen::VectorXf&, const Eigen::MatrixX3f&, const Eigen::MatrixX3i&);
+    GLuint idx_vbo_;
+    
+    void init(GLProgram& prog,
+              const Eigen::VectorXf& pts,
+              const Eigen::MatrixX3f& nml,
+              const Eigen::MatrixX2f& uv,
+              const Eigen::MatrixX3i& tri_pts,
+              const Eigen::MatrixX3i& tri_uv);
+    
+    void init(GLProgram& prog,
+              const Eigen::VectorXf& pts,
+              const Eigen::MatrixX3f& nml,
+              const Eigen::MatrixX3i& tri_pts);
+    
+    void init(GLProgram& prog,
+              const Eigen::VectorXf& pts);
+    
+    void init(GLProgram& prog,
+              const Eigen::VectorXf& pts,
+              const Eigen::Vector4f& clr);
+
+    void init_with_idx(GLProgram& prog,
+                       const Eigen::VectorXf& pts,
+                       const Eigen::MatrixX3f& nml,
+                       const Eigen::MatrixX2f& uv,
+                       const Eigen::MatrixX3i& tri_pts,
+                       const Eigen::MatrixX3i& tri_uv);
+    
+    void init_with_idx(GLProgram& prog,
+                       const Eigen::VectorXf& pts,
+                       const Eigen::MatrixX3f& nml,
+                       const Eigen::MatrixX3i& tri_pts);
+    
+    void init_with_idx(GLProgram& prog,
+                       const Eigen::VectorXf& pts,
+                       const Eigen::VectorXf& clr,
+                       const Eigen::MatrixX3f& nml,
+                       const Eigen::MatrixX3i& tri_pts);
+    
+    void init_with_idx(GLProgram& program,
+                       const Eigen::VectorXf& pts,
+                       const Eigen::VectorXf& clr,
+                       const Eigen::MatrixX3f& nml,
+                       const Eigen::MatrixX2f& uvs,
+                       const Eigen::MatrixX3i& tri_pts,
+                       const Eigen::MatrixX3i& tri_uv);
+    
+    void update(GLProgram& prog,
+                const Eigen::VectorXf& pts,
+                const Eigen::MatrixX3f& nml,
+                const Eigen::MatrixX3i& tri_pts);
+    
+    void update_with_idx(GLProgram& prog,
+                         const Eigen::VectorXf& pts,
+                         const Eigen::MatrixX3f& nml);
+    
+    void update_with_idx(GLProgram&,
+                         const Eigen::VectorXf&,
+                         const Eigen::VectorXf&,
+                         const Eigen::MatrixX3f&);
 };
 
 #endif /* gl_mesh_hpp */

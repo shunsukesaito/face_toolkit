@@ -1,6 +1,6 @@
-#version 400
+#version 330
 
-uniform sampler2D  background_texture;
+uniform sampler2D  bg_texture;
 
 in vec2 uv;
 
@@ -10,9 +10,5 @@ void main()
 {
     vec2 flipped_uv = vec2(1.0 - uv.x, uv.y);
 
-    vec4 color_rgb = texture(background_texture, flipped_uv);
-    vec4 color_bgr = color_rgb;
-    color_bgr.x = color_rgb.z;
-    color_bgr.z = color_rgb.x;
-    frag_color = color_bgr;
+    frag_color = texture(bg_texture, flipped_uv);
 }

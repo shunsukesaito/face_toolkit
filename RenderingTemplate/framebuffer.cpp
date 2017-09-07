@@ -9,10 +9,10 @@
 #include "framebuffer.hpp"
 
 // Constructor requires at least one of the textures (color or depth) to be valid.
-Framebuffer::Framebuffer(unsigned int width, unsigned int height, bool with_color)
+Framebuffer::Framebuffer(unsigned int width, unsigned int height, int color_size)
 : width_(width), height_(height), handle_(-1), depth_(-1)
 {
-    init(width, height, with_color);
+    init(width, height, color_size);
 }
 
 Framebuffer::~Framebuffer()
@@ -25,9 +25,9 @@ Framebuffer::~Framebuffer()
     glDeleteTextures(1, &depth_);
 }
 
-FramebufferPtr Framebuffer::Create(unsigned int width, unsigned int height, bool with_color)
+FramebufferPtr Framebuffer::Create(unsigned int width, unsigned int height, int color_size)
 {
-    return FramebufferPtr(new Framebuffer(width, height,with_color));
+    return FramebufferPtr(new Framebuffer(width, height, color_size));
 }
 
 void Framebuffer::AttachColorTexture()
@@ -49,6 +49,93 @@ void Framebuffer::AttachColorTexture()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + colorIdx, GL_TEXTURE_2D, color, 0);
     
     glReadBuffer(GL_COLOR_ATTACHMENT0 + colorIdx);
+    
+    Unbind();
+}
+
+void Framebuffer::RetrieveFBO(std::vector<cv::Mat>& mat)
+{
+    if(mat.size() != colors_.size())
+        mat.resize(colors_.size());
+    
+    for(int i = 0; i < colors_.size(); ++i)
+    {
+        RetrieveFBO(mat[i], i);
+    }
+}
+
+void Framebuffer::RetrieveFBO(std::vector<cv::Mat_<cv::Vec4f>>& mat)
+{
+    if(mat.size() != colors_.size())
+        mat.resize(colors_.size());
+    
+    for(int i = 0; i < colors_.size(); ++i)
+    {
+        RetrieveFBO(mat[i], i);
+    }
+}
+
+void Framebuffer::RetrieveFBO(cv::Mat& mat, int attachID)
+{
+    if(mat.rows != height_ || mat.cols != width_)
+        mat.create(height_, width_, mat.type());
+    
+    Bind();
+    
+    CHECK_GL_ERROR();
+    
+    glViewport(0, 0, width_, height_);
+    
+    CHECK_GL_ERROR();
+    
+    glReadBuffer(GL_COLOR_ATTACHMENT0 + attachID);
+    
+    CHECK_GL_ERROR();
+    
+    // This is needed because RGB buffer is not 32-bit aligned
+    
+    //use fast 4-byte alignment (default anyway) if possible
+    glPixelStorei(GL_PACK_ALIGNMENT, (mat.step & 3) ? 1 : 4);
+    
+    //set length of one complete row in destination data (doesn't need to equal img.cols)
+    glPixelStorei(GL_PACK_ROW_LENGTH, mat.step/mat.elemSize());
+    
+    // Warning: This is a bit adhoc.
+    GLint rgbmode;
+    if (mat.channels() == 4)
+    {
+        rgbmode = GL_RGBA;
+    }
+    else if (mat.channels() == 3)
+    {
+        rgbmode = GL_BGR;
+    }
+    else if (mat.channels() == 1)
+    {
+        rgbmode = GL_DEPTH_COMPONENT;
+    }
+    else
+    {
+        fprintf(stderr, "Error, texture formap unknown.\n");
+    }
+    
+    GLint type;
+    if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_8U)
+    {
+        type = GL_UNSIGNED_BYTE;
+    }
+    else if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_32F)
+    {
+        type = GL_FLOAT;
+    }
+    else
+    {
+        fprintf(stderr, "Error, texture type unknown.\n");
+    }
+    
+    glReadPixels(0, 0, width_, height_, rgbmode, type, mat.data );
+    cv::flip(mat, mat, 0);
+    CHECK_GL_ERROR();
     
     Unbind();
 }
@@ -89,7 +176,7 @@ void Framebuffer::Unbind() const
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::init(unsigned int width, unsigned int height, bool with_color)
+void Framebuffer::init(unsigned int width, unsigned int height, int color_size)
 {
     if(handle_ == -1)
         glGenFramebuffers(1, &handle_);
@@ -97,7 +184,8 @@ void Framebuffer::init(unsigned int width, unsigned int height, bool with_color)
     
     width_ = width;
     height_ = height;
-        Bind();
+    
+    Bind();
     
     // add color attachment and query resolution from any of the available textures    
     if(depth_ == -1)
@@ -119,23 +207,21 @@ void Framebuffer::init(unsigned int width, unsigned int height, bool with_color)
     }
     Unbind();
     
-    if(with_color){
+    for(int i = 0; i < colors_.size(); ++i)
+        glDeleteTextures(1, &colors_[i]);
         
-        for(int i = 0; i < colors_.size(); ++i)
-            glDeleteTextures(1, &colors_[i]);
-        
-        colors_.clear();
-        
+    colors_.clear();
+    
+    for(int i = 0; i < color_size; ++i)
         AttachColorTexture();
-    }
     
     ApplyBuffers();
     CHECK_GL_ERROR();
 }
 
-void Framebuffer::Resize(unsigned int width, unsigned int height, bool with_color)
+void Framebuffer::Resize(unsigned int width, unsigned int height, int color_size)
 {
     Unbind();
     
-    init(width, height, with_color);
+    init(width, height, color_size);
 }

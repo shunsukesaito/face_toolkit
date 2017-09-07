@@ -29,30 +29,6 @@ inline Eigen::Vector3f getCenter(Eigen::VectorXf& pts)
     return p.rowwise().mean();
 }
 
-inline void calcNormal(Eigen::MatrixX3f& nml,
-                       Eigen::VectorXf& pts,
-                       Eigen::MatrixX3i& tri_pts)
-{
-    nml = Eigen::MatrixX3f::Zero(pts.size()/3,3);
-    for(int i = 0; i < tri_pts.rows(); ++i)
-    {
-        const Eigen::Vector3f& p0 = pts.b3(tri_pts(i,0));
-        const Eigen::Vector3f& p1 = pts.b3(tri_pts(i,1));
-        const Eigen::Vector3f& p2 = pts.b3(tri_pts(i,2));
-        
-        Eigen::Vector3f n = (p1-p0).cross(p2-p0);
-        
-        nml.row(tri_pts(i,0)) += n;
-        nml.row(tri_pts(i,1)) += n;
-        nml.row(tri_pts(i,2)) += n;
-    }
-    
-    for(int i = 0; i < nml.rows(); ++i)
-    {
-        nml.row(i).normalize();
-    }
-}
-
 inline void writeObj(const std::string& filename,
                      Eigen::VectorXf& pts,
                      Eigen::MatrixX3f& nml,

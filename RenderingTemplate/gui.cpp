@@ -19,16 +19,13 @@ void GUI::setInstance(GUI *gui)
 
 void GUI::resize_callback(GLFWwindow *window, int w, int h)
 {
-#ifdef WITH_NANOGUI
-    instance->screen_->resizeCallbackEvent(w, h);
-#endif
     instance->resize(w, h);
 }
 
 void GUI::keyboard_callback(GLFWwindow *window, int key, int s, int a, int m)
 {
-#ifdef WITH_NANOGUI
-    if(instance->screen_->keyCallbackEvent(key,s,a,m) == false)
+#if defined(WITH_IMGUI)
+    if(!ImGui::IsAnyItemActive())
         instance->keyboard(key, s, a, m);
 #else
     instance->keyboard(key, s, a, m);
@@ -37,8 +34,8 @@ void GUI::keyboard_callback(GLFWwindow *window, int key, int s, int a, int m)
 
 void GUI::charMods_callback(GLFWwindow *window, unsigned int c, int m)
 {
-#ifdef WITH_NANOGUI
-    if(instance->screen_->charCallbackEvent(c) == false)
+#if defined(WITH_IMGUI)
+    if(!ImGui::IsAnyItemActive())
         instance->charMods(c, m);
 #else
     instance->charMods(c, m);
@@ -47,8 +44,8 @@ void GUI::charMods_callback(GLFWwindow *window, unsigned int c, int m)
 
 void GUI::mouseMotion_callback(GLFWwindow *window, double x, double y)
 {
-#ifdef WITH_NANOGUI
-    if(instance->screen_->cursorPosCallbackEvent(x,y) == false)
+#if defined(WITH_IMGUI)
+    if(!ImGui::IsAnyItemActive())
         instance->mouseMotion(x, y);
 #else
     instance->mouseMotion(x, y);
@@ -57,9 +54,8 @@ void GUI::mouseMotion_callback(GLFWwindow *window, double x, double y)
 
 void GUI::mousePressed_callback(GLFWwindow *window, int button, int s, int m)
 {
-#ifdef WITH_NANOGUI
-    if(instance->screen_->mouseButtonCallbackEvent(button,s,m) == false)
-        instance->mousePressed(button, s, m);
+#if defined(WITH_IMGUI)
+    instance->mousePressed(button, s, m);
 #else
     instance->mousePressed(button, s, m);
 #endif
@@ -67,8 +63,8 @@ void GUI::mousePressed_callback(GLFWwindow *window, int button, int s, int m)
 
 void GUI::mouseScroll_callback(GLFWwindow *window, double x, double y)
 {
-#ifdef WITH_NANOGUI
-    if(instance->screen_->scrollCallbackEvent(x,y) == false)
+#if defined(WITH_IMGUI)
+    if(!ImGui::IsAnyItemActive())
         instance->mouseScroll(x, y);
 #else
     instance->mouseScroll(x, y);
@@ -77,9 +73,6 @@ void GUI::mouseScroll_callback(GLFWwindow *window, double x, double y)
 
 void GUI::drop_callback(GLFWwindow *window,int count,const char **filenames)
 {
-#ifdef WITH_NANOGUI
-    instance->screen_->dropCallbackEvent(count, filenames);
-#endif
 }
 
 void GUI::resize(int w, int h)
@@ -88,8 +81,6 @@ void GUI::resize(int w, int h)
     height_ = h;
 
     renderer_.resize(1, w, h);
-    
-    screen_->performLayout();
 }
 
 void GUI::keyboard(int key, int s, int a, int m)
@@ -100,6 +91,17 @@ void GUI::keyboard(int key, int s, int a, int m)
         rotCenter = renderer_.center_;
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = rotCenter + Eigen::Vector3f(0,0,10);
+    }
+    if(key == GLFW_KEY_1 && a == GLFW_PRESS){
+        F2FRenderer f2frender;
+        f2frender.init("./", renderer_.camera_, renderer_.facemodel_);
+        std::vector<cv::Mat_<cv::Vec4f>> out;
+        f2frender.render(width_, height_, renderer_.camera_, fParam, renderer_.facemodel_, out);
+        
+        for(int i = 0; i < out.size(); ++i)
+        {
+            cv::imwrite(std::to_string(i) + ".png", 255.0*out[i]);
+        }
     }
   
 }
@@ -221,28 +223,15 @@ void GUI::init(int w, int h)
     
     rotCenter = renderer_.center_;
     
-    std::cout << rotCenter << std::endl;
+    fParam.idCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_id_.size());
+    fParam.exCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_ex_.size());
+    fParam.alCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_cl_.size());
+    fParam.SH[0] = Eigen::Vector3f::Ones();
     
     GLFWwindow* window = renderer_.windows_[MAIN];
 
-#ifdef WITH_NANOGUI
-    screen_ = new nanogui::Screen();
-    screen_->initialize(window, false);
-    ngui_ = new nanogui::FormHelper(screen_);
-    
-    ngui_->setFixedSize(Eigen::Vector2i(100,20));
-    ngui_->addWindow(Eigen::Vector2i(10,10),"Control Panel");
-    
-    ngui_->addGroup("Camera");
-    ngui_->addVariable("tx",renderer_.camera_.extrinsic_(0,3))->setSpinnable(true);
-    ngui_->addVariable("ty", renderer_.camera_.extrinsic_(1,3))->setSpinnable(true);
-    ngui_->addVariable("tz", renderer_.camera_.extrinsic_(2,3))->setSpinnable(true);
-    
-    ngui_->addVariable("zN", renderer_.camera_.zNear_);
-    ngui_->addVariable("zF", renderer_.camera_.zFar_);
-    
-    screen_->setVisible(true);
-    screen_->performLayout();
+#ifdef WITH_IMGUI
+    ImGui_ImplGlfwGL3_Init(window, true);
 #endif
     
     glfwSetKeyCallback(window, keyboard_callback);
@@ -256,14 +245,55 @@ void GUI::init(int w, int h)
 
 void GUI::update()
 {
-    renderer_.clear(Renderer::COLOR_GREY);
+    renderer_.facemodel_.updateIdentity(fParam.idCoeff);
+    renderer_.facemodel_.updateExpression(fParam.exCoeff);
+    
+    clearBuffer(COLOR::COLOR_GREY);
+    int w, h;
+    glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
+    glViewport(0, 0, w, h);
+    
     renderer_.update();
     renderer_.draw();
     
-#ifdef WITH_NANOGUI
-    ngui_->refresh();
-    screen_->drawContents();
-    screen_->drawWidgets();
+#ifdef WITH_IMGUI
+    ImGui_ImplGlfwGL3_NewFrame();
+    ImGui::Begin("Control Panel", &show_control_panel_);
+    if (ImGui::CollapsingHeader("Face Parameters")){
+        if (ImGui::TreeNode("ID")){
+            for(int i = 0; i < fParam.idCoeff.size(); ++i)
+                ImGui::SliderFloat(("id" + std::to_string(i)).c_str(), &fParam.idCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("EX")){
+            for(int i = 0; i < fParam.exCoeff.size(); ++i)
+                ImGui::SliderFloat(("ex" + std::to_string(i)).c_str(), &fParam.exCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("CL")){
+            for(int i = 0; i < fParam.alCoeff.size(); ++i)
+                ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &fParam.alCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        ImGui::InputFloat3("Tr", &fParam.RT(0,3));
+        if (ImGui::TreeNode("SH")){
+            for(int i = 0; i < fParam.SH.size(); ++i)
+                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &fParam.SH[i][0]);
+            ImGui::TreePop();
+        }
+    }
+    if (ImGui::CollapsingHeader("Camera Parameters")){
+        Camera& cam = renderer_.camera_;
+        ImGui::InputFloat("zNear", &cam.zNear_);
+        ImGui::InputFloat("zFar", &cam.zFar_);
+        ImGui::InputFloat("fx", &cam.intrinsic_(0,0));
+        ImGui::InputFloat("fy", &cam.intrinsic_(1,1));
+        ImGui::InputFloat("px", &cam.intrinsic_(0,2));
+        ImGui::InputFloat("py", &cam.intrinsic_(1,2));
+    }
+    ImGui::End();
+    ImGui::Render();
+    
 #endif
     
     renderer_.flush();
@@ -282,6 +312,10 @@ void GUI::loop()
 
         glfwPollEvents();
     }
+    
+#ifdef WITH_IMGUI
+    ImGui_ImplGlfwGL3_Shutdown();
+#endif
     
     glfwTerminate();
 }

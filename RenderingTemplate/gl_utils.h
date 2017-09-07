@@ -105,6 +105,27 @@ static void CheckGLError(const char *file, int line)
     }
 }
 
+enum COLOR{
+    COLOR_WHITE, COLOR_GREY, COLOR_GREEN, COLOR_ALPHA
+};
+inline void clearBuffer(COLOR mode) {
+    switch(mode){
+        case COLOR_WHITE:
+            glClearColor(1.f, 1.f, 1.f, 1.f);
+            break;
+        case COLOR_GREY:
+            glClearColor(0.5f, 0.5f, 0.5f, 1.f);
+            break;
+        case COLOR_GREEN:
+            glClearColor(0.f, 1.f, 0.f, 1.f);
+            break;
+        case COLOR_ALPHA:
+            glClearColor(0.f, 0.f, 0.f, 0.f);
+            break;
+    }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 #ifndef NDEBUG
 #define CHECK_GL_ERROR() CheckGLError(__FILE__,__LINE__)
 #else

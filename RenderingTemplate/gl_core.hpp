@@ -30,6 +30,8 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <Eigen/Core>
+
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -37,14 +39,15 @@
 
 #include "gl_utils.h"
 
-enum class DataType { UINT, FLOAT, VECTOR4, VECTOR3, VECTOR2, MATRIX44};
-enum class DrawMode { TRIANGLES, POINTS };
+enum class DataType { UINT, FLOAT, VECTOR4, VECTOR3, VECTOR2, MATRIX44, INDEX};
+enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS };
 class GLProgram;
 
 struct GLAttribute {
     
     GLAttribute();
     GLAttribute(GLProgram* parentProgram_, std::string name_, DataType type_, bool dynamic_);
+    GLAttribute(GLProgram* parentProgram_);
     
     // member variables
     GLProgram* parentProgram;
@@ -56,8 +59,9 @@ struct GLAttribute {
     
     void setData(const std::vector<glm::vec4>& data);
     void setData(const std::vector<glm::vec3>& data);
-    void setData(const std::vector<glm::vec2>& data);
+    void setData(const std::vector<glm::vec2>& data);    
     void setData(const std::vector<float>& data);
+    void setData(const std::vector<unsigned int>& data);
 };
 
 struct GLUniform {
@@ -76,6 +80,11 @@ struct GLUniform {
     void setData(const glm::vec3& val);
     void setData(float val);
     void setData(uint val);
+    
+    void setData(const std::vector<Eigen::Matrix4f>& val);
+    void setData(const std::vector<glm::vec3>& val);
+    void setData(const std::vector<float>& val);
+    void setData(const std::vector<uint>& val);
 };
 
 struct GLTexture {
@@ -109,6 +118,7 @@ public:
     
     void draw(bool wire = false);
     
+    void createElementIndex(const std::vector<unsigned int>& vals);
     void createAttribute(std::string attributeName, DataType type, bool dynamic);
     void createUniform(std::string uniformName, DataType type);
     void createTexture(std::string textureName, std::string sourceFile);
@@ -123,6 +133,10 @@ public:
     void setUniformData(std::string uniformName, const glm::vec3& val);
     void setUniformData(std::string uniformName, float val);
     void setUniformData(std::string uniformName, uint val);
+    void setUniformData(std::string uniformName, const std::vector<Eigen::Matrix4f>& val);
+    void setUniformData(std::string uniformName, const std::vector<glm::vec3>& val);
+    void setUniformData(std::string uniformName, const std::vector<float>& val);
+    void setUniformData(std::string uniformName, const std::vector<uint>& val);
     
 private:
     

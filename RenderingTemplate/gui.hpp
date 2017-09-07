@@ -13,12 +13,11 @@
 
 #include "renderer.hpp"
 
-#define WITH_NANOGUI
+#define WITH_IMGUI
 
-#ifdef WITH_NANOGUI
-#include <nanogui/formhelper.h>
-#include <nanogui/screen.h>
-namespace nanogui { class FormHelper; class Screen; }
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#include "imgui_impl_glfw_gl3.h"
 #endif
 
 class GUI
@@ -57,10 +56,9 @@ public:
     
 private:
     Renderer renderer_;
-
-#ifdef WITH_NANOGUI
-    nanogui::FormHelper* ngui_ = nullptr;
-    nanogui::Screen* screen_ = nullptr;
+    
+#ifdef WITH_IMGUI
+    bool show_control_panel_ = true;
 #endif
     
     int width_, height_;
@@ -71,6 +69,8 @@ private:
     Eigen::Vector3f up, right;
     double current_mouse_x, current_mouse_y;
     double down_mouse_x, down_mouse_y;
+    
+    FaceParams fParam;
 };
 
 #endif /* GUI_hpp */

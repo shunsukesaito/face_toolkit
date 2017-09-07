@@ -152,6 +152,9 @@ void GLProgram::draw(bool wire)
         case DrawMode::TRIANGLES:
             glDrawArrays(GL_TRIANGLES, 0, (GLsizei)dataLen);
             break;
+        case DrawMode::TRIANGLES_IDX:
+            glDrawElements(GL_TRIANGLES, attributeMap["index"].dataSize, GL_UNSIGNED_INT, NULL);
+            break;
         case DrawMode::POINTS:
             glDrawArrays(GL_POINTS, 0, (GLsizei)dataLen);
             break;
@@ -177,6 +180,7 @@ long long GLProgram::validateAttributeSizes()
     bool allGood = true;
     for(auto&& entry : attributeMap)
     {
+        if(entry.first == "index") continue;
         if(entry.second.dataSize == -1){
             cerr << "GL ERROR: Attribute " << entry.second.name << " was never set." << endl;
             allGood = false;
@@ -218,6 +222,12 @@ void GLProgram::validateUniformSet()
     if(!allGood){
         throw std::runtime_error("Uniform validation failed");
     }
+}
+
+void GLProgram::createElementIndex(const std::vector<unsigned int>& vals)
+{
+    attributeMap["index"] = GLAttribute(this);
+    attributeMap["index"].setData(vals);
 }
 
 void GLProgram::createUniform(std::string uniformName, DataType type)
@@ -311,6 +321,42 @@ void GLProgram::setUniformData(std::string uniformName, uint val)
     uniformMap[uniformName].setData(val);
 }
 
+void GLProgram::setUniformData(std::string uniformName, const std::vector<Eigen::Matrix4f> &val)
+{
+    if(uniformMap.find(uniformName) == uniformMap.end()){
+        throw std::runtime_error("Attempted to set uniform which does not exist: " + uniformName);
+    }
+    
+    uniformMap[uniformName].setData(val);
+}
+
+void GLProgram::setUniformData(std::string uniformName, const std::vector<glm::vec3> &val)
+{
+    if(uniformMap.find(uniformName) == uniformMap.end()){
+        throw std::runtime_error("Attempted to set uniform which does not exist: " + uniformName);
+    }
+    
+    uniformMap[uniformName].setData(val);
+}
+
+void GLProgram::setUniformData(std::string uniformName, const std::vector<float> &val)
+{
+    if(uniformMap.find(uniformName) == uniformMap.end()){
+        throw std::runtime_error("Attempted to set uniform which does not exist: " + uniformName);
+    }
+    
+    uniformMap[uniformName].setData(val);
+}
+
+void GLProgram::setUniformData(std::string uniformName, const std::vector<uint> &val)
+{
+    if(uniformMap.find(uniformName) == uniformMap.end()){
+        throw std::runtime_error("Attempted to set uniform which does not exist: " + uniformName);
+    }
+    
+    uniformMap[uniformName].setData(val);
+}
+
 void GLProgram::setAttributeData(std::string attributeName, const std::vector<float> &vals)
 {
     if(attributeMap.find(attributeName) == attributeMap.end()){
@@ -385,6 +431,15 @@ GLAttribute::GLAttribute(GLProgram* parentProgram_, std::string name_, DataType 
     }
 }
 
+GLAttribute::GLAttribute(GLProgram* parentProgram_)
+: parentProgram(parentProgram_), type(DataType::INDEX), dynamic(false)
+{
+    glUseProgram(parentProgram->programHandle);
+    
+    glBindVertexArray(parentProgram->vaoHandle);
+    glGenBuffers(1, &VBO);
+}
+
 void GLAttribute::setData(const std::vector<glm::vec4> &data)
 {
     if(type != DataType::VECTOR4){
@@ -457,6 +512,23 @@ void GLAttribute::setData(const std::vector<float> &data)
     dataSize = data.size();
 }
 
+void GLAttribute::setData(const std::vector<unsigned int> &data)
+{
+    if(type != DataType::INDEX){
+        throw std::runtime_error("Attempted to set attribute of type " + std::to_string(static_cast<int>(type)) + " with scalar data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glBindVertexArray(parentProgram->vaoHandle);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*data.size(), &data[0], GL_STATIC_DRAW);
+    CHECK_GL_ERROR();
+    
+    dataSize = data.size();
+}
+
+
 // === GLUniform class functions
 GLUniform::GLUniform() {}
 
@@ -470,6 +542,54 @@ GLUniform::GLUniform(GLProgram* parentProgram_, std::string name_, DataType type
         cerr << "ERROR: Uniform " << name << " does not appear in this shader program." << endl;
         throw std::runtime_error("Tried to create uniform with invalid name");
     }
+}
+
+void GLUniform::setData(const std::vector<Eigen::Matrix4f> &val)
+{
+    if(type != DataType::MATRIX44){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with Eigen::Matrix4f data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniformMatrix4fv(location, val.size(), GL_FALSE, (float*)val[0].data());
+
+    hasBeenSet = true;
+}
+
+void GLUniform::setData(const std::vector<glm::vec3> &val)
+{
+    if(type != DataType::VECTOR3){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with Vector3 data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniform3fv(location, val.size(), (float*)&val[0][0]);
+    
+    hasBeenSet = true;
+}
+
+void GLUniform::setData(const std::vector<float> &val)
+{
+    if(type != DataType::FLOAT){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with float data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniform1fv(location, val.size(), (float*)&val[0]);
+    
+    hasBeenSet = true;
+}
+
+void GLUniform::setData(const std::vector<uint> &val)
+{
+    if(type != DataType::UINT){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with uint data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniform1uiv(location, val.size(), (uint*)&val[0]);
+    
+    hasBeenSet = true;
 }
 
 void GLUniform::setData(const Eigen::Matrix4f &val)

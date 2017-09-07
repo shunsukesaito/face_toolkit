@@ -38,7 +38,7 @@ void Renderer::init(int w, int h, std::string data_dir)
     // initialize GLEW
     glewExperimental=GL_TRUE;
     GLenum err = glewInit();
-    //CHECK_GL_ERROR();
+    CHECK_GL_ERROR();
     if (GLEW_OK != err)
     {
         fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
@@ -61,8 +61,12 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
-    programs_["main shader"] = GLProgram(data_dir + "shaders/mesh.vert", data_dir + "shaders/mesh.frag", DrawMode::TRIANGLES);
-    clear(Renderer::COLOR_GREEN);
+    programs_["main"] = GLProgram(data_dir + "shaders/mesh.vert", data_dir + "shaders/mesh.frag", DrawMode::TRIANGLES_IDX);
+    programs_["bg"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert", data_dir + "shaders/full_texture_bgr.frag", DrawMode::TRIANGLES);
+    programs_["p2d"] = GLProgram(data_dir + "shaders/point2d.vert", data_dir + "shaders/point2d.frag", DrawMode::POINTS);
+    programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert", data_dir + "shaders/point3d.frag", DrawMode::POINTS);
+    
+    clearBuffer(COLOR::COLOR_GREEN);
     CHECK_GL_ERROR();
 
     glEnable(GL_DEPTH_TEST);
@@ -74,40 +78,55 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     Eigen::Matrix4f RT = Camera::loadRTFromTxt(data_dir + "data/RT.txt");
     Eigen::Matrix4f K = Camera::loadKFromTxt(data_dir + "data/K.txt");
-    camera_ = Camera(RT, K, w, h, 1, 100);
+    camera_ = Camera(RT, K, w, h, 1, 1000);
 
-    auto& prog = programs_["main shader"];
+    auto& prog = programs_["main"];
+    auto& prog2d = programs_["p2d"];
+    auto& prog3d = programs_["p3d"];
     
     camera_.intializeUniforms(prog, true, false);
     camera_.updateUniforms(prog, true, false);
-
-    Eigen::VectorXf pts;
-    Eigen::MatrixX3f nml;
-    Eigen::MatrixX2f uvs;
-    Eigen::MatrixX3i tri_pts;
-    Eigen::MatrixX3i tri_uv;
-
-    loadObjFile(data_dir + "data/neutral.obj", pts, nml, uvs, tri_pts, tri_uv);
-    writeObj(data_dir + "data/debug.obj", pts, nml, uvs, tri_pts, tri_uv);
-    mesh_.init(prog, pts, nml, tri_pts);
     
-    center_ = getCenter(pts);
+    camera_.intializeUniforms(prog3d, false, false);
+    camera_.updateUniforms(prog3d, false, false);
+
+//    Eigen::VectorXf pts;
+//    Eigen::MatrixX3f nml;
+//    Eigen::MatrixX2f uvs;
+//    Eigen::MatrixX3i tri_pts;
+//    Eigen::MatrixX3i tri_uv;
+
+    //loadObjFile(data_dir + "data/pin.obj", pts, nml, uvs, tri_pts, tri_uv);
+    //writeObj(data_dir + "data/debug.obj", pts, nml, uvs, tri_pts, tri_uv);
+    //facemodel_.loadOldBinaryModel(data_dir + "data/BinaryModel.bin", data_dir + "data/pin.obj");
+    //facemodel_.saveBinaryModel(data_dir + "data/PinModel.bin");
+    facemodel_.loadBinaryModel(data_dir + "data/PinModel.bin");
+    mesh_.init_with_idx(prog, facemodel_.pts_, facemodel_.nml_, facemodel_.tri_pts_);
+    
+    glPlane bg;
+    bg.init(programs_["bg"]);
+    programs_["bg"].createTexture("bg_texture", data_dir + "data/cosimo.png");
+    
+    center_ = getCenter(facemodel_.pts_);
 }
 
 void Renderer::draw()
 {
+    glDisable(GL_CULL_FACE);
+    programs_["bg"].draw();
+
     glEnable(GL_DEPTH_TEST);
-    CHECK_GL_ERROR();
-    
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    CHECK_GL_ERROR();
+    programs_["main"].draw();
     
-    programs_["main shader"].draw();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
 }
 
 void Renderer::update()
 {
-    auto& prog = programs_["main shader"];
+    auto& prog = programs_["main"];
     camera_.updateUniforms(prog, true, false);
+    
+    mesh_.update_with_idx(prog, facemodel_.pts_, facemodel_.nml_);
 }

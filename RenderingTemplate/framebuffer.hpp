@@ -16,6 +16,7 @@
 #include <iostream>
 
 #include <GL/glew.h>
+#include <opencv2/opencv.hpp>
 
 #include "gl_utils.h"
 
@@ -25,20 +26,24 @@ typedef std::shared_ptr<Framebuffer> FramebufferPtr;
 // Describes a framebuffer object
 class Framebuffer
 {
-    Framebuffer(unsigned int width, unsigned int height,bool with_color);
+    Framebuffer(unsigned int width, unsigned int height,int color_size);
     Framebuffer(const Framebuffer &);
     const Framebuffer &operator =(const Framebuffer &);
     
 public:
     ~Framebuffer();
     
-    static FramebufferPtr Create(unsigned int width, unsigned int height, bool with_color);
+    static FramebufferPtr Create(unsigned int width, unsigned int height, int color_size);
     void AttachColorTexture();
     void ApplyBuffers();
     
     void Bind() const;
     void Unbind() const;
-    void Resize(unsigned int width, unsigned int height, bool with_color);
+    void Resize(unsigned int width, unsigned int height, int color_size);
+    
+    void RetrieveFBO(std::vector<cv::Mat>& mat);
+    void RetrieveFBO(std::vector<cv::Mat_<cv::Vec4f>>& mat);
+    void RetrieveFBO(cv::Mat& mat, int attachID);
     
     GLuint color(unsigned int idx) const { return colors_[idx]; }
     GLuint depth() const { return depth_; }
@@ -50,9 +55,8 @@ public:
     unsigned int handle() const { return handle_; }
     
 private:
-    void init(unsigned int width, unsigned int height, bool with_color);
+    void init(unsigned int width, unsigned int height, int color_size);
     void deinit();
-    
     
     GLuint depth_;
     std::vector<GLuint> colors_;
