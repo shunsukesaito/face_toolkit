@@ -53,6 +53,28 @@ void Framebuffer::AttachColorTexture()
     Unbind();
 }
 
+void Framebuffer::RetrieveFBO(int w, int h, std::vector<cv::Mat>& mat)
+{
+    if(mat.size() != colors_.size())
+        mat.resize(colors_.size());
+    
+    for(int i = 0; i < colors_.size(); ++i)
+    {
+        RetrieveFBO(w, h, mat[i], i);
+    }
+}
+
+void Framebuffer::RetrieveFBO(int w, int h, std::vector<cv::Mat_<cv::Vec4f>>& mat)
+{
+    if(mat.size() != colors_.size())
+        mat.resize(colors_.size());
+    
+    for(int i = 0; i < colors_.size(); ++i)
+    {
+        RetrieveFBO(w, h, mat[i], i);
+    }
+}
+
 void Framebuffer::RetrieveFBO(std::vector<cv::Mat>& mat)
 {
     if(mat.size() != colors_.size())
@@ -73,6 +95,72 @@ void Framebuffer::RetrieveFBO(std::vector<cv::Mat_<cv::Vec4f>>& mat)
     {
         RetrieveFBO(mat[i], i);
     }
+}
+
+void Framebuffer::RetrieveFBO(int w, int h, cv::Mat& mat, int attachID)
+{
+    assert(w <= width_ && h <= height_);
+    if(mat.rows != h || mat.cols != w)
+        mat.create(h, w, mat.type());
+    
+    Bind();
+    
+    CHECK_GL_ERROR();
+    
+    glViewport(0, 0, w, h);
+    
+    CHECK_GL_ERROR();
+    
+    glReadBuffer(GL_COLOR_ATTACHMENT0 + attachID);
+    
+    CHECK_GL_ERROR();
+    
+    // This is needed because RGB buffer is not 32-bit aligned
+    
+    //use fast 4-byte alignment (default anyway) if possible
+    glPixelStorei(GL_PACK_ALIGNMENT, (mat.step & 3) ? 1 : 4);
+    
+    //set length of one complete row in destination data (doesn't need to equal img.cols)
+    glPixelStorei(GL_PACK_ROW_LENGTH, mat.step/mat.elemSize());
+    
+    // Warning: This is a bit adhoc.
+    GLint rgbmode;
+    if (mat.channels() == 4)
+    {
+        rgbmode = GL_RGBA;
+    }
+    else if (mat.channels() == 3)
+    {
+        rgbmode = GL_BGR;
+    }
+    else if (mat.channels() == 1)
+    {
+        rgbmode = GL_DEPTH_COMPONENT;
+    }
+    else
+    {
+        fprintf(stderr, "Error, texture formap unknown.\n");
+    }
+    
+    GLint type;
+    if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_8U)
+    {
+        type = GL_UNSIGNED_BYTE;
+    }
+    else if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_32F)
+    {
+        type = GL_FLOAT;
+    }
+    else
+    {
+        fprintf(stderr, "Error, texture type unknown.\n");
+    }
+    
+    glReadPixels(0, 0, w, h, rgbmode, type, mat.data );
+    cv::flip(mat, mat, 0);
+    CHECK_GL_ERROR();
+    
+    Unbind();
 }
 
 void Framebuffer::RetrieveFBO(cv::Mat& mat, int attachID)

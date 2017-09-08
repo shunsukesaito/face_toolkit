@@ -90,20 +90,19 @@ void GUI::keyboard(int key, int s, int a, int m)
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         rotCenter = renderer_.center_;
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
-        RT.block<3,1>(0,3) = rotCenter + Eigen::Vector3f(0,0,10);
+        RT.block<3,1>(0,3) = rotCenter + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_1 && a == GLFW_PRESS){
         F2FRenderer f2frender;
         f2frender.init("./", renderer_.camera_, renderer_.facemodel_);
         std::vector<cv::Mat_<cv::Vec4f>> out;
-        f2frender.render(width_, height_, renderer_.camera_, fParam, renderer_.facemodel_, out);
+        f2frender.render(width_/2, height_/2, renderer_.camera_, fParam, renderer_.facemodel_, out);
         
         for(int i = 0; i < out.size(); ++i)
         {
             cv::imwrite(std::to_string(i) + ".png", 255.0*out[i]);
         }
     }
-  
 }
 
 void GUI::charMods(unsigned int c, int m)

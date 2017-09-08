@@ -45,6 +45,10 @@ public:
     void RetrieveFBO(std::vector<cv::Mat_<cv::Vec4f>>& mat);
     void RetrieveFBO(cv::Mat& mat, int attachID);
     
+    void RetrieveFBO(int w, int h, std::vector<cv::Mat>& mat);
+    void RetrieveFBO(int w, int h, std::vector<cv::Mat_<cv::Vec4f>>& mat);
+    void RetrieveFBO(int w, int h, cv::Mat& mat, int attachID);
+    
     GLuint color(unsigned int idx) const { return colors_[idx]; }
     GLuint depth() const { return depth_; }
     

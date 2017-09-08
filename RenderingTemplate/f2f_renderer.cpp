@@ -246,8 +246,6 @@ void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
 
 void F2FRenderer::render(int w, int h, Camera& camera, FaceParams& fParam, FaceModel& model, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
-    if(fb_->width() != w || fb_->height() != h)
-        fb_->Resize(w, h, 8);
     // render parameters update
     param_.update(prog_);
     
@@ -272,10 +270,12 @@ void F2FRenderer::render(int w, int h, Camera& camera, FaceParams& fParam, FaceM
     clearBuffer(COLOR::COLOR_ALPHA);
     
     // draw mesh
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     prog_.draw();
     
     // unbinding framebuffer
     fb_->Unbind();
     
-    fb_->RetrieveFBO(out);
+    fb_->RetrieveFBO(w, h, out);
 }
