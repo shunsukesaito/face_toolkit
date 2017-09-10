@@ -13,7 +13,6 @@
 //#define DUMP_JACOBIAN_DATA
 //#define ALBEDO_MODE
 
-
 /*****************************************************************************************************************
 jacobian memo
 y = f/g - m_objectiveNormal;
@@ -154,7 +153,15 @@ void computeJacobiansF(Eigen::VectorXf& result,
                        const int index1,
                        const DOF& dof);
 
-void computeJacobianPCAReg(Eigen::VectorXf& Jtr,
+float computeJacobianPCAReg(Eigen::VectorXf& Jtr,
+                            Eigen::MatrixXf& JtJ,
+                            const Eigen::VectorXf& X,
+                            const Eigen::VectorXf& sigma,
+                            unsigned int start,
+                            unsigned int size,
+                            const float& w);
+
+float computeJacobianL1Reg(Eigen::VectorXf& Jtr,
                            Eigen::MatrixXf& JtJ,
                            const Eigen::VectorXf& X,
                            const Eigen::VectorXf& sigma,
@@ -162,13 +169,29 @@ void computeJacobianPCAReg(Eigen::VectorXf& Jtr,
                            unsigned int size,
                            const float& w);
 
-void computeJacobianTikhonovReg(Eigen::VectorXf& Jtr,
-                                Eigen::MatrixXf& JtJ,
-                                const Eigen::VectorXf& X,
-                                const Eigen::VectorXf& X0,
-                                unsigned int start,
-                                unsigned int size,
-                                const float w);
+float computeJacobianL2Reg(Eigen::VectorXf& Jtr,
+                           Eigen::MatrixXf& JtJ,
+                           const Eigen::VectorXf& X,
+                           const Eigen::VectorXf& sigma,
+                           unsigned int start,
+                           unsigned int size,
+                           const float& w);
+
+float computeJacobianLMixReg(Eigen::VectorXf& Jtr,
+                             Eigen::MatrixXf& JtJ,
+                             const Eigen::VectorXf& X,
+                             const Eigen::VectorXf& sigma,
+                             unsigned int start,
+                             unsigned int size,
+                             const float& w);
+
+float computeJacobianTikhonovReg(Eigen::VectorXf& Jtr,
+                                 Eigen::MatrixXf& JtJ,
+                                 const Eigen::VectorXf& X,
+                                 const Eigen::VectorXf& X0,
+                                 unsigned int start,
+                                 unsigned int size,
+                                 const float w);
 
 // to be removed
 void computeCorresContourLand2D(std::vector<TriPoint>& pBary,
@@ -212,7 +235,8 @@ float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
                                    const std::vector<Eigen::Vector4f>& pV,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
-                                   const float& w);
+                                   const float& w,
+                                   bool robust);
 
 float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
@@ -220,14 +244,16 @@ float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
                                    const std::vector<Eigen::Vector3f>& nV,
-                                   const float& w);
+                                   const float& w,
+                                   bool robust);
 
 float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
                                    const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX2f>& dpV,
                                    const std::vector<Eigen::Vector2f>& qV,
-                                   const float& w);
+                                   const float& w,
+                                   bool robust);
 
 float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
                                   Eigen::MatrixXf& JtJ,
@@ -235,7 +261,8 @@ float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
                                   const std::vector<Eigen::MatrixX2f>& dpV,
                                   const std::vector<Eigen::Vector2f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w);
+                                  const float& w,
+                                  bool robust);
 
 void computeVertexWiseNormalTerm(std::vector<Eigen::Vector3f>& nV,
                                  std::vector<Eigen::MatrixXf>& dnV,

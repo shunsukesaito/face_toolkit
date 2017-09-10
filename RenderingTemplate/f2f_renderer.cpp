@@ -1,31 +1,25 @@
 #include "f2f_renderer.hpp"
 
 
-
-void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
-                                       Eigen::MatrixXf& JtJ,
-                                       const Eigen::MatrixXf& w_al,
-                                       const std::vector<cv::Mat_<cv::Vec3f>>& w_al_uv,
-                                       const std::vector<Eigen::Vector2f>& pV,
-                                       const std::vector<Eigen::MatrixX2f>& dpV,
-                                       const std::vector<Eigen::Vector3f>& nV,
-                                       const std::vector<Eigen::MatrixXf>& dnV,
-                                       const Eigen::Vector3f* shCoeff,
-                                       const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
-                                       const cv::Mat_<cv::Vec4f>& renderRGB,
-                                       const cv::Mat_<cv::Vec4f>& inputRGB,
-                                       const cv::Mat_<cv::Vec3f>& dIx,
-                                       const cv::Mat_<cv::Vec3f>& dIy,
-                                       const DOF& dof,
-                                       const float w,
-                                       bool tex_mode)
+float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
+                                        Eigen::MatrixXf& JtJ,
+                                        const Eigen::MatrixXf& w_al,
+                                        const std::vector<Eigen::Vector2f>& pV,
+                                        const std::vector<Eigen::MatrixX2f>& dpV,
+                                        const std::vector<Eigen::Vector3f>& nV,
+                                        const std::vector<Eigen::MatrixXf>& dnV,
+                                        const std::vector<Eigen::Vector3f> sh,
+                                        const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
+                                        const cv::Mat_<cv::Vec4f>& renderRGB,
+                                        const cv::Mat_<cv::Vec4f>& inputRGB,
+                                        const cv::Mat_<cv::Vec3f>& dIx,
+                                        const cv::Mat_<cv::Vec3f>& dIy,
+                                        const DOF& dof,
+                                        const float w)
 {
     // compute gradient for each pixel
     // since the interpolated normal is normalized again, compute jacobian based on normalized normal
     const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
-    
-    float tex_w = (float)w_al_uv[0].cols;
-    float tex_h = (float)w_al_uv[0].rows;
     
     Eigen::MatrixXf JtJc = Eigen::MatrixXf::Zero(dof.all(), dof.all());
     
@@ -50,6 +44,7 @@ void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     //#pragma omp parallel for
     const unsigned int width = renderTarget[RT_NAMES::positions].cols;
     const unsigned int height = renderTarget[RT_NAMES::positions].rows;
+    float error = 0.0;
     for (unsigned int j = 1; j < height - 1; ++j)
     {
         for (unsigned int i = 1; i < width - 1; ++i)
@@ -94,17 +89,17 @@ void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 // for R, G, B
                 if (dof.ID + dof.EX != 0){
                     dcdi.block(0, 0, dof.ID + dof.EX, 1) =
-                    2.0f * al[0] * (c2 * shCoeff[3][0] + c1 * (shCoeff[8][0] * n[0] + shCoeff[4][0] * n[1] + shCoeff[7][0] * n[2])) * dn.col(0)
-                    + 2.0f * al[0] * (c2 * shCoeff[1][0] + c1 * (shCoeff[4][0] * n[0] - shCoeff[8][0] * n[1] + shCoeff[5][0] * n[2])) * dn.col(1)
-                    + 2.0f * al[0] * (c2 * shCoeff[2][0] + c1 * (shCoeff[7][0] * n[0] + shCoeff[5][0] * n[1]) + c3 * shCoeff[6][0] * n[2]) * dn.col(2);
+                    2.0f * al[0] * (c2 * sh[3][0] + c1 * (sh[8][0] * n[0] + sh[4][0] * n[1] + sh[7][0] * n[2])) * dn.col(0)
+                    + 2.0f * al[0] * (c2 * sh[1][0] + c1 * (sh[4][0] * n[0] - sh[8][0] * n[1] + sh[5][0] * n[2])) * dn.col(1)
+                    + 2.0f * al[0] * (c2 * sh[2][0] + c1 * (sh[7][0] * n[0] + sh[5][0] * n[1]) + c3 * sh[6][0] * n[2]) * dn.col(2);
                     dcdi.block(0, 1, dof.ID + dof.EX, 1) =
-                    2.0f * al[1] * (c2 * shCoeff[3][1] + c1 * (shCoeff[8][1] * n[0] + shCoeff[4][1] * n[1] + shCoeff[7][1] * n[2])) * dn.col(0)
-                    + 2.0f * al[1] * (c2 * shCoeff[1][1] + c1 * (shCoeff[4][1] * n[0] - shCoeff[8][1] * n[1] + shCoeff[5][1] * n[2])) * dn.col(1)
-                    + 2.0f * al[1] * (c2 * shCoeff[2][1] + c1 * (shCoeff[7][1] * n[0] + shCoeff[5][1] * n[1]) + c3 * shCoeff[6][1] * n[2]) * dn.col(2);
+                    2.0f * al[1] * (c2 * sh[3][1] + c1 * (sh[8][1] * n[0] + sh[4][1] * n[1] + sh[7][1] * n[2])) * dn.col(0)
+                    + 2.0f * al[1] * (c2 * sh[1][1] + c1 * (sh[4][1] * n[0] - sh[8][1] * n[1] + sh[5][1] * n[2])) * dn.col(1)
+                    + 2.0f * al[1] * (c2 * sh[2][1] + c1 * (sh[7][1] * n[0] + sh[5][1] * n[1]) + c3 * sh[6][1] * n[2]) * dn.col(2);
                     dcdi.block(0, 2, dof.ID + dof.EX, 1) =
-                    2.0f * al[2] * (c2 * shCoeff[3][2] + c1 * (shCoeff[8][2] * n[0] + shCoeff[4][2] * n[1] + shCoeff[7][2] * n[2])) * dn.col(0)
-                    + 2.0f * al[2] * (c2 * shCoeff[1][2] + c1 * (shCoeff[4][2] * n[0] - shCoeff[8][2] * n[1] + shCoeff[5][2] * n[2])) * dn.col(1)
-                    + 2.0f * al[2] * (c2 * shCoeff[2][2] + c1 * (shCoeff[7][2] * n[0] + shCoeff[5][2] * n[1]) + c3 * shCoeff[6][2] * n[2]) * dn.col(2);
+                    2.0f * al[2] * (c2 * sh[3][2] + c1 * (sh[8][2] * n[0] + sh[4][2] * n[1] + sh[7][2] * n[2])) * dn.col(0)
+                    + 2.0f * al[2] * (c2 * sh[1][2] + c1 * (sh[4][2] * n[0] - sh[8][2] * n[1] + sh[5][2] * n[2])) * dn.col(1)
+                    + 2.0f * al[2] * (c2 * sh[2][2] + c1 * (sh[7][2] * n[0] + sh[5][2] * n[1]) + c3 * sh[6][2] * n[2]) * dn.col(2);
                 }
                 
                 // TODO: it can be pre-computed
@@ -127,26 +122,12 @@ void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 dcdi.block(0, 0, dof.ID + dof.EX, 3) -= di.block(0, 0, dof.ID + dof.EX, 3);
                 
                 const auto& shade = renderTarget[RT_NAMES::shading](j, i);
-                if(tex_mode){
-                    const auto& uv = renderTarget[RT_NAMES::texCoords](j, i);
-                    // convert UV [0,1] to image space
-                    int tX = uv[0]*tex_w;
-                    int tY = uv[1]*tex_h;
-                    
-                    for(int x = 0; x < dof.AL; ++x)
-                    {
-                        a(0, x) = w_al_uv[x](tY, tX)[0];
-                        a(1, x) = w_al_uv[x](tY, tX)[1];
-                        a(2, x) = w_al_uv[x](tY, tX)[2];
-                    }
-                }
-                {
-                    const Eigen::MatrixXf& a0 = w_al.block(tri_ind[0] * 3, 0, 3, dof.AL);
-                    const Eigen::MatrixXf& a1 = w_al.block(tri_ind[1] * 3, 0, 3, dof.AL);
-                    const Eigen::MatrixXf& a2 = w_al.block(tri_ind[2] * 3, 0, 3, dof.AL);
-                    
-                    a = b[0] * a0 + b[1] * a1 + b[2] * a2;
-                }
+
+                const Eigen::MatrixXf& a0 = w_al.block(tri_ind[0] * 3, 0, 3, dof.AL);
+                const Eigen::MatrixXf& a1 = w_al.block(tri_ind[1] * 3, 0, 3, dof.AL);
+                const Eigen::MatrixXf& a2 = w_al.block(tri_ind[2] * 3, 0, 3, dof.AL);
+                
+                a = b[0] * a0 + b[1] * a1 + b[2] * a2;
                 
                 for (int x = 0; x < dof.AL; ++x)
                 {
@@ -198,6 +179,8 @@ void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 const Eigen::MatrixXf dcdi_transpose = dcdi.transpose();
                 JtJc.noalias() += w / CI_norm * (dcdi * dcdi_transpose);
                 
+                error += w * CI_norm;
+                
                 count++;
             }
         }
@@ -206,10 +189,13 @@ void F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     if (count != 0){
         JtJc *= 1.0f / (float)count;
         Jtrc *= 1.0f / (float)count;
+        error *= 1.0f / (float)count;
     }
     
     JtJ += JtJc;
     Jtr += Jtrc;
+    
+    return error;
 }
 
 void F2FRenderParams::init(GLProgram& prog)
@@ -239,6 +225,7 @@ void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
     
     param_.init(prog_);
     prog_.createUniform("u_SHCoeffs", DataType::VECTOR3);
+    prog_.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
     fb_ = Framebuffer::Create(camera.width_, camera.height_, 8);
     camera.intializeUniforms(prog_, true, false);
     mesh_.init_with_idx(prog_, model.pts_, model.clr_, model.nml_, model.uvs_, model.tri_pts_, model.tri_uv_);

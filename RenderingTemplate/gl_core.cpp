@@ -76,7 +76,7 @@ void printProgramInfoLog(GLuint handle)
     
     glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &logLen);
     glGetProgramiv(handle, GL_VALIDATE_STATUS, &validate);
-    
+    CHECK_GL_ERROR();
     if(validate == GL_FALSE){
         log = (char *)malloc(logLen);
         glGetProgramInfoLog(handle, logLen, &chars, log);
@@ -127,7 +127,10 @@ GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string
     
     // link the program
     glLinkProgram(programHandle);
-    printProgramInfoLog(programHandle);
+    GLint linked;
+    glGetProgramiv(programHandle, GL_LINK_STATUS, &linked);
+    if(!linked)
+        printProgramInfoLog(programHandle);
     glUseProgram(programHandle);
     
     // create a VAO for use with all buffers
@@ -757,8 +760,11 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, std::string s
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, location);
     
-    cout << "    Attempting to load texture image from path: " << sourceFile << endl;
     imageData = cv::imread(sourceFile, CV_LOAD_IMAGE_COLOR);
+    if(imageData.empty()){
+        throw std::runtime_error("    Failed to load texture image from path: " + sourceFile);
+    }
+    std::cout << "    Loading texture image from path: " << sourceFile << std::endl;
     // TODO: this should be something better to make sure texture size is exponent of 2
     cv::resize(imageData, imageData, cv::Size(1024,1024));
     width = imageData.cols; height = imageData.rows;

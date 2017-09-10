@@ -263,41 +263,148 @@ void computeJacobiansF(Eigen::VectorXf& result,
 	}
 }
 
-void computeJacobianPCAReg(Eigen::VectorXf& Jtr,
-                           Eigen::MatrixXf& JtJ,
-                           const Eigen::VectorXf& X,
-                           const Eigen::VectorXf& sigma,
-                           unsigned int start,
-                           unsigned int size,
-                           const float& w)
+float computeJacobianPCAReg(Eigen::VectorXf& Jtr,
+                            Eigen::MatrixXf& JtJ,
+                            const Eigen::VectorXf& X,
+                            const Eigen::VectorXf& sigma,
+                            unsigned int start,
+                            unsigned int size,
+                            const float& w)
 {
     assert(sigma.size() >= size);
     assert(X.size() == Jtr.size());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     assert(X.size() >= start + size);
     
+    float error = 0.0;
+    float wsq_sigma = 0.0;
     for (int i = 0; i < size; ++i)
     {
-        JtJ(start + i, start + i) += w / sigma[i] / sigma[i];
-        Jtr[start + i] += w * X[start + i] / sigma[i] / sigma[i];
+        wsq_sigma = w / sigma[i] / sigma[i];
+        JtJ(start + i, start + i) += wsq_sigma;
+        Jtr[start + i] += wsq_sigma * X[start + i];
+        
+        error += wsq_sigma * X[start + i] * X[start + i];
     }
+    
+    return error;
 }
 
-void computeJacobianTikhonovReg(Eigen::VectorXf& Jtr,
-                                Eigen::MatrixXf& JtJ,
-                                const Eigen::VectorXf& X,
-                                const Eigen::VectorXf& X0,
-                                unsigned int start,
-                                unsigned int size,
-                                const float w)
+float computeJacobianL1Reg(Eigen::VectorXf& Jtr,
+                           Eigen::MatrixXf& JtJ,
+                           const Eigen::VectorXf& X,
+                           unsigned int start,
+                           unsigned int size,
+                           const float& w)
+{
+    assert(X.size() == Jtr.size());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    assert(X.size() >= start + size);
+    
+    float error = 0.0;
+    for(int i = 0; i < size; ++i)
+    {
+        JtJ(start + i, start + i) += w * 0.25f / (fabs(X[start + i]) + EPSILON);
+        Jtr[start + i] += (X[start + i] >= 0) ? 0.5f * w : -0.5f * w;
+        
+        error += w * (fabs(X[start + i]) + EPSILON);
+    }
+    
+    return error;
+}
+
+float computeJacobianL2Reg(Eigen::VectorXf& Jtr,
+                           Eigen::MatrixXf& JtJ,
+                           const Eigen::VectorXf& X,
+                           unsigned int start,
+                           unsigned int size,
+                           const float& w)
+{
+    assert(X.size() == Jtr.size());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    assert(X.size() >= start + size);
+    
+    float error = 0.0;
+    for(int i = 0; i < size; ++i)
+    {
+        JtJ(start + i, start + i) += w;
+        Jtr[start + i] += w * X[start + i];
+        
+        error += w * X[start + i] * X[start + i];
+    }
+    return error;
+}
+
+float computeJacobianLMixReg(Eigen::VectorXf& Jtr,
+                             Eigen::MatrixXf& JtJ,
+                             const Eigen::VectorXf& X,
+                             float l,
+                             float u,
+                             float lambda,
+                             unsigned int start,
+                             unsigned int size,
+                             const float& w)
+{
+    assert(X.size() == Jtr.size());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    assert(X.size() >= start + size);
+    
+    float a;
+    float error = 0.0;
+    for(int i = 0; i < size; ++i)
+    {
+        const float& x = X[start + i];
+        if(x < 0){
+            JtJ(start + i, start + i) += w * lambda;
+            Jtr[start + i] += w * lambda * x;
+            
+            error += w * lambda * x * x;
+        }
+        else if(x < l){
+            a = 0.5f / l;
+            JtJ(start + i, start + i) += w * a;
+            Jtr[start + i] += w * a * x;
+            
+            error += w * a * x * x;
+        }
+        else if(x > u){
+            a = 0.5 * (1.0 + lambda) / u;
+            JtJ(start + i, start + i) += w * a;
+            Jtr[start + i] += w * (a * x + 0.5 * lambda);
+            
+            error += w * (a * x * x + 0.5 * lambda * x);
+        }
+        else{
+            JtJ(start + i, start + i) += w * 0.25f / (fabs(X[start + i]) + EPSILON);
+            Jtr[start + i] += (x >= 0) ? 0.5f * w : -0.5f * w;
+            
+            error += w * (fabs(X[start + i]) + EPSILON);
+        }
+    }
+    
+    return error;
+}
+
+float computeJacobianTikhonovReg(Eigen::VectorXf& Jtr,
+                                 Eigen::MatrixXf& JtJ,
+                                 const Eigen::VectorXf& X,
+                                 const Eigen::VectorXf& X0,
+                                 unsigned int start,
+                                 unsigned int size,
+                                 const float w)
 {
     assert(X.size() >= start + size);
     
+    float error = 0.0;
     for(int i = start; i < start + size; ++i)
     {
         JtJ(i, i) += w;
         Jtr[i] += w * (X[i] - X0[i]);
+        
+        error += w * (X[i] - X0[i]) * (X[i] - X0[i]);
     }
+    
+    return error;
 }
 
 // NOTE: it assume 68 landmarks (0-17 are on the contour)
@@ -509,46 +616,112 @@ void computeJacobianPairClose(Eigen::VectorXf& Jtr,
 }
 
 float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
-                                  Eigen::MatrixXf& JtJ,
-                                  const std::vector<Eigen::Vector4f>& pV,
-                                  const std::vector<Eigen::MatrixX3f>& dpV,
-                                  const std::vector<Eigen::Vector3f>& qV,
-                                  const float& w)
+                                   Eigen::MatrixXf& JtJ,
+                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::MatrixX3f>& dpV,
+                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const float& w,
+                                   bool robust)
 {
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size() && pV.size() == qV.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    
     float error = 0;
     Eigen::Vector3f pq;
-    for(int i = 0; i < pV.size(); ++i)
-    {
-        pq = pV[i].segment<3>(0)-qV[i];
-    
-        Jtr += w*pV[i][3]*dpV[i]*pq;
-        JtJ += w*pV[i][3]*dpV[i]*dpV[i].transpose();
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<3>(0)-qV[i];
+            z.push_back(pq.norm());
+        }
+        z_sorted = z;
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
         
-        error += w * pV[i][3] * pq.squaredNorm();
+        float w_all;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<3>(0)-qV[i];
+            w_all = w * pV[i][3] * exp(-z[i]*z[i]/(2.0*sigmasq));
+            
+            Jtr += w_all * dpV[i] * pq;
+            JtJ += w_all * dpV[i] * dpV[i].transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<3>(0)-qV[i];
+        
+            Jtr += w * pV[i][3] * dpV[i] * pq;
+            JtJ += w * pV[i][3] * dpV[i] * dpV[i].transpose();
+            
+            error += w * pV[i][3] * pq.squaredNorm();
+        }
     }
     
     return error;
 }
 
 float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
-                                  Eigen::MatrixXf& JtJ,
-                                  const std::vector<Eigen::Vector4f>& pV,
-                                  const std::vector<Eigen::MatrixX3f>& dpV,
-                                  const std::vector<Eigen::Vector3f>& qV,
-                                  const std::vector<Eigen::Vector3f>& nV,
-                                  const float& w)
+                                   Eigen::MatrixXf& JtJ,
+                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::MatrixX3f>& dpV,
+                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const std::vector<Eigen::Vector3f>& nV,
+                                   const float& w,
+                                   bool robust)
 {
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size() && pV.size() == qV.size() && pV.size() == nV.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    
     float error = 0;
     float npq;
     Eigen::VectorXf ndp;
-    for(int i = 0; i < pV.size(); ++i)
-    {
-        npq = nV[i].dot(pV[i].segment<3>(0)-qV[i]);
-        ndp = dpV[i] * nV[i];
-        Jtr += w * pV[i][3] * npq * ndp;
-        JtJ += w * pV[i][3] * ndp * ndp.transpose();
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[i].segment<3>(0)-qV[i]);
+            z.push_back(npq);
+            z_sorted.push_back(fabs(npq));
+        }
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
         
-        error += w * pV[i][3] * npq * npq;
+        float w_all;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            ndp = dpV[i] * nV[i];
+            w_all = w * pV[i][3] * exp(-z[i] * z[i] / (2.0 * sigmasq));
+            
+            Jtr += w_all * z[i] * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[i].segment<3>(0)-qV[i]);
+            ndp = dpV[i] * nV[i];
+            Jtr += w * pV[i][3] * npq * ndp;
+            JtJ += w * pV[i][3] * ndp * ndp.transpose();
+            
+            error += w * pV[i][3] * npq * npq;
+        }
     }
     
     return error;
@@ -559,18 +732,51 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
                                    const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX2f>& dpV,
                                    const std::vector<Eigen::Vector2f>& qV,
-                                   const float& w)
+                                   const float& w,
+                                   bool robust)
 {
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size() && pV.size() == qV.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    
     float error = 0;
     Eigen::Vector2f pq;
-    for(int i = 0; i < pV.size(); ++i)
-    {
-        pq = pV[i].segment<2>(0)-qV[i];
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<2>(0)-qV[i];
+            z.push_back(pq.norm());
+        }
+        z_sorted = z;
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
         
-        Jtr += w*pV[i][2]*dpV[i]*pq;
-        JtJ += w*pV[i][2]*dpV[i]*dpV[i].transpose();
-        
-        error += w * pV[i][2] * pq.squaredNorm();
+        float w_all;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<2>(0)-qV[i];
+            w_all = w * pV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
+            
+            Jtr += w_all * dpV[i] * pq;
+            JtJ += w_all * dpV[i] * dpV[i].transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            pq = pV[i].segment<2>(0)-qV[i];
+            
+            Jtr += w * pV[i][2] * dpV[i] * pq;
+            JtJ += w * pV[i][2] * dpV[i] * dpV[i].transpose();
+            
+            error += w * pV[i][2] * pq.squaredNorm();
+        }
     }
     
     return error;
@@ -582,19 +788,53 @@ float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
                                   const std::vector<Eigen::MatrixX2f>& dpV,
                                   const std::vector<Eigen::Vector2f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w)
+                                  const float& w,
+                                  bool robust)
 {
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size() && pV.size() == qV.size() && pV.size() == nV.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+
+    
     float error = 0;
     float npq;
     Eigen::VectorXf ndp;
-    for(int i = 0; i < pV.size(); ++i)
-    {
-        npq = nV[i].dot(pV[i].segment<2>(0)-qV[i]);
-        ndp = dpV[i] * nV[i];
-        Jtr += w * pV[i][2] * npq * ndp;
-        JtJ += w * pV[i][2] * ndp * ndp.transpose();
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[i].segment<2>(0)-qV[i]);
+            z.push_back(npq);
+            z_sorted.push_back(fabs(npq));
+        }
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
         
-        error += w * pV[i][2] * npq * npq;
+        float w_all;
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            ndp = dpV[i] * nV[i];
+            w_all = w * pV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
+            
+            Jtr += w_all * z[i] * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < pV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[i].segment<2>(0)-qV[i]);
+            ndp = dpV[i] * nV[i];
+            Jtr += w * pV[i][2] * npq * ndp;
+            JtJ += w * pV[i][2] * ndp * ndp.transpose();
+            
+            error += w * pV[i][2] * npq * npq;
+        }
     }
     
     return error;

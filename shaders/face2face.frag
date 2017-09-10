@@ -8,9 +8,9 @@ uniform float u_cull_offset;
 
 uniform vec3 u_SHCoeffs[9];
 
-uniform sampler2D u_tex1; 
-uniform sampler2D u_tex2;
-uniform sampler2D u_tex3;
+uniform sampler2D u_sample_texture;
+uniform sampler2D u_sample_mask;
+uniform sampler2D u_sample_seg;
 
 in VertexData {
     vec4 color;
@@ -75,7 +75,7 @@ void main()
     frag_shading = vec4(evaluateLightingModel(normal), 1.0f);
 
     if (u_enable_texture != uint(0))
-        frag_color = texture(u_tex1, texcoord);
+        frag_color = texture(u_sample_texture, texcoord);
     else
         frag_color = vec4(clamp(VertexIn.color, vec4(0.0), vec4(1.0)));
     
@@ -85,12 +85,12 @@ void main()
         discard;
    
     if (u_enable_mask != uint(0)){
-        if (texture(u_tex2, VertexIn.texcoord)[0] < 0.5)
+        if (texture(u_sample_mask, VertexIn.texcoord)[0] < 0.5)
             discard;
     }
 
     if (u_enable_seg != uint(0)){
-        if (texture(u_tex3, VertexIn.proj_texcoord)[0] > 0.5)
+        if (texture(u_sample_seg, VertexIn.proj_texcoord)[0] > 0.5)
             discard;
     }
 }

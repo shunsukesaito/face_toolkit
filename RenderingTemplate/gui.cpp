@@ -96,7 +96,7 @@ void GUI::keyboard(int key, int s, int a, int m)
         F2FRenderer f2frender;
         f2frender.init("./", renderer_.camera_, renderer_.facemodel_);
         std::vector<cv::Mat_<cv::Vec4f>> out;
-        f2frender.render(width_/2, height_/2, renderer_.camera_, fParam, renderer_.facemodel_, out);
+        f2frender.render(width_/4, height_/4, renderer_.camera_, fParam, renderer_.facemodel_, out);
         
         for(int i = 0; i < out.size(); ++i)
         {
@@ -244,6 +244,7 @@ void GUI::init(int w, int h)
 
 void GUI::update()
 {
+    renderer_.facemodel_.updateColor(fParam.alCoeff);
     renderer_.facemodel_.updateIdentity(fParam.idCoeff);
     renderer_.facemodel_.updateExpression(fParam.exCoeff);
     
