@@ -80,6 +80,53 @@ struct DOF
     }
 };
 
+// point-to-point 2d constraint
+struct P2P2DC
+{
+    int v_idx; // index on the mesh
+    int idx; // index on the landmarks
+    
+    static void getIndexList(const std::vector<P2P2DC>& C,
+                             std::vector<int>& idxs);
+    static void updateConstraints(const std::vector<P2P2DC>& C,
+                                  const std::vector<Eigen::Vector3f>& qinV,
+                                  std::vector<Eigen::Vector3f>& qoutV);
+};
+
+// point-to-point 3d constraint
+struct P2P3DC
+{
+    int v_idx; // index on the mesh
+    int idx; // index on point cloud
+    
+    static void getIndexList(const std::vector<P2P3DC>& C,
+                             std::vector<int>& idxs);
+    static void updateConstraints(const std::vector<P2P3DC>& C,
+                                  const std::vector<Eigen::Vector4f>& qinV,
+                                  std::vector<Eigen::Vector4f>& qoutV);
+};
+
+// point-to-line 2d constraint
+struct P2L2DC
+{
+    int v_idx; // index on the mesh
+    int start_idx; // starting index on the landmarks
+    int end_idx; // ending index on the landmarks
+    
+    static void getIndexList(const std::vector<P2L2DC>& C,
+                             std::vector<int>& idxs);
+    static void updateConstraints(const std::vector<P2L2DC>& C,
+                                  const std::vector<Eigen::Vector3f>& qinV,
+                                  const std::vector<Eigen::Vector2f>& pV,
+                                  std::vector<Eigen::Vector3f>& qoutV,
+                                  std::vector<Eigen::Vector2f>& nV);
+};
+
+void computeV(const FaceParams& fParam,
+              const FaceModel& fModel,
+              const std::vector<int>& idx,
+              std::vector<Eigen::Vector3f>& V);
+
 void jacobianID(Eigen::MatrixX2f& result,
                 const Eigen::Vector3f& pp,
                 const float& zsq,
@@ -216,7 +263,7 @@ void computeJacobianSymmetry(Eigen::VectorXf& Jtr,
                              const Eigen::VectorXf& ex_delta,
                              const Eigen::MatrixXf& w_id,
                              const Eigen::MatrixXf& w_exp,
-                             const std::vector< int > sym_list,
+                             const Eigen::MatrixX2i& sym_list,
                              const DOF& dof,
                              const float& w,
                              bool withexp);
@@ -232,42 +279,61 @@ void computeJacobianPairClose(Eigen::VectorXf& Jtr,
 
 float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
-                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const std::vector<Eigen::Vector4f>& qV,
                                    const float& w,
                                    bool robust);
 
 float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
-                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const std::vector<Eigen::Vector4f>& qV,
                                    const std::vector<Eigen::Vector3f>& nV,
                                    const float& w,
                                    bool robust);
 
 float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector3f>& pV,
+                                   const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::MatrixX2f>& dpV,
-                                   const std::vector<Eigen::Vector2f>& qV,
+                                   const std::vector<Eigen::Vector3f>& qV,
                                    const float& w,
                                    bool robust);
 
 float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
                                   Eigen::MatrixXf& JtJ,
-                                  const std::vector<Eigen::Vector3f>& pV,
+                                  const std::vector<Eigen::Vector2f>& pV,
                                   const std::vector<Eigen::MatrixX2f>& dpV,
-                                  const std::vector<Eigen::Vector2f>& qV,
+                                  const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
                                   const float& w,
                                   bool robust);
 
+float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
+                                   Eigen::MatrixXf& JtJ,
+                                   const std::vector<Eigen::Vector2f>& pV,
+                                   const std::vector<Eigen::MatrixX2f>& dpV,
+                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const float& w,
+                                   bool robust,
+                                   std::vector<int>& idx);
+
+float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
+                                  Eigen::MatrixXf& JtJ,
+                                  const std::vector<Eigen::Vector2f>& pV,
+                                  const std::vector<Eigen::MatrixX2f>& dpV,
+                                  const std::vector<Eigen::Vector3f>& qV,
+                                  const std::vector<Eigen::Vector2f>& nV,
+                                  const float& w,
+                                  bool robust,
+                                  std::vector<int>& idx);
+
 void computeVertexWiseNormalTerm(std::vector<Eigen::Vector3f>& nV,
                                  std::vector<Eigen::MatrixXf>& dnV,
                                  const Eigen::VectorXf& V,
-                                 const Eigen::MatrixX3f& tri,
+                                 const Eigen::MatrixX3i& tri,
                                  const std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_edge,
                                  const std::vector<std::array<Eigen::Matrix3Xf, 2>>& ex_edge,
                                  const DOF& dof);
@@ -281,8 +347,19 @@ void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
                                          const Eigen::Vector6f& rt,
                                          const Eigen::Matrix4f& I,
                                          const DOF& dof,
-                                         const std::vector<int>& vert_list);
+                                         const std::vector<int>& vert_list = std::vector<int>());
 
+void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
+                                         std::vector<Eigen::MatrixX2f>& dpV,
+                                         const std::vector<Eigen::Vector3f>& V,
+                                         const Eigen::MatrixXf& w_id,
+                                         const Eigen::MatrixXf& w_exp,
+                                         const Eigen::Matrix4f& RTc,
+                                         const Eigen::Vector6f& rt,
+                                         const Eigen::Matrix4f& I,
+                                         const DOF& dof,
+                                         const std::vector<int>& vert_list);
+                                         
 void computeVertexWisePositionGradient3D(std::vector<Eigen::Vector3f>& pV,
                                          std::vector<Eigen::MatrixX3f>& dpV,
                                          const Eigen::VectorXf& V,
@@ -290,7 +367,7 @@ void computeVertexWisePositionGradient3D(std::vector<Eigen::Vector3f>& pV,
                                          const Eigen::MatrixXf& w_exp,
                                          const Eigen::Vector6f& rt,
                                          const DOF& dof,
-                                         const std::vector<int>& vert_list);
+                                         const std::vector<int>& vert_list = std::vector<int>());
 
 void setFaceVector(Eigen::VectorXf& X,
                    std::vector<Eigen::Matrix4f>& Is,

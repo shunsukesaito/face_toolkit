@@ -23,6 +23,10 @@
 		8F5A98221F564B5300DDF204 /* f2f_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F5A981E1F564B5300DDF204 /* f2f_renderer.cpp */; };
 		8F5A98231F564B5300DDF204 /* face_gradient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F5A98201F564B5300DDF204 /* face_gradient.cpp */; };
 		8F71F1A91F520D4F00DE56D7 /* trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F71F1A71F520D4F00DE56D7 /* trackball.cpp */; };
+		8FB59A201F66F2C600D84C03 /* f2f_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A1C1F66F2C600D84C03 /* f2f_optimizer.cpp */; };
+		8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */; };
+		8FB59A241F66F7DB00D84C03 /* minitrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A221F66F7DB00D84C03 /* minitrace.c */; };
+		8FB59A271F671E0600D84C03 /* sh_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */; };
 		8FDF976A1F50F8AF0038065A /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8FDF97681F50F8AF0038065A /* tiny_obj_loader.cc */; };
 		8FE2953E1F5F1C120021E914 /* face_model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FE2953C1F5F1C120021E914 /* face_model.cpp */; };
 		8FE2954E1F61E76D0021E914 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FE295441F61E76D0021E914 /* imgui.cpp */; };
@@ -76,6 +80,14 @@
 		8F71F1A61F5106D400DE56D7 /* EigenHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EigenHelper.h; sourceTree = "<group>"; };
 		8F71F1A71F520D4F00DE56D7 /* trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = trackball.cpp; sourceTree = "<group>"; };
 		8F71F1A81F520D4F00DE56D7 /* trackball.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = trackball.hpp; sourceTree = "<group>"; };
+		8FB59A1C1F66F2C600D84C03 /* f2f_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = f2f_optimizer.cpp; sourceTree = "<group>"; };
+		8FB59A1D1F66F2C600D84C03 /* f2f_optimizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = f2f_optimizer.h; sourceTree = "<group>"; };
+		8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = p2d_optimizer.cpp; sourceTree = "<group>"; };
+		8FB59A1F1F66F2C600D84C03 /* p2d_optimizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = p2d_optimizer.h; sourceTree = "<group>"; };
+		8FB59A221F66F7DB00D84C03 /* minitrace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = minitrace.c; sourceTree = "<group>"; };
+		8FB59A231F66F7DB00D84C03 /* minitrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minitrace.h; sourceTree = "<group>"; };
+		8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sh_optimizer.cpp; sourceTree = "<group>"; };
+		8FB59A261F671E0600D84C03 /* sh_optimizer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sh_optimizer.hpp; sourceTree = "<group>"; };
 		8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.frag; sourceTree = "<group>"; };
 		8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.vert; sourceTree = "<group>"; };
 		8FDF975D1F50ED910038065A /* point2d.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = point2d.frag; sourceTree = "<group>"; };
@@ -168,12 +180,18 @@
 				8F34542C1EECD419007B479B /* camera.hpp */,
 				8F34542E1EECD42D007B479B /* renderer.cpp */,
 				8F34542F1EECD42D007B479B /* renderer.hpp */,
+				8FB59A1C1F66F2C600D84C03 /* f2f_optimizer.cpp */,
+				8FB59A1D1F66F2C600D84C03 /* f2f_optimizer.h */,
+				8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */,
+				8FB59A1F1F66F2C600D84C03 /* p2d_optimizer.h */,
 				8F5A981E1F564B5300DDF204 /* f2f_renderer.cpp */,
 				8F5A981F1F564B5300DDF204 /* f2f_renderer.hpp */,
 				8F5A98201F564B5300DDF204 /* face_gradient.cpp */,
 				8F5A98211F564B5300DDF204 /* face_gradient.h */,
 				8FE2953C1F5F1C120021E914 /* face_model.cpp */,
 				8FE2953D1F5F1C120021E914 /* face_model.hpp */,
+				8FB59A221F66F7DB00D84C03 /* minitrace.c */,
+				8FB59A231F66F7DB00D84C03 /* minitrace.h */,
 				8F3454311EECD439007B479B /* gui.cpp */,
 				8F3454321EECD439007B479B /* gui.hpp */,
 				8F3454341EECD460007B479B /* gl_mesh.cpp */,
@@ -185,6 +203,8 @@
 				8F3454381EECD473007B479B /* framebuffer.hpp */,
 				8F71F1A71F520D4F00DE56D7 /* trackball.cpp */,
 				8F71F1A81F520D4F00DE56D7 /* trackball.hpp */,
+				8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */,
+				8FB59A261F671E0600D84C03 /* sh_optimizer.hpp */,
 			);
 			path = RenderingTemplate;
 			sourceTree = "<group>";
@@ -290,14 +310,18 @@
 				8F3454171EEC9E30007B479B /* main.cpp in Sources */,
 				8FDF976A1F50F8AF0038065A /* tiny_obj_loader.cc in Sources */,
 				8FE2954E1F61E76D0021E914 /* imgui.cpp in Sources */,
+				8FB59A271F671E0600D84C03 /* sh_optimizer.cpp in Sources */,
 				8F3454391EECD473007B479B /* framebuffer.cpp in Sources */,
 				8FE295501F61E76D0021E914 /* imgui_draw.cpp in Sources */,
 				8F34542D1EECD419007B479B /* camera.cpp in Sources */,
 				8FE2954F1F61E76D0021E914 /* imgui_demo.cpp in Sources */,
 				8FE2953E1F5F1C120021E914 /* face_model.cpp in Sources */,
 				8F3454361EECD460007B479B /* gl_mesh.cpp in Sources */,
+				8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */,
 				8F71F1A91F520D4F00DE56D7 /* trackball.cpp in Sources */,
 				8F3454331EECD439007B479B /* gui.cpp in Sources */,
+				8FB59A241F66F7DB00D84C03 /* minitrace.c in Sources */,
+				8FB59A201F66F2C600D84C03 /* f2f_optimizer.cpp in Sources */,
 				8F34541F1EECA0C1007B479B /* gl_core.cpp in Sources */,
 				8F5A98221F564B5300DDF204 /* f2f_renderer.cpp in Sources */,
 			);
@@ -410,6 +434,7 @@
 					external/glm,
 					external/cereal/include,
 					external/gflags/include,
+					external/spdlog/include,
 				);
 				INSTALL_PATH = "-rpath @executable_path";
 				LIBRARY_SEARCH_PATHS = (
@@ -443,6 +468,7 @@
 					external/glm,
 					external/cereal/include,
 					external/gflags/include,
+					external/spdlog/include,
 				);
 				INSTALL_PATH = "-rpath @executable_path";
 				LIBRARY_SEARCH_PATHS = (

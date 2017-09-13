@@ -85,9 +85,12 @@ struct Renderer {
     std::unordered_map<std::string, GLProgram> programs_;
     Camera camera_;
     glMesh mesh_;
+    F2FRenderer f2f_renderer_;
+    
+    // temp
     FaceModel facemodel_;
-    
-    
+    FaceParams fParam_;
+
     Eigen::Vector3f center_;
     
     int frame_;

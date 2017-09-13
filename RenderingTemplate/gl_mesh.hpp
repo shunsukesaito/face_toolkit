@@ -22,7 +22,7 @@ struct glPlane
     std::vector<glm::vec2> uvs_;
     std::vector<glm::vec3> pts_;
     
-    void init(GLProgram&);
+    void init(GLProgram&, float z = 1.0);
 };
 
 struct glPoint2D
@@ -50,6 +50,14 @@ struct glMesh
     
     void init(GLProgram& prog,
               const Eigen::VectorXf& pts,
+              const Eigen::MatrixX3f& nml,
+              const Eigen::MatrixX2f& uv,
+              const Eigen::MatrixX3i& tri_pts,
+              const Eigen::MatrixX3i& tri_uv);
+    
+    void init(GLProgram& prog,
+              const Eigen::VectorXf& pts,
+              const Eigen::VectorXf& clr,
               const Eigen::MatrixX3f& nml,
               const Eigen::MatrixX2f& uv,
               const Eigen::MatrixX3i& tri_pts,
@@ -98,14 +106,20 @@ struct glMesh
                 const Eigen::MatrixX3f& nml,
                 const Eigen::MatrixX3i& tri_pts);
     
+    void update(GLProgram& prog,
+                const Eigen::VectorXf& pts,
+                const Eigen::VectorXf& clr,
+                const Eigen::MatrixX3f& nml,
+                const Eigen::MatrixX3i& tri_pts);
+    
     void update_with_idx(GLProgram& prog,
                          const Eigen::VectorXf& pts,
                          const Eigen::MatrixX3f& nml);
     
-    void update_with_idx(GLProgram&,
-                         const Eigen::VectorXf&,
-                         const Eigen::VectorXf&,
-                         const Eigen::MatrixX3f&);
+    void update_with_idx(GLProgram& prog,
+                         const Eigen::VectorXf& pts,
+                         const Eigen::VectorXf& clr,
+                         const Eigen::MatrixX3f& nml);
 };
 
 #endif /* gl_mesh_hpp */

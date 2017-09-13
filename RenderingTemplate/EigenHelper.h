@@ -13,8 +13,8 @@
 #define EPSILON 0.000001f
 
 inline void calcNormal(Eigen::MatrixX3f& nml,
-                       Eigen::VectorXf& pts,
-                       Eigen::MatrixX3i& tri_pts)
+                       const Eigen::VectorXf& pts,
+                       const Eigen::MatrixX3i& tri_pts)
 {
     nml = Eigen::MatrixX3f::Zero(pts.size()/3,3);
     for(int i = 0; i < tri_pts.rows(); ++i)

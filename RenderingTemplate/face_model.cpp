@@ -12,28 +12,87 @@
 #include "face_model.hpp"
 #include "obj_loader.hpp"
 
-void FaceModel::updateIdentity(const Eigen::VectorXf& val)
+static void computeEdgeBasis(std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_edge,
+                             std::vector<std::array<Eigen::Matrix3Xf, 2>>& ex_edge,
+                             const Eigen::MatrixXf& w_id,
+                             const Eigen::MatrixXf& w_ex,
+                             const Eigen::MatrixX3i& tri,
+                             int ID,
+                             int EX)
 {
-    neu_ = mu_id_ + w_id_ * val;
-}
-
-void FaceModel::updateExpression(const Eigen::VectorXf& val)
-{
-    pts_ = neu_ + w_ex_ * val;
+    id_edge.resize(tri.rows());
+    ex_edge.resize(tri.rows());
     
-    calcNormal(nml_, pts_, tri_pts_);
+    for (int i = 0; i < tri.rows(); ++i)
+    {
+        if (ID != 0){
+            id_edge[i][0] = w_id.block(3 * tri(i,1), 0, 3, ID) - w_id.block(3 * tri(i,0), 0, 3, ID);
+            id_edge[i][1] = w_id.block(3 * tri(i,2), 0, 3, ID) - w_id.block(3 * tri(i,0), 0, 3, ID);
+        }
+        
+        if (EX != 0){
+            ex_edge[i][0] = w_ex.block(3 * tri(i,1), 0, 3, EX) - w_ex.block(3 * tri(i,0), 0, 3, EX);
+            ex_edge[i][1] = w_ex.block(3 * tri(i,2), 0, 3, EX) - w_ex.block(3 * tri(i,0), 0, 3, EX);
+        }
+    }
 }
 
-void FaceModel::updateColor(const Eigen::VectorXf& val)
+void FaceParams::updateIdentity(const FaceModel& model)
 {
-    clr_ = mu_cl_ + w_cl_ * val;
+    assert(model.w_id_.cols() == idCoeff.size());
+    d_id_ = model.w_id_ * idCoeff;
+    neu_ = model.mu_id_ + d_id_;
 }
 
-void FaceModel::Reset()
+void FaceParams::updateExpression(const FaceModel& model)
 {
-    updateIdentity(Eigen::VectorXf::Zero(sigma_id_.size()));
-    updateExpression(Eigen::VectorXf::Zero(sigma_ex_.size()));
-    updateColor(Eigen::VectorXf::Zero(sigma_cl_.size()));
+    assert(model.w_ex_.cols() == exCoeff.size());
+
+    d_ex_ = model.w_ex_ * exCoeff;
+    pts_ = neu_ + d_ex_;
+    
+    calcNormal(nml_, pts_, model.tri_pts_);
+}
+
+void FaceParams::updateColor(const FaceModel& model)
+{
+    assert(model.w_cl_.cols() == alCoeff.size());
+
+    clr_ = model.mu_cl_ + model.w_cl_ * alCoeff;
+}
+
+void FaceParams::updateAll(const FaceModel &model)
+{
+    updateColor(model);
+    updateIdentity(model);
+    updateExpression(model);
+}
+
+void FaceParams::updateShape(const FaceModel& model)
+{
+    updateIdentity(model);
+    updateExpression(model);
+}
+
+Eigen::Vector3f FaceParams::computeV(int i, const FaceModel& model) const
+{
+    assert(model.w_id_.cols() == idCoeff.size());
+    assert(model.w_ex_.cols() == exCoeff.size());
+    
+    Eigen::Vector3f p = model.mu_id_.b3(i) + model.w_id_.block(i*3, 0, 3, idCoeff.size()) * idCoeff;
+    p += model.mu_ex_.b3(i) + model.w_ex_.block(i*3, 0, 3, exCoeff.size()) * exCoeff;
+    return p;
+}
+
+void FaceParams::init(const FaceModel& model)
+{
+    idCoeff = Eigen::VectorXf::Zero(model.sigma_id_.size());
+    exCoeff = Eigen::VectorXf::Zero(model.sigma_ex_.size());
+    alCoeff = Eigen::VectorXf::Zero(model.sigma_cl_.size());
+    
+    updateColor(model);
+    updateIdentity(model);
+    updateExpression(model);
 }
 
 void FaceModel::saveBinaryModel(std::string file)
@@ -133,7 +192,7 @@ void FaceModel::loadBinaryModel(std::string file)
     
     fclose(fp);
     
-    Reset();
+    computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }
 
 void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
@@ -240,7 +299,9 @@ void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
     
     fclose(fp);
     
-    loadObjFile(meshfile, pts_, nml_, uvs_, tri_pts_, tri_uv_);
+    Eigen::VectorXf pts;
+    Eigen::MatrixX3f nml;
+    loadObjFile(meshfile, pts, nml, uvs_, tri_pts_, tri_uv_);
     
-    Reset();
+    computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }

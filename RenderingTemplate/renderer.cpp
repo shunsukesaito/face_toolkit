@@ -90,34 +90,32 @@ void Renderer::init(int w, int h, std::string data_dir)
     camera_.intializeUniforms(prog3d, false, false);
     camera_.updateUniforms(prog3d, false, false);
 
-//    Eigen::VectorXf pts;
-//    Eigen::MatrixX3f nml;
-//    Eigen::MatrixX2f uvs;
-//    Eigen::MatrixX3i tri_pts;
-//    Eigen::MatrixX3i tri_uv;
-
-    //loadObjFile(data_dir + "data/pin.obj", pts, nml, uvs, tri_pts, tri_uv);
-    //writeObj(data_dir + "data/debug.obj", pts, nml, uvs, tri_pts, tri_uv);
-    //facemodel_.loadOldBinaryModel(data_dir + "data/BinaryModel.bin", data_dir + "data/pin.obj");
-    //facemodel_.saveBinaryModel(data_dir + "data/PinModel.bin");
     facemodel_.loadBinaryModel(data_dir + "data/PinModel.bin");
-    mesh_.init_with_idx(prog, facemodel_.pts_, facemodel_.nml_, facemodel_.tri_pts_);
+    fParam_.init(facemodel_);
+    mesh_.init_with_idx(prog, fParam_.pts_, fParam_.nml_, facemodel_.tri_pts_);
+    
+    f2f_renderer_.init(data_dir, camera_, facemodel_);
     
     glPlane bg;
     bg.init(programs_["bg"]);
-    programs_["bg"].createTexture("bg_texture", data_dir + "data/cosimo.png");
+    programs_["bg"].createTexture("u_texture", data_dir + "data/cosimo.png");
     
-    center_ = getCenter(facemodel_.pts_);
+    center_ = getCenter(fParam_.pts_);
 }
 
 void Renderer::draw()
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glDisable(GL_CULL_FACE);
     programs_["bg"].draw();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    programs_["main"].draw();
+    //programs_["main"].draw();
+    
+    f2f_renderer_.render(camera_, fParam_);
     
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -128,5 +126,8 @@ void Renderer::update()
     auto& prog = programs_["main"];
     camera_.updateUniforms(prog, true, false);
     
-    mesh_.update_with_idx(prog, facemodel_.pts_, facemodel_.nml_);
+    fParam_.updateColor(facemodel_);
+    fParam_.updateIdentity(facemodel_);
+    fParam_.updateExpression(facemodel_);
+    mesh_.update_with_idx(prog, fParam_.pts_, fParam_.nml_);
 }

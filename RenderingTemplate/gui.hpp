@@ -69,8 +69,6 @@ private:
     Eigen::Vector3f up, right;
     double current_mouse_x, current_mouse_y;
     double down_mouse_x, down_mouse_y;
-    
-    FaceParams fParam;
 };
 
 #endif /* GUI_hpp */

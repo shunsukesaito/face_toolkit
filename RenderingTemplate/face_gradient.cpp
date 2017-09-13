@@ -1,24 +1,147 @@
 #include "face_gradient.h"
 
-void computeEdgeBasis(std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_edge,
-                      std::vector<std::array<Eigen::Matrix3Xf, 2>>& exp_edge,
-                      const Eigen::MatrixXf& w_id,
-                      const Eigen::MatrixXf& w_exp,
-                      const Eigen::MatrixX3i& tri,
-                      const DOF& dof)
+static Eigen::Vector2f calcLineSegment(const Eigen::Vector2f& p,
+                                       const std::vector<Eigen::Vector3f>& qV,
+                                       Eigen::Vector3f& q,
+                                       int start_idx,
+                                       int end_idx)
 {
-	for (int i = 0; i < tri.rows(); ++i)
-	{
-		if (dof.ID != 0){
-			id_edge[i][0] = w_id.block(3 * tri(i,1), 0, 3, dof.ID) - w_id.block(3 * tri(i,0), 0, 3, dof.ID);
-			id_edge[i][1] = w_id.block(3 * tri(i,2), 0, 3, dof.ID) - w_id.block(3 * tri(i,0), 0, 3, dof.ID);
-		}
+    assert(start_idx < end_idx);
+    
+    Eigen::Vector2f pq;
+    Eigen::Vector2f n_min;
+    Eigen::Vector2f l, n;
+    float dist, ratio;
+    float mindist = 1.e5;
+    for(int i = start_idx; i < end_idx; ++i)
+    {
+        l = (qV[i + 1].segment<2>(0)-qV[i].segment<2>(0)).normalized();
+        n << l[1], -l[0];
+        pq = p - qV[i].segment<2>(0);
+        
+        ratio = l.dot(pq.normalized());
+        if(ratio < 0 || ratio > 1.0)
+            continue;
+        
+        dist = n.dot(pq);
+        
+        if(dist < mindist){
+            n_min = n;
+            q = ratio*qV[i + 1]+(1.0-ratio)*qV[i];
+            
+            mindist = dist;
+        }
+    }
+    
+    // if p doesn't lie in the line segments
+    if(mindist == 1.e5){
+        l = (qV[start_idx + 1].segment<2>(0)-qV[start_idx].segment<2>(0)).normalized();
+        n << l[1], -l[0];
+        
+        ratio = l.dot(pq.normalized());
+        if(ratio < 0){
+            q = qV[start_idx];
+            return n;
+        }
+        else{
+            q = qV[end_idx];
+            l = (qV[end_idx].segment<2>(0)-qV[end_idx - 1].segment<2>(0)).normalized();
+            n << l[1], -l[0];
+            
+            return n;
+        }
+    }
+    
+    return n_min;
+}
 
-		if (dof.EX != 0){
-			exp_edge[i][0] = w_exp.block(3 * tri(i,1), 0, 3, dof.EX) - w_exp.block(3 * tri(i,0), 0, 3, dof.EX);
-			exp_edge[i][1] = w_exp.block(3 * tri(i,2), 0, 3, dof.EX) - w_exp.block(3 * tri(i,0), 0, 3, dof.EX);
-		}
-	}
+void P2P2DC::getIndexList(const std::vector<P2P2DC> &C, std::vector<int> &idxs)
+{
+    idxs.clear();
+    
+    for(auto& c : C)
+    {
+        idxs.push_back(c.v_idx);
+    }
+}
+
+void P2P2DC::updateConstraints(const std::vector<P2P2DC>& C,
+                               const std::vector<Eigen::Vector3f>& qinV,
+                               std::vector<Eigen::Vector3f>& qoutV)
+{
+    qoutV.clear();
+    
+    for(auto& c : C)
+    {
+        qoutV.push_back(qinV[c.idx]);
+    }
+}
+
+void P2P3DC::getIndexList(const std::vector<P2P3DC>& C,
+                          std::vector<int>& idxs)
+{
+    idxs.clear();
+    
+    for(auto& c : C)
+    {
+        idxs.push_back(c.v_idx);
+    }
+}
+
+void P2P3DC::updateConstraints(const std::vector<P2P3DC>& C,
+                                    const std::vector<Eigen::Vector4f>& qinV,
+                                    std::vector<Eigen::Vector4f>& qoutV)
+{
+    qoutV.clear();
+    
+    for(auto& c : C)
+    {
+        qoutV.push_back(qinV[c.idx]);
+    }
+}
+
+void P2L2DC::getIndexList(const std::vector<P2L2DC>& C,
+                          std::vector<int>& idxs)
+{
+    idxs.clear();
+    
+    for(auto& c : C)
+    {
+        idxs.push_back(c.v_idx);
+    }
+}
+
+void P2L2DC::updateConstraints(const std::vector<P2L2DC>& C,
+                               const std::vector<Eigen::Vector3f>& qinV,
+                               const std::vector<Eigen::Vector2f>& pV,
+                               std::vector<Eigen::Vector3f>& qoutV,
+                               std::vector<Eigen::Vector2f>& nV)
+{
+    assert(pV.size() == C.size());
+    
+    qoutV.clear();
+    nV.clear();
+    
+    Eigen::Vector3f q;
+    for(int i = 0; i < C.size(); ++i)
+    {
+        nV.push_back(calcLineSegment(pV[i], qinV, q, C[i].start_idx, C[i].end_idx));
+        qoutV.push_back(q);
+    }
+}
+
+void computeV(const FaceParams& fParam,
+              const FaceModel& fModel,
+              const std::vector<int>& idx,
+              std::vector<Eigen::Vector3f>& V)
+{
+    if(V.size() != idx.size())
+        V.resize(idx.size());
+    
+    for(int i = 0; i < idx.size(); ++i)
+    {
+        V[i] = fParam.computeV(idx[i], fModel);
+    }
 }
 
 void jacobianID(Eigen::MatrixX2f& result,
@@ -545,7 +668,7 @@ void computeJacobianSymmetry(Eigen::VectorXf& Jtr,
                              const Eigen::VectorXf& ex_delta,
                              const Eigen::MatrixXf& w_id,
                              const Eigen::MatrixXf& w_exp,
-                             const std::vector< int > sym_list,
+                             const Eigen::MatrixX2i& sym_list,
                              const DOF& dof,
                              const float& w,
                              bool withexp)
@@ -553,12 +676,12 @@ void computeJacobianSymmetry(Eigen::VectorXf& Jtr,
 	if ((dof.ID == 0 && !withexp) || (dof.ID + dof.EX == 0 && withexp)) return;
 
 	Eigen::Vector3f p12;
-	std::vector<Eigen::Matrix3Xf> dp12(sym_list.size() / 2, Eigen::Matrix3Xf::Zero(3, dof.all()));
+	std::vector<Eigen::Matrix3Xf> dp12(sym_list.rows(), Eigen::Matrix3Xf::Zero(3, dof.all()));
 
-	for (int i = 0; i < sym_list.size(); i += 2)
+	for (int i = 0; i < sym_list.rows(); i++)
 	{
-		const int& i1 = sym_list[i];
-		const int& i2 = sym_list[i + 1];
+		const int& i1 = sym_list(i,0);
+		const int& i2 = sym_list(i,1);
 		const Eigen::Vector3f& p1id = id_delta.b3(i1);
 		const Eigen::Vector3f& p2id = id_delta.b3(i2);
         const Eigen::Vector3f& p1ex = ex_delta.b3(i1);
@@ -568,20 +691,20 @@ void computeJacobianSymmetry(Eigen::VectorXf& Jtr,
 		p12[1] = p1id[1] - p2id[1];
 		p12[2] = p1id[2] - p2id[2];
 
-		dp12[i / 2].block(0, 0, 1, dof.ID) = w_id.block(i1 * 3 + 0, 0, 1, dof.ID) + w_id.block(i2 * 3 + 0, 0, 1, dof.ID);
-		dp12[i / 2].block(1, 0, 2, dof.ID) = w_id.block(i1 * 3 + 1, 0, 2, dof.ID) - w_id.block(i2 * 3 + 1, 0, 2, dof.ID);
+		dp12[i].block(0, 0, 1, dof.ID) = w_id.block(i1 * 3 + 0, 0, 1, dof.ID) + w_id.block(i2 * 3 + 0, 0, 1, dof.ID);
+		dp12[i].block(1, 0, 2, dof.ID) = w_id.block(i1 * 3 + 1, 0, 2, dof.ID) - w_id.block(i2 * 3 + 1, 0, 2, dof.ID);
         
         if(withexp){
             p12[0] += p1ex[0] + p2ex[0];
             p12[1] += p1ex[1] - p2ex[1];
             p12[2] += p1ex[2] - p2ex[2];
             
-            dp12[i / 2].block(0, dof.ID, 1, dof.EX) = w_exp.block(i1 * 3 + 0, 0, 1, dof.EX) + w_exp.block(i2 * 3 + 0, 0, 1, dof.EX);
-            dp12[i / 2].block(1, dof.ID, 2, dof.EX) = w_exp.block(i1 * 3 + 1, 0, 2, dof.EX) - w_exp.block(i2 * 3 + 1, 0, 2, dof.EX);
+            dp12[i].block(0, dof.ID, 1, dof.EX) = w_exp.block(i1 * 3 + 0, 0, 1, dof.EX) + w_exp.block(i2 * 3 + 0, 0, 1, dof.EX);
+            dp12[i].block(1, dof.ID, 2, dof.EX) = w_exp.block(i1 * 3 + 1, 0, 2, dof.EX) - w_exp.block(i2 * 3 + 1, 0, 2, dof.EX);
         }
 
-		Jtr += w * dp12[i / 2].transpose() * p12;
-		JtJ += w * dp12[i / 2].transpose() * dp12[i / 2];
+		Jtr += w * dp12[i].transpose() * p12;
+		JtJ += w * dp12[i].transpose() * dp12[i];
 	}
 }
 
@@ -617,9 +740,9 @@ void computeJacobianPairClose(Eigen::VectorXf& Jtr,
 
 float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
-                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const std::vector<Eigen::Vector4f>& qV,
                                    const float& w,
                                    bool robust)
 {
@@ -632,11 +755,12 @@ float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
     
     float error = 0;
     Eigen::Vector3f pq;
+    float w_all;
     if(robust){
         std::vector<float> z, z_sorted;
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<3>(0)-qV[i];
+            pq = pV[i]-qV[i].segment<3>(0);
             z.push_back(pq.norm());
         }
         z_sorted = z;
@@ -644,11 +768,11 @@ float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
         float sigmasq = 1.43 * z_sorted[z.size()/2];
         sigmasq = sigmasq * sigmasq;
         
-        float w_all;
+
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<3>(0)-qV[i];
-            w_all = w * pV[i][3] * exp(-z[i]*z[i]/(2.0*sigmasq));
+            pq = pV[i]-qV[i].segment<3>(0);
+            w_all = w * qV[i][3] * exp(-z[i]*z[i]/(2.0*sigmasq));
             
             Jtr += w_all * dpV[i] * pq;
             JtJ += w_all * dpV[i] * dpV[i].transpose();
@@ -658,12 +782,12 @@ float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<3>(0)-qV[i];
-        
-            Jtr += w * pV[i][3] * dpV[i] * pq;
-            JtJ += w * pV[i][3] * dpV[i] * dpV[i].transpose();
+            pq = pV[i]-qV[i].segment<3>(0);
+            w_all = w * qV[i][3];
+            Jtr += w_all * dpV[i] * pq;
+            JtJ += w_all * dpV[i] * dpV[i].transpose();
             
-            error += w * pV[i][3] * pq.squaredNorm();
+            error += w_all * pq.squaredNorm();
         }
     }
     
@@ -672,9 +796,9 @@ float computeJacobianPoint2Point3D(Eigen::VectorXf& Jtr,
 
 float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector4f>& pV,
+                                   const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::MatrixX3f>& dpV,
-                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const std::vector<Eigen::Vector4f>& qV,
                                    const std::vector<Eigen::Vector3f>& nV,
                                    const float& w,
                                    bool robust)
@@ -689,11 +813,12 @@ float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
     float error = 0;
     float npq;
     Eigen::VectorXf ndp;
+    float w_all;
     if(robust){
         std::vector<float> z, z_sorted;
         for(int i = 0; i < pV.size(); ++i)
         {
-            npq = nV[i].dot(pV[i].segment<3>(0)-qV[i]);
+            npq = nV[i].dot(pV[i]-qV[i].segment<3>(0));
             z.push_back(npq);
             z_sorted.push_back(fabs(npq));
         }
@@ -701,11 +826,11 @@ float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
         float sigmasq = 1.43 * z_sorted[z.size()/2];
         sigmasq = sigmasq * sigmasq;
         
-        float w_all;
+        
         for(int i = 0; i < pV.size(); ++i)
         {
             ndp = dpV[i] * nV[i];
-            w_all = w * pV[i][3] * exp(-z[i] * z[i] / (2.0 * sigmasq));
+            w_all = w * qV[i][3] * exp(-z[i] * z[i] / (2.0 * sigmasq));
             
             Jtr += w_all * z[i] * ndp;
             JtJ += w_all * ndp * ndp.transpose();
@@ -715,12 +840,13 @@ float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
-            npq = nV[i].dot(pV[i].segment<3>(0)-qV[i]);
+            npq = nV[i].dot(pV[i]-qV[i].segment<3>(0));
             ndp = dpV[i] * nV[i];
-            Jtr += w * pV[i][3] * npq * ndp;
-            JtJ += w * pV[i][3] * ndp * ndp.transpose();
+            w_all = w * qV[i][3];
             
-            error += w * pV[i][3] * npq * npq;
+            Jtr += w_all * npq * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            error += w_all * npq * npq;
         }
     }
     
@@ -729,9 +855,9 @@ float computeJacobianPoint2Plane3D(Eigen::VectorXf& Jtr,
 
 float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
                                    Eigen::MatrixXf& JtJ,
-                                   const std::vector<Eigen::Vector3f>& pV,
+                                   const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::MatrixX2f>& dpV,
-                                   const std::vector<Eigen::Vector2f>& qV,
+                                   const std::vector<Eigen::Vector3f>& qV,
                                    const float& w,
                                    bool robust)
 {
@@ -744,11 +870,12 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
     
     float error = 0;
     Eigen::Vector2f pq;
+    float w_all;
     if(robust){
         std::vector<float> z, z_sorted;
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<2>(0)-qV[i];
+            pq = pV[i]-qV[i].segment<2>(0);
             z.push_back(pq.norm());
         }
         z_sorted = z;
@@ -756,11 +883,11 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
         float sigmasq = 1.43 * z_sorted[z.size()/2];
         sigmasq = sigmasq * sigmasq;
         
-        float w_all;
+        
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<2>(0)-qV[i];
-            w_all = w * pV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
+            pq = pV[i]-qV[i].segment<2>(0);
+            w_all = w * qV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
             
             Jtr += w_all * dpV[i] * pq;
             JtJ += w_all * dpV[i] * dpV[i].transpose();
@@ -770,12 +897,13 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
-            pq = pV[i].segment<2>(0)-qV[i];
+            pq = pV[i]-qV[i].segment<2>(0);
+            w_all = w * qV[i][2];
+
+            Jtr += w_all * dpV[i] * pq;
+            JtJ += w_all * dpV[i] * dpV[i].transpose();
             
-            Jtr += w * pV[i][2] * dpV[i] * pq;
-            JtJ += w * pV[i][2] * dpV[i] * dpV[i].transpose();
-            
-            error += w * pV[i][2] * pq.squaredNorm();
+            error += w_all * pq.squaredNorm();
         }
     }
     
@@ -784,9 +912,9 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
 
 float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
                                   Eigen::MatrixXf& JtJ,
-                                  const std::vector<Eigen::Vector3f>& pV,
+                                  const std::vector<Eigen::Vector2f>& pV,
                                   const std::vector<Eigen::MatrixX2f>& dpV,
-                                  const std::vector<Eigen::Vector2f>& qV,
+                                  const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
                                   const float& w,
                                   bool robust)
@@ -797,16 +925,16 @@ float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
     assert(pV.size() == dpV.size() && pV.size() == qV.size() && pV.size() == nV.size());
     assert(dpV[0].rows() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
-
     
     float error = 0;
     float npq;
+    float w_all;
     Eigen::VectorXf ndp;
     if(robust){
         std::vector<float> z, z_sorted;
         for(int i = 0; i < pV.size(); ++i)
         {
-            npq = nV[i].dot(pV[i].segment<2>(0)-qV[i]);
+            npq = nV[i].dot(pV[i]-qV[i].segment<2>(0));
             z.push_back(npq);
             z_sorted.push_back(fabs(npq));
         }
@@ -814,11 +942,11 @@ float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
         float sigmasq = 1.43 * z_sorted[z.size()/2];
         sigmasq = sigmasq * sigmasq;
         
-        float w_all;
+        
         for(int i = 0; i < pV.size(); ++i)
         {
             ndp = dpV[i] * nV[i];
-            w_all = w * pV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
+            w_all = w * qV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
             
             Jtr += w_all * z[i] * ndp;
             JtJ += w_all * ndp * ndp.transpose();
@@ -828,22 +956,145 @@ float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
-            npq = nV[i].dot(pV[i].segment<2>(0)-qV[i]);
+            npq = nV[i].dot(pV[i]-qV[i].segment<2>(0));
             ndp = dpV[i] * nV[i];
-            Jtr += w * pV[i][2] * npq * ndp;
-            JtJ += w * pV[i][2] * ndp * ndp.transpose();
+            w_all = w * qV[i][2];
             
-            error += w * pV[i][2] * npq * npq;
+            Jtr += w_all * npq * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            
+            error += w_all * npq * npq;
         }
     }
     
     return error;
 }
 
+float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
+                                   Eigen::MatrixXf& JtJ,
+                                   const std::vector<Eigen::Vector2f>& pV,
+                                   const std::vector<Eigen::MatrixX2f>& dpV,
+                                   const std::vector<Eigen::Vector3f>& qV,
+                                   const float& w,
+                                   bool robust,
+                                   std::vector<int>& idx)
+{
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size());
+    assert(qV.size() == idx.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    
+    float error = 0;
+    Eigen::Vector2f pq;
+    float w_all;
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            pq = pV[idx[i]]-qV[i].segment<2>(0);
+            z.push_back(pq.norm());
+        }
+        z_sorted = z;
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
+        
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            pq = pV[idx[i]]-qV[i].segment<2>(0);
+            w_all = w * qV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
+            
+            Jtr += w_all * dpV[idx[i]] * pq;
+            JtJ += w_all * dpV[idx[i]] * dpV[idx[i]].transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            pq = pV[idx[i]]-qV[i].segment<2>(0);
+            w_all = w * qV[i][2];
+            
+            Jtr += w_all * dpV[idx[i]] * pq;
+            JtJ += w_all * dpV[idx[i]] * dpV[idx[i]].transpose();
+            
+            error += w_all * pq.squaredNorm();
+        }
+    }
+    
+    return error;
+}
+
+float computeJacobianPoint2Line2D(Eigen::VectorXf& Jtr,
+                                  Eigen::MatrixXf& JtJ,
+                                  const std::vector<Eigen::Vector2f>& pV,
+                                  const std::vector<Eigen::MatrixX2f>& dpV,
+                                  const std::vector<Eigen::Vector3f>& qV,
+                                  const std::vector<Eigen::Vector2f>& nV,
+                                  const float& w,
+                                  bool robust,
+                                  std::vector<int>& idx)
+{
+    if(dpV.size() == 0 || w == 0.0)
+        return 0.0;
+    
+    assert(pV.size() == dpV.size());
+    assert(qV.size() == idx.size());
+    assert(nV.size() == qV.size());
+    assert(dpV[0].rows() == JtJ.rows());
+    assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
+    
+    float error = 0;
+    float npq;
+    float w_all;
+    Eigen::VectorXf ndp;
+    if(robust){
+        std::vector<float> z, z_sorted;
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[idx[i]]-qV[i].segment<2>(0));
+            z.push_back(npq);
+            z_sorted.push_back(fabs(npq));
+        }
+        std::sort(z_sorted.begin(), z_sorted.end());
+        float sigmasq = 1.43 * z_sorted[z.size()/2];
+        sigmasq = sigmasq * sigmasq;
+        
+        
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            ndp = dpV[idx[i]] * nV[i];
+            w_all = w * qV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
+            
+            Jtr += w_all * z[i] * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            error += w_all * z[i] * z[i];
+        }
+    }
+    else{
+        for(int i = 0; i < qV.size(); ++i)
+        {
+            npq = nV[i].dot(pV[idx[i]]-qV[i].segment<2>(0));
+            ndp = dpV[idx[i]] * nV[i];
+            w_all = w * qV[i][2];
+            
+            Jtr += w_all * npq * ndp;
+            JtJ += w_all * ndp * ndp.transpose();
+            error += w_all * npq * npq;
+        }
+    }
+    
+    return error;
+}
+
+
 void computeVertexWiseNormalTerm(std::vector<Eigen::Vector3f>& nV,
                                  std::vector<Eigen::MatrixXf>& dnV,
                                  const Eigen::VectorXf& V,
-                                 const Eigen::MatrixX3f& tri,
+                                 const Eigen::MatrixX3i& tri,
                                  const std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_edge,
                                  const std::vector<std::array<Eigen::Matrix3Xf, 2>>& ex_edge,
                                  const DOF& dof)
@@ -899,7 +1150,7 @@ void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
                                          std::vector<Eigen::MatrixX2f>& dpV,
                                          const Eigen::VectorXf& V,
                                          const Eigen::MatrixXf& w_id,
-                                         const Eigen::MatrixXf& w_exp,
+                                         const Eigen::MatrixXf& w_ex,
                                          const Eigen::Matrix4f& RTc,
                                          const Eigen::Vector6f& rt,
                                          const Eigen::Matrix4f& I,
@@ -948,11 +1199,78 @@ void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
 	RdRs[1] = R * RdRs[1];
 	RdRs[2] = R * RdRs[2];
 
+    if(vert_list.size() != 0){
+        for (int i = 0; i < vert_list.size(); ++i)
+        {
+            const Eigen::Matrix3Xf& w_idV = w_id.block(3 * vert_list[i], 0, 3, (dof.ID>0 ? dof.ID : 1));
+            const Eigen::Matrix3Xf& w_expV = w_ex.block(3 * vert_list[i], 0, 3, (dof.EX>0 ? dof.EX : 1));
+            computeJacobiansP2D(dpV[i], pV[i], V.b3(vert_list[i]), w_idV, w_expV, RTall, RTc, RdRs, I, dof);
+        }
+    }
+    else{
+        assert(V.size()/3 == w_id.rows());
+        assert(V.size()/3 == w_ex.rows());
+        for (int i = 0; i < V.size()/3; ++i)
+        {
+            const Eigen::Matrix3Xf& w_idV = w_id.block(3 * i, 0, 3, (dof.ID>0 ? dof.ID : 1));
+            const Eigen::Matrix3Xf& w_expV = w_ex.block(3 * i, 0, 3, (dof.EX>0 ? dof.EX : 1));
+            computeJacobiansP2D(dpV[i], pV[i], V.b3(i), w_idV, w_expV, RTall, RTc, RdRs, I, dof);
+        }
+    }
+}
+
+void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
+                                         std::vector<Eigen::MatrixX2f>& dpV,
+                                         const std::vector<Eigen::Vector3f>& V,
+                                         const Eigen::MatrixXf& w_id,
+                                         const Eigen::MatrixXf& w_ex,
+                                         const Eigen::Matrix4f& RTc,
+                                         const Eigen::Vector6f& rt,
+                                         const Eigen::Matrix4f& I,
+                                         const DOF& dof,
+                                         const std::vector<int>& vert_list)
+{
+    assert(vert_list.size() == V.size());
+    if (pV.size() != vert_list.size())
+        pV.assign(vert_list.size(), Eigen::Vector2f::Zero());
+    if (dpV.size() != vert_list.size())
+        dpV.assign(vert_list.size(), Eigen::MatrixX2f::Zero(dof.all(), 2));
+    
+    
+    // compute position term per vertex
+    Eigen::Matrix4f RTall = RTc*Eigen::EulerAnglesPoseToMatrix(rt);
+    const Eigen::Matrix3f& R = RTc.block<3,3>(0, 0);
+    
+    std::vector<Eigen::Matrix3f> RdRs(3);
+    // Warning: it's not aligned with wiki (https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions)
+    // looks like there's weird convenction in euler angle in mLib
+    // this part could be problematic when moving to other coordinate system
+    float sPhi = sin(rt[0]);
+    float cPhi = cos(rt[0]);
+    float sTheta = sin(rt[1]);
+    float cTheta = cos(rt[1]);
+    float sPsi = sin(rt[2]);
+    float cPsi = cos(rt[2]);
+    
+    RdRs[0] << 0, sPhi*sPsi + cPhi*sTheta*cPsi, cPhi*sPsi - sPhi*sTheta*cPsi,
+    0, -sPhi*cPsi + cPhi*sTheta*sPsi, -cPhi*cPsi - sPhi*sTheta*sPsi,
+    0, cPhi*cTheta, -sPhi*cTheta;
+    RdRs[1] << -sTheta*cPsi, sPhi*cTheta*cPsi, cPhi*cTheta*cPsi,
+    -sTheta*sPsi, sPhi*cTheta*sPsi, cPhi*cTheta*sPsi,
+    -cTheta, -sPhi*sTheta, -cPhi*sTheta;
+    RdRs[2] << -cTheta*sPsi, -cPhi*cPsi - sPhi*sTheta*sPsi, sPhi*cPsi - cPhi*sTheta*sPsi,
+    cTheta*cPsi, -cPhi*sPsi + sPhi*sTheta*cPsi, sPhi*sPsi + cPhi*sTheta*cPsi,
+    0, 0, 0;
+    
+    RdRs[0] = R * RdRs[0];
+    RdRs[1] = R * RdRs[1];
+    RdRs[2] = R * RdRs[2];
+    
     for (int i = 0; i < vert_list.size(); ++i)
     {
         const Eigen::Matrix3Xf& w_idV = w_id.block(3 * vert_list[i], 0, 3, (dof.ID>0 ? dof.ID : 1));
-        const Eigen::Matrix3Xf& w_expV = w_exp.block(3 * vert_list[i], 0, 3, (dof.EX>0 ? dof.EX : 1));
-        computeJacobiansP2D(dpV[i], pV[i], V.b3(vert_list[i]), w_idV, w_expV, RTall, RTc, RdRs, I, dof);
+        const Eigen::Matrix3Xf& w_expV = w_ex.block(3 * vert_list[i], 0, 3, (dof.EX>0 ? dof.EX : 1));
+        computeJacobiansP2D(dpV[i], pV[i], V[i], w_idV, w_expV, RTall, RTc, RdRs, I, dof);
     }
 }
 
@@ -960,7 +1278,7 @@ void computeVertexWisePositionGradient3D(std::vector<Eigen::Vector3f>& pV,
                                          std::vector<Eigen::MatrixX3f>& dpV,
                                          const Eigen::VectorXf& V,
                                          const Eigen::MatrixXf& w_id,
-                                         const Eigen::MatrixXf& w_exp,
+                                         const Eigen::MatrixXf& w_ex,
                                          const Eigen::Vector6f& rt,
                                          const DOF& dof,
                                          const std::vector<int>& vert_list)
@@ -1004,12 +1322,26 @@ void computeVertexWisePositionGradient3D(std::vector<Eigen::Vector3f>& pV,
 		cTheta*cPsi, -cPhi*sPsi + sPhi*sTheta*cPsi, sPhi*sPsi + cPhi*sTheta*cPsi,
 		0, 0, 0;
 
-    for (int i = 0; i < vert_list.size(); ++i)
-    {
-        pV[i] = R*V.b3(vert_list[i]) + t;
-        const Eigen::Matrix3Xf& w_idV = w_id.block(3 * vert_list[i], 0, 3, (dof.ID>0 ? dof.ID : 1));
-        const Eigen::Matrix3Xf& w_expV = w_exp.block(3 * vert_list[i], 0, 3, (dof.EX>0 ? dof.EX : 1));
-        computeJacobiansP3D(dpV[i], V.b3(vert_list[i]), w_idV, w_expV, RTf, dRs, dof);
+    if(vert_list.size() != 0){
+        for (int i = 0; i < vert_list.size(); ++i)
+        {
+            pV[i] = R*V.b3(vert_list[i]) + t;
+            const Eigen::Matrix3Xf& w_idV = w_id.block(3 * vert_list[i], 0, 3, (dof.ID>0 ? dof.ID : 1));
+            const Eigen::Matrix3Xf& w_expV = w_ex.block(3 * vert_list[i], 0, 3, (dof.EX>0 ? dof.EX : 1));
+            computeJacobiansP3D(dpV[i], V.b3(vert_list[i]), w_idV, w_expV, RTf, dRs, dof);
+        }
+    }
+    else{
+        assert(V.size()/3 == w_id.rows());
+        assert(V.size()/3 == w_ex.rows());
+        
+        for (int i = 0; i < V.size()/3; ++i)
+        {
+            pV[i] = R*V.b3(i) + t;
+            const Eigen::Matrix3Xf& w_idV = w_id.block(3 * i, 0, 3, (dof.ID>0 ? dof.ID : 1));
+            const Eigen::Matrix3Xf& w_expV = w_ex.block(3 * i, 0, 3, (dof.EX>0 ? dof.EX : 1));
+            computeJacobiansP3D(dpV[i], V.b3(i), w_idV, w_expV, RTf, dRs, dof);
+        }
     }
 }
 
@@ -1093,14 +1425,14 @@ void setFaceVector(Eigen::VectorXf& X,
             {
                 for (int j = 0; j < 9; ++j)
                 {
-                    X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + i * 9 + j] = param.SH[j][i];
+                    X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + i * 9 + j] = param.SH(i,j);
                 }
             }
             break;
         case 9:
             for (int j = 0; j < 9; ++j)
             {
-                X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + j] = (1.f / 3.f)*(param.SH[j][0] + param.SH[j][1] + param.SH[j][2]);
+                X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + j] = param.SH(0,j);
             }
             break;
         default:
@@ -1193,7 +1525,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
             {
                 for (int j = 0; j < 9; ++j)
                 {
-                    param.SH[j][i] = X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + i * 9 + j];
+                    param.SH(i,j) = X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + i * 9 + j];
                 }
             }
             break;
@@ -1202,7 +1534,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
             {
                 for (int j = 0; j < 9; ++j)
                 {
-                    param.SH[j][i] = X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + j];
+                    param.SH(i,j) = X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + j];
                 }
             }
             break;

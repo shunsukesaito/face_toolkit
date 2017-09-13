@@ -12,7 +12,6 @@ out VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
-    vec4 light;
     vec4 pos;
     vec2 proj_texcoord;
     vec2 texcoord;
@@ -25,8 +24,6 @@ void main()
 
     VertexOut.normal = vec4(v_normal, 1.0);
     VertexOut.normalCamera = u_modelview * vec4(v_normal, 0.0);
-    
-    VertexOut.light = vec4(normalize(vec3(0.0, 0.1, -1.0)),0.0);
     
     vec4 posWorld = u_mvp * vec4(v_position, 1.0);
 

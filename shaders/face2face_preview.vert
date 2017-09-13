@@ -4,7 +4,7 @@ uniform mat4 u_mvp;
 uniform mat4 u_modelview;
 
 // params
-uniform	uint g_tex_view;
+uniform	uint u_tex_view;
 
 in vec3 v_position;
 in vec4 v_color;
@@ -15,7 +15,6 @@ out VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
-    vec4 light;
     vec4 pos;
     vec2 proj_texcoord;
     vec2 texcoord;
@@ -28,10 +27,8 @@ void main()
     VertexOut.normal = vec4(v_normal, 1.0);
     VertexOut.normalCamera = u_modelview * vec4(v_normal, 0.0);
     
-    VertexOut.light = vec4(normalize(vec3(0.0, 0.1, -1.0)),0.0);
-    
     vec4 posWorld = u_mvp * vec4(v_position, 1.0);
-	if (g_tex_view != uint(0))
+	if (u_tex_view != uint(0))
 	{
 		VertexOut.pos = vec4(v_texcoord, 0.0, 1.0) - vec4(0.5, 0.5, 0.0, 0.0);
 		VertexOut.pos[0] *= 2;

@@ -96,7 +96,7 @@ void GUI::keyboard(int key, int s, int a, int m)
         F2FRenderer f2frender;
         f2frender.init("./", renderer_.camera_, renderer_.facemodel_);
         std::vector<cv::Mat_<cv::Vec4f>> out;
-        f2frender.render(width_/4, height_/4, renderer_.camera_, fParam, renderer_.facemodel_, out);
+        f2frender.render(width_/4, height_/4, renderer_.camera_, renderer_.fParam_, out);
         
         for(int i = 0; i < out.size(); ++i)
         {
@@ -222,11 +222,6 @@ void GUI::init(int w, int h)
     
     rotCenter = renderer_.center_;
     
-    fParam.idCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_id_.size());
-    fParam.exCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_ex_.size());
-    fParam.alCoeff = Eigen::VectorXf::Zero(renderer_.facemodel_.sigma_cl_.size());
-    fParam.SH[0] = Eigen::Vector3f::Ones();
-    
     GLFWwindow* window = renderer_.windows_[MAIN];
 
 #ifdef WITH_IMGUI
@@ -243,11 +238,7 @@ void GUI::init(int w, int h)
 }
 
 void GUI::update()
-{
-    renderer_.facemodel_.updateColor(fParam.alCoeff);
-    renderer_.facemodel_.updateIdentity(fParam.idCoeff);
-    renderer_.facemodel_.updateExpression(fParam.exCoeff);
-    
+{    
     clearBuffer(COLOR::COLOR_GREY);
     int w, h;
     glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
@@ -259,6 +250,9 @@ void GUI::update()
 #ifdef WITH_IMGUI
     ImGui_ImplGlfwGL3_NewFrame();
     ImGui::Begin("Control Panel", &show_control_panel_);
+    
+    FaceParams& fParam = renderer_.fParam_;
+    
     if (ImGui::CollapsingHeader("Face Parameters")){
         if (ImGui::TreeNode("ID")){
             for(int i = 0; i < fParam.idCoeff.size(); ++i)
@@ -277,8 +271,8 @@ void GUI::update()
         }
         ImGui::InputFloat3("Tr", &fParam.RT(0,3));
         if (ImGui::TreeNode("SH")){
-            for(int i = 0; i < fParam.SH.size(); ++i)
-                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &fParam.SH[i][0]);
+            for(int i = 0; i < fParam.SH.cols(); ++i)
+                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &fParam.SH.col(i)[0]);
             ImGui::TreePop();
         }
     }
@@ -290,6 +284,16 @@ void GUI::update()
         ImGui::InputFloat("fy", &cam.intrinsic_(1,1));
         ImGui::InputFloat("px", &cam.intrinsic_(0,2));
         ImGui::InputFloat("py", &cam.intrinsic_(1,2));
+        ImGui::InputInt("width", &cam.width_);
+        ImGui::InputInt("height", &cam.height_);
+    }
+    if (ImGui::CollapsingHeader("Rendering Parameters")){
+        F2FRenderParams& param = renderer_.f2f_renderer_.param_;
+        ImGui::Checkbox("mask", &param.enable_mask);
+        ImGui::Checkbox("seg", &param.enable_seg);
+        ImGui::Checkbox("texture", &param.enable_tex);
+        const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
+        ImGui::ListBox("RenderTarget", &param.location, listbox_items, 8);
     }
     ImGui::End();
     ImGui::Render();

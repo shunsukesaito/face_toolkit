@@ -8,7 +8,7 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                                         const std::vector<Eigen::MatrixX2f>& dpV,
                                         const std::vector<Eigen::Vector3f>& nV,
                                         const std::vector<Eigen::MatrixXf>& dnV,
-                                        const std::vector<Eigen::Vector3f> sh,
+                                        const Eigen::MatrixX3f& sh,
                                         const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
                                         const cv::Mat_<cv::Vec4f>& renderRGB,
                                         const cv::Mat_<cv::Vec4f>& inputRGB,
@@ -45,6 +45,7 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     const unsigned int width = renderTarget[RT_NAMES::positions].cols;
     const unsigned int height = renderTarget[RT_NAMES::positions].rows;
     float error = 0.0;
+    int cur_pos;
     for (unsigned int j = 1; j < height - 1; ++j)
     {
         for (unsigned int i = 1; i < width - 1; ++i)
@@ -88,18 +89,12 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 
                 // for R, G, B
                 if (dof.ID + dof.EX != 0){
-                    dcdi.block(0, 0, dof.ID + dof.EX, 1) =
-                    2.0f * al[0] * (c2 * sh[3][0] + c1 * (sh[8][0] * n[0] + sh[4][0] * n[1] + sh[7][0] * n[2])) * dn.col(0)
-                    + 2.0f * al[0] * (c2 * sh[1][0] + c1 * (sh[4][0] * n[0] - sh[8][0] * n[1] + sh[5][0] * n[2])) * dn.col(1)
-                    + 2.0f * al[0] * (c2 * sh[2][0] + c1 * (sh[7][0] * n[0] + sh[5][0] * n[1]) + c3 * sh[6][0] * n[2]) * dn.col(2);
-                    dcdi.block(0, 1, dof.ID + dof.EX, 1) =
-                    2.0f * al[1] * (c2 * sh[3][1] + c1 * (sh[8][1] * n[0] + sh[4][1] * n[1] + sh[7][1] * n[2])) * dn.col(0)
-                    + 2.0f * al[1] * (c2 * sh[1][1] + c1 * (sh[4][1] * n[0] - sh[8][1] * n[1] + sh[5][1] * n[2])) * dn.col(1)
-                    + 2.0f * al[1] * (c2 * sh[2][1] + c1 * (sh[7][1] * n[0] + sh[5][1] * n[1]) + c3 * sh[6][1] * n[2]) * dn.col(2);
-                    dcdi.block(0, 2, dof.ID + dof.EX, 1) =
-                    2.0f * al[2] * (c2 * sh[3][2] + c1 * (sh[8][2] * n[0] + sh[4][2] * n[1] + sh[7][2] * n[2])) * dn.col(0)
-                    + 2.0f * al[2] * (c2 * sh[1][2] + c1 * (sh[4][2] * n[0] - sh[8][2] * n[1] + sh[5][2] * n[2])) * dn.col(1)
-                    + 2.0f * al[2] * (c2 * sh[2][2] + c1 * (sh[7][2] * n[0] + sh[5][2] * n[1]) + c3 * sh[6][2] * n[2]) * dn.col(2);
+                    for(int k = 0; k < 3; ++k){
+                        dcdi.block(0, k, dof.ID + dof.EX, 1) =
+                        2.0f * al[k] * (c2 * sh(k,3) + c1 * (sh(k,8) * n[0] + sh(k,4) * n[1] + sh(k,7) * n[2])) * dn.col(0)
+                        + 2.0f * al[k] * (c2 * sh(k,1) + c1 * (sh(k,4) * n[0] - sh(k,8) * n[1] + sh(k,5) * n[2])) * dn.col(1)
+                        + 2.0f * al[k] * (c2 * sh(k,2) + c1 * (sh(k,7) * n[0] + sh(k,5) * n[1]) + c3 * sh(k,6) * n[2]) * dn.col(2);
+                    }
                 }
                 
                 // TODO: it can be pre-computed
@@ -137,35 +132,36 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 }
                 
                 // TODO: treat camera derivative properly (for now, no need to optimize camera intrinsics though)
-                dcdi.block(dof.ID + dof.EX + dof.AL, 0, dof.ROT + dof.TR + dof.CAM, 3) = -di.block(dof.ID + dof.EX + dof.AL, 0, dof.ROT + dof.TR + dof.CAM, 3);
+                cur_pos = dof.ID + dof.EX + dof.AL;
+                dcdi.block(cur_pos, 0, dof.ROT + dof.TR + dof.CAM, 3) = -di.block(cur_pos, 0, dof.ROT + dof.TR + dof.CAM, 3);
                 if (dof.SH == 27){
-                    
+                    cur_pos = dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM;
                     for (int x = 0; x < 3; ++x)
                     {
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 0, x) = c4 * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 1, x) = 2.0f * c2 * n[1] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 2, x) = 2.0f * c2 * n[2] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 3, x) = 2.0f * c2 * n[0] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 9 * x + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
+                        dcdi(cur_pos + 9 * x + 0, x) = c4 * al[x];
+                        dcdi(cur_pos + 9 * x + 1, x) = 2.0f * c2 * n[1] * al[x];
+                        dcdi(cur_pos + 9 * x + 2, x) = 2.0f * c2 * n[2] * al[x];
+                        dcdi(cur_pos + 9 * x + 3, x) = 2.0f * c2 * n[0] * al[x];
+                        dcdi(cur_pos + 9 * x + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
+                        dcdi(cur_pos + 9 * x + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
+                        dcdi(cur_pos + 9 * x + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
+                        dcdi(cur_pos + 9 * x + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
+                        dcdi(cur_pos + 9 * x + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
                     }
                 }
                 else if (dof.SH == 9)
                 {
                     for (int x = 0; x < 3; ++x)
                     {
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 0, x) = c4 * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 1, x) = 2.0f * c2 * n[1] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 2, x) = 2.0f * c2 * n[2] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 3, x) = 2.0f * c2 * n[0] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
-                        dcdi(dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
+                        dcdi(cur_pos + 0, x) = c4 * al[x];
+                        dcdi(cur_pos + 1, x) = 2.0f * c2 * n[1] * al[x];
+                        dcdi(cur_pos + 2, x) = 2.0f * c2 * n[2] * al[x];
+                        dcdi(cur_pos + 3, x) = 2.0f * c2 * n[0] * al[x];
+                        dcdi(cur_pos + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
+                        dcdi(cur_pos + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
+                        dcdi(cur_pos + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
+                        dcdi(cur_pos + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
+                        dcdi(cur_pos + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
                     }
                 }
                 
@@ -198,57 +194,124 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     return error;
 }
 
-void F2FRenderParams::init(GLProgram& prog)
+void F2FRenderParams::init(GLProgram& prog, bool _preview)
 {
     prog.createUniform("u_enable_texture", DataType::UINT);
     prog.createUniform("u_enable_mask", DataType::UINT);
     prog.createUniform("u_enable_seg", DataType::UINT);
     
     prog.createUniform("u_cull_offset", DataType::FLOAT);
+    
+    preview = _preview;
+    if(preview){
+        prog.createUniform("u_tex_mode", DataType::UINT);
+        prog.createUniform("u_inv_diffuse", DataType::UINT);
+    }
 }
 
 void F2FRenderParams::update(GLProgram& prog)
 {
-    prog.setUniformData("u_enable_texture", enable_tex);
-    prog.setUniformData("u_enable_mask", enable_mask);
-    prog.setUniformData("u_enable_seg", enable_seg);
+    prog.setUniformData("u_enable_texture", (uint)enable_tex);
+    prog.setUniformData("u_enable_mask", (uint)enable_mask);
+    prog.setUniformData("u_enable_seg", (uint)enable_seg);
     
     prog.setUniformData("u_cull_offset", cull_offset);
+    
+    if(preview){
+        prog.setUniformData("u_tex_mode", (uint)tex_mode);
+        prog.setUniformData("u_inv_diffuse", (uint)enable_inv_diffuse);
+    }
 }
 
 void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
 {
-    prog_ = GLProgram(data_dir + "shaders/face2face.vert",
-                      data_dir + "shaders/face2face.geom",
-                      data_dir + "shaders/face2face.frag",
-                      DrawMode::TRIANGLES_IDX);
+    programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
+                                 data_dir + "shaders/face2face.geom",
+                                 data_dir + "shaders/face2face.frag",
+                                 DrawMode::TRIANGLES_IDX);
+    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
+                                   data_dir + "shaders/full_texture_bgr.frag",
+                                   DrawMode::TRIANGLES);
     
-    param_.init(prog_);
-    prog_.createUniform("u_SHCoeffs", DataType::VECTOR3);
-    prog_.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
+    auto& prog_f2f = programs_["f2f"];
+    auto& prog_pl = programs_["plane"];
+    
+    param_.init(prog_f2f);
+    prog_f2f.createUniform("u_SHCoeffs", DataType::VECTOR3);
+    prog_f2f.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
     fb_ = Framebuffer::Create(camera.width_, camera.height_, 8);
-    camera.intializeUniforms(prog_, true, false);
-    mesh_.init_with_idx(prog_, model.pts_, model.clr_, model.nml_, model.uvs_, model.tri_pts_, model.tri_uv_);
+    camera.intializeUniforms(prog_f2f, true, false);
+    
+    Eigen::MatrixX3f nml;
+    calcNormal(nml, model.mu_id_, model.tri_pts_);
+    mesh_.init_with_idx(prog_f2f, model.mu_id_, model.mu_cl_, nml, model.uvs_, model.tri_pts_, model.tri_uv_);
+    
+    plane_.init(prog_pl,0.5);
+    prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
 }
 
-void F2FRenderer::render(int w, int h, Camera& camera, FaceParams& fParam, FaceModel& model, std::vector<cv::Mat_<cv::Vec4f>>& out)
+void F2FRenderer::render(Camera& camera, const FaceParams& fParam)
 {
     // render parameters update
-    param_.update(prog_);
+    auto& prog_f2f = programs_["f2f"];
+    auto& prog_pl = programs_["plane"];
+    
+    param_.update(prog_f2f);
     
     // spherical harmonics update
     std::vector<glm::vec3> sh;
     for(int i = 0; i < 9; ++i)
     {
-        sh.push_back(glm::vec3(fParam.SH[i][0],fParam.SH[i][1],fParam.SH[i][2]));
+        sh.push_back(glm::vec3(fParam.SH(0,i),fParam.SH(1,i),fParam.SH(2,i)));
     }
-    prog_.setUniformData("u_SHCoeffs", sh);
+    prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_, fParam.RT, true, false);
+    camera.updateUniforms(prog_f2f, fParam.RT, true, false);
     
     // update mesh attributes
-    mesh_.update_with_idx(prog_, model.pts_, model.clr_, model.nml_);
+    mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
+    
+    fb_->Bind();
+    
+    glViewport(0, 0, fb_->width(), fb_->height());
+    clearBuffer(COLOR::COLOR_ALPHA);
+    // draw mesh
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    prog_f2f.draw();
+    
+    fb_->Unbind();
+    
+    prog_pl.updateTexture("u_texture", fb_->color((uint)param_.location));
+    GLFWwindow* window = glfwGetCurrentContext();
+    int w, h;
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    glDisable(GL_CULL_FACE);
+    prog_pl.draw();
+}
+
+void F2FRenderer::render(int w, int h, Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out)
+{
+    auto& prog_f2f = programs_["f2f"];
+    
+    // render parameters update
+    param_.update(prog_f2f);
+    
+    // spherical harmonics update
+    std::vector<glm::vec3> sh;
+    for(int i = 0; i < 9; ++i)
+    {
+        sh.push_back(glm::vec3(fParam.SH(0,i),fParam.SH(1,i),fParam.SH(2,i)));
+    }
+    prog_f2f.setUniformData("u_SHCoeffs", sh);
+    
+    // camera parameters update
+    camera.updateUniforms(prog_f2f, fParam.RT, true, false);
+    
+    // update mesh attributes
+    mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
     
     // binding framebuffer
     fb_->Bind();
@@ -259,7 +322,7 @@ void F2FRenderer::render(int w, int h, Camera& camera, FaceParams& fParam, FaceM
     // draw mesh
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    prog_.draw();
+    prog_f2f.draw();
     
     // unbinding framebuffer
     fb_->Unbind();

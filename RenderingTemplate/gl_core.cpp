@@ -123,8 +123,6 @@ GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string
     }
     glAttachShader(programHandle, fragShaderHandle);
 
-    glBindFragDataLocation(programHandle, 0, "frag_color");
-    
     // link the program
     glLinkProgram(programHandle);
     GLint linked;
@@ -286,6 +284,17 @@ void GLProgram::updateTexture(std::string textureName, std::string sourceFile, b
         throw std::runtime_error("Attempted to load image which does not exist: " + textureName);
     }
     GLTexture::UpdateTexture(img, tex.location);
+}
+
+void GLProgram::updateTexture(std::string textureName, GLuint location)
+{
+    if(textureMap.find(textureName) == textureMap.end()){
+        throw std::runtime_error("Attempted to update texture which does not exist: " + textureName);
+    }
+    
+    GLTexture& tex = textureMap[textureName];
+    
+    tex.location = location;
 }
 
 void GLProgram::setUniformData(std::string uniformName, const Eigen::Matrix4f &val)
@@ -764,6 +773,7 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, std::string s
     if(imageData.empty()){
         throw std::runtime_error("    Failed to load texture image from path: " + sourceFile);
     }
+    cv::flip(imageData, imageData, 0);
     std::cout << "    Loading texture image from path: " << sourceFile << std::endl;
     // TODO: this should be something better to make sure texture size is exponent of 2
     cv::resize(imageData, imageData, cv::Size(1024,1024));
@@ -784,6 +794,7 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, std::string s
 }
 
 GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, const cv::Mat& img)
+: parentProgram(parentProgram_), name(name_)
 {
     glUseProgram(parentProgram->programHandle);
 
@@ -792,14 +803,38 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, const cv::Mat
     
     location = CreateTexture(img);
     
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, location);
+    
     glUniform1i(glGetUniformLocation(parentProgram->programHandle, name.c_str()), 0);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    CHECK_GL_ERROR();
 }
 
 GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, GLuint location_, int w, int h)
+: parentProgram(parentProgram_), name(name_)
 {
     glUseProgram(parentProgram->programHandle);
+    
+    width = w;
+    height = h;
+    
+    location = location_;
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, location);
+    
     glUniform1i(glGetUniformLocation(parentProgram->programHandle, name.c_str()), 0);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    CHECK_GL_ERROR();
 }
 
 Drawable::~Drawable() {}

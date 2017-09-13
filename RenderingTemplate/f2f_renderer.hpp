@@ -11,12 +11,20 @@
 #include "face_model.hpp"
 
 struct F2FRenderParams{
-    uint enable_tex = 0;
-    uint enable_mask = 1;
-    uint enable_seg = 0;
+    bool enable_tex = 0;
+    bool enable_mask = 1;
+    bool enable_seg = 0;
     float cull_offset = 0.0;
     
-    void init(GLProgram& prog);
+    // for preview
+    bool tex_mode = 0;
+    bool enable_inv_diffuse = 0;
+    
+    int location;
+    
+    bool preview = false;
+    
+    void init(GLProgram& prog, bool _preview = false);
     void update(GLProgram& prog);
 };
 
@@ -35,13 +43,15 @@ struct F2FRenderer
         count
     };
     
-    GLProgram prog_;
+    std::unordered_map<std::string, GLProgram> programs_;
     glMesh mesh_;
+    glPlane plane_;
     FramebufferPtr fb_;
     F2FRenderParams param_;
     
     void init(std::string data_dir, Camera& camera, FaceModel& model);
-    void render(int w, int h, Camera& camera, FaceParams& fParam, FaceModel& model, std::vector<cv::Mat_<cv::Vec4f>>& out);
+    void render(Camera& camera, const FaceParams& fParam);
+    void render(int w, int h, Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
     static float computeJacobianColor(Eigen::VectorXf& Jtr,
                                       Eigen::MatrixXf& JtJ,
@@ -50,7 +60,7 @@ struct F2FRenderer
                                       const std::vector<Eigen::MatrixX2f>& dpV,
                                       const std::vector<Eigen::Vector3f>& nV,
                                       const std::vector<Eigen::MatrixXf>& dnV,
-                                      const std::vector<Eigen::Vector3f> sh,
+                                      const Eigen::MatrixX3f& sh,
                                       const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
                                       const cv::Mat_<cv::Vec4f>& renderRGB,
                                       const cv::Mat_<cv::Vec4f>& inputRGB,

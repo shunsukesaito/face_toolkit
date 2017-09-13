@@ -16,7 +16,6 @@ in VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
-    vec4 light;
     vec4 pos;
     vec2 proj_texcoord;
     vec2 texcoord;

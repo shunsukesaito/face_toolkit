@@ -13,6 +13,8 @@
 
 #include "EigenHelper.h"
 
+struct FaceModel;
+
 struct FaceParams
 {
     Eigen::VectorXf idCoeff;
@@ -20,7 +22,32 @@ struct FaceParams
     Eigen::VectorXf alCoeff;
     
     Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
-    std::vector<Eigen::Vector3f> SH = std::vector<Eigen::Vector3f>(9,Eigen::Vector3f::Zero());
+    Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);
+    
+    // current shape
+    Eigen::VectorXf pts_;
+    // current normal
+    Eigen::MatrixX3f nml_;
+    // current neutral
+    Eigen::VectorXf neu_;
+    // current color
+    Eigen::VectorXf clr_;
+    
+    // expression delta
+    Eigen::VectorXf d_ex_;
+    // identity delta
+    Eigen::VectorXf d_id_;
+    
+    void updateIdentity(const FaceModel& model);
+    void updateExpression(const FaceModel& model);
+    void updateColor(const FaceModel& model);
+    
+    void updateAll(const FaceModel& model);
+    void updateShape(const FaceModel& model);
+    
+    Eigen::Vector3f computeV(int i, const FaceModel& model) const;
+    
+    void init(const FaceModel& model);
 };
 
 struct FaceModel
@@ -46,28 +73,11 @@ struct FaceModel
     // triangle list
     Eigen::MatrixX3i tri_pts_;
     Eigen::MatrixX3i tri_uv_;
-
-    // current shape
-    Eigen::VectorXf pts_;
-    // current normal
-    Eigen::MatrixX3f nml_;
-    // current neutral
-    Eigen::VectorXf neu_;
-    // current color
-    Eigen::VectorXf clr_;
-    
-    // expression delta
-    Eigen::VectorXf d_ex_;
-    // identity delta
-    Eigen::VectorXf d_id_;
     
     Eigen::MatrixX2i sym_list_;
     
-    void updateIdentity(const Eigen::VectorXf& val);
-    void updateExpression(const Eigen::VectorXf& val);
-    void updateColor(const Eigen::VectorXf& val);
-    
-    void Reset();
+    std::vector<std::array<Eigen::Matrix3Xf, 2>> id_edge_;
+    std::vector<std::array<Eigen::Matrix3Xf, 2>> ex_edge_;
     
     void saveBinaryModel(std::string file);
     void loadBinaryModel(std::string file);

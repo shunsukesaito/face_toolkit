@@ -7,7 +7,6 @@ in VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
-    vec4 light;
     vec4 pos;
     vec2 proj_texcoord;
     vec2 texcoord;
@@ -18,7 +17,6 @@ out VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
-    vec4 light;
     vec4 pos;
     vec2 proj_texcoord;
     vec2 texcoord;
@@ -38,7 +36,6 @@ void main()
         VertexOut.color = VertexIn[i].color;
         VertexOut.normal = VertexIn[i].normal;
         VertexOut.normalCamera = VertexIn[i].normalCamera;
-        VertexOut.light = VertexIn[i].light;
         VertexOut.pos = VertexIn[i].pos;
         VertexOut.proj_texcoord = VertexIn[i].proj_texcoord;
         VertexOut.texcoord = VertexIn[i].texcoord;
