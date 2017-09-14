@@ -66,43 +66,25 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     clearBuffer(COLOR::COLOR_GREEN);
     CHECK_GL_ERROR();
-    
-    Eigen::Matrix4f RT = Camera::loadRTFromTxt(data_dir + "data/RT.txt");
-    Eigen::Matrix4f K = Camera::loadKFromTxt(data_dir + "data/K.txt");
-    camera_ = Camera(RT, K, w, h, 1, 1000);
-    
-    facemodel_.loadBinaryModel(data_dir + "data/PinModel.bin");
-    fParam_.init(facemodel_);
-
+        
     video_capture_.open(0);
-    cv::Mat img;
-    video_capture_ >> img;
-    bg_renderer_.init(data_dir, img);
+    video_capture_ >> cur_img_;
+
+    bg_renderer_.init(data_dir, cur_img_);
     //bg_renderer_.init(data_dir, data_dir + "data/cosimo.png");
-    f2f_renderer_.init(data_dir, camera_, facemodel_);
-    mesh_renderer_.init(data_dir, camera_, fParam_.pts_, fParam_.nml_, facemodel_.tri_pts_);
     
-    center_ = getCenter(fParam_.pts_);
-    
+    face_module_.init(data_dir);
 }
 
 void Renderer::draw()
 {
-    char title[256];
-    sprintf(title, "Main Window [fps: %.1f]", fps_.count());
-    glfwSetWindowTitle(windows_[MAIN], title);
-
-    cv::Mat img;
-    video_capture_ >> img;
-    bg_renderer_.render(img, true);
-    mesh_renderer_.render(camera_, fParam_.pts_, fParam_.nml_);
-    f2f_renderer_.render(camera_, fParam_);
-    
+    bg_renderer_.render(cur_img_, true);
+    face_module_.preview();
 }
 
 void Renderer::update()
 {
-    fParam_.updateColor(facemodel_);
-    fParam_.updateIdentity(facemodel_);
-    fParam_.updateExpression(facemodel_);
+    video_capture_ >> cur_img_;
+
+    face_module_.update(cur_img_);
 }

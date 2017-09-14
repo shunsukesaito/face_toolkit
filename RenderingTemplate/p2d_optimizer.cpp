@@ -3,7 +3,27 @@
 #include "p2d_optimizer.h"
 #include "minitrace.h"
 
-#define a_ratio 0.6180339
+#ifdef WITH_IMGUI
+void P2DFitParams::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader("P2DFit Parameters")){
+        ImGui::InputInt("DOF ID", &dof.ID);
+        ImGui::InputInt("DOF EX", &dof.EX);
+        ImGui::InputInt("DOF ROT", &dof.ROT);
+        ImGui::InputInt("DOF TR", &dof.TR);
+        ImGui::InputInt("DOF CAM", &dof.CAM);
+        ImGui::InputFloat("w P2P", &w_p2p_);
+        ImGui::InputFloat("w P2L", &w_p2l_);
+        ImGui::InputFloat("w PCA ex", &w_reg_pca_ex_);
+        ImGui::InputFloat("w PCA id", &w_reg_pca_id_);
+        ImGui::InputFloat("GN threshold", &gn_thresh_);
+        ImGui::InputFloat("MC threshold", &mclose_thresh_);
+        ImGui::InputFloat("Ang threshold", &angle_thresh_);
+        ImGui::Checkbox("robust", &robust_);
+        ImGui::InputInt("maxIter", &maxIter_);
+    }
+}
+#endif
 
 void compute_rigid_motion(const Eigen::Matrix4f &intrinsic,
 						  const std::vector<Eigen::Vector3f> &p3d,
@@ -158,8 +178,8 @@ void Landmark2DFittingMultiView(FaceParams& fParam,
                 P2L2DC::updateConstraints(C_P2L, q2V[j], p_p2l, q_p2l, n_p2l);
 
                 // compute landmark jacobian
-                computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2l, q_p2p, params.w_landin_, params.robust_);
-                computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_landcont_, params.robust_);
+                computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2l, q_p2p, params.w_p2p_, params.robust_);
+                computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
             }
         }
         

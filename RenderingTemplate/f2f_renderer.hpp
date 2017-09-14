@@ -32,7 +32,7 @@ struct F2FRenderParams{
     void update(GLProgram& prog);
     
 #ifdef WITH_IMGUI
-    bool updateIMGUI();
+    void updateIMGUI();
 #endif
 };
 
@@ -57,12 +57,12 @@ struct F2FRenderer
     FramebufferPtr fb_;
     F2FRenderParams param_;
     
-    void init(std::string data_dir, Camera& camera, FaceModel& model);
-    void render(Camera& camera, const FaceParams& fParam);
-    void render(int w, int h, Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
+    void init(std::string data_dir, const Camera& camera, FaceModel& model);
+    void render(const Camera& camera, const FaceParams& fParam);
+    void render(int w, int h, const Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
 #ifdef WITH_IMGUI
-    inline bool updateIMGUI(){ return param_.updateIMGUI();}
+    inline void updateIMGUI(){ param_.updateIMGUI();}
 #endif
     
     static float computeJacobianColor(Eigen::VectorXf& Jtr,

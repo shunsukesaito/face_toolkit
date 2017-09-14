@@ -9,7 +9,7 @@
 #include "mesh_renderer.hpp"
 
 void MeshRenderer::init(std::string data_dir,
-                        Camera& camera,
+                        const Camera& camera,
                         const Eigen::VectorXf& pts,
                         const Eigen::MatrixX3f& nml,
                         const Eigen::MatrixX3i& tri_pts)
@@ -26,7 +26,7 @@ void MeshRenderer::init(std::string data_dir,
     mesh_.init_with_idx(prog, pts, nml, tri_pts);
 }
 
-void MeshRenderer::render(Camera& camera,
+void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
                           const Eigen::MatrixX3f& nml)
 {
@@ -39,5 +39,22 @@ void MeshRenderer::render(Camera& camera,
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
+    prog.draw();
+}
+
+void MeshRenderer::render(const Camera& camera,
+                          const Eigen::Matrix4f& RT,
+                          const Eigen::VectorXf& pts,
+                          const Eigen::MatrixX3f& nml)
+{
+    auto& prog = programs_["mesh"];
+    
+    camera.updateUniforms(prog, RT, true, false);
+    
+    mesh_.update_with_idx(prog, pts, nml);
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    
     prog.draw();
 }

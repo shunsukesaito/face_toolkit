@@ -98,8 +98,9 @@ void FaceParams::init(const FaceModel& model)
 }
 
 #ifdef WITH_IMGUI
-bool FaceParams::updateIMGUI()
+void FaceParams::updateIMGUI()
 {
+    Eigen::Vector3f euler = Eigen::matToEulerAngle(RT.block<3,3>(0,0));
     if (ImGui::CollapsingHeader("Face Parameters")){
         if (ImGui::TreeNode("ID")){
             for(int i = 0; i < idCoeff.size(); ++i)
@@ -116,6 +117,7 @@ bool FaceParams::updateIMGUI()
                 ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &alCoeff[i], -2.0, 2.0);
             ImGui::TreePop();
         }
+        ImGui::InputFloat3("Rot", &euler(0), -1, ImGuiInputTextFlags_ReadOnly);
         ImGui::InputFloat3("Tr", &RT(0,3));
         if (ImGui::TreeNode("SH")){
             for(int i = 0; i < SH.cols(); ++i)
@@ -123,10 +125,7 @@ bool FaceParams::updateIMGUI()
             ImGui::TreePop();
         }
     }
-    else
-        return false;
-    
-    return true;
+
 }
 #endif
 

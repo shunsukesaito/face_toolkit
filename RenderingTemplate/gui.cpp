@@ -8,6 +8,7 @@
 
 #include "gui.hpp"
 
+#include "obj_loader.hpp"
 #include "trackball.hpp"
 
 GUI* GUI::instance = new GUI();
@@ -85,23 +86,12 @@ void GUI::resize(int w, int h)
 
 void GUI::keyboard(int key, int s, int a, int m)
 {
-    Eigen::Matrix4f& RT = renderer_.camera_.extrinsic_;
+    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
     
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
-        rotCenter = renderer_.center_;
+        lookat = getCenter(renderer_.face_module_.fParam_.pts_);
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
-        RT.block<3,1>(0,3) = rotCenter + Eigen::Vector3f(0,0,50);
-    }
-    if(key == GLFW_KEY_1 && a == GLFW_PRESS){
-        F2FRenderer f2frender;
-        f2frender.init("./", renderer_.camera_, renderer_.facemodel_);
-        std::vector<cv::Mat_<cv::Vec4f>> out;
-        f2frender.render(width_/4, height_/4, renderer_.camera_, renderer_.fParam_, out);
-        
-        for(int i = 0; i < out.size(); ++i)
-        {
-            cv::imwrite(std::to_string(i) + ".png", 255.0*out[i]);
-        }
+        RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
 }
 
@@ -117,7 +107,7 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_x = x;
     current_mouse_y = y;
     
-    Eigen::Matrix4f& RT = renderer_.camera_.extrinsic_;
+    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
     
     switch (mouse_mode)
     {
@@ -129,7 +119,7 @@ void GUI::mouseMotion(double x, double y)
             Eigen::Matrix3f R = q.toRotationMatrix();
             Eigen::Matrix3f Rpre = curRT.block<3,3>(0,0);
             RT.block<3,3>(0,0) = curRT.block<3,3>(0,0)*R;
-            RT.block<3,1>(0,3) = RT.block<3,3>(0,0)*Rpre.transpose()*(curRT.block<3,1>(0,3)-rotCenter)+rotCenter;
+            RT.block<3,1>(0,3) = RT.block<3,3>(0,0)*Rpre.transpose()*(curRT.block<3,1>(0,3)-lookat)+lookat;
             break;
         }
         case MouseMode::Translation:
@@ -172,9 +162,9 @@ void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = renderer_.camera_.extrinsic_;
+    curRT = renderer_.face_module_.camera_.extrinsic_;
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
-    right = (curRT.block<3,1>(0,3)-rotCenter).cross(up).normalized();
+    right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
     switch (mb)
     {
@@ -195,23 +185,23 @@ void GUI::mouseDown(MouseButton mb, int m)
 
 void GUI::mouseUp(MouseButton mb, int m)
 {
-    Eigen::Matrix4f& RT = renderer_.camera_.extrinsic_;
+    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
     
     if(mb == MouseButton::Right)
-        rotCenter += RT.block<3,1>(0,3) - curRT.block<3,1>(0,3);
+        lookat += RT.block<3,1>(0,3) - curRT.block<3,1>(0,3);
     mouse_mode = MouseMode::None;
 }
 
 void GUI::mouseScroll(double x, double y)
 {
-    Eigen::Matrix4f& RT = renderer_.camera_.extrinsic_;
+    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
 
     float scale = 0.01;
-    Eigen::Vector3f t = RT.block<3,1>(0,3) - rotCenter;
+    Eigen::Vector3f t = RT.block<3,1>(0,3) - lookat;
     
     t = (1.0 + scale * y)*t;
     
-    RT.block<3,1>(0,3) = t + rotCenter;
+    RT.block<3,1>(0,3) = t + lookat;
 }
 
 void GUI::init(int w, int h)
@@ -221,7 +211,7 @@ void GUI::init(int w, int h)
     
     renderer_.init(w, h, "./");
     
-    rotCenter = renderer_.center_;
+    lookat = getCenter(renderer_.face_module_.fParam_.pts_);
     
     GLFWwindow* window = renderer_.windows_[MAIN];
 
@@ -239,7 +229,11 @@ void GUI::init(int w, int h)
 }
 
 void GUI::update()
-{    
+{
+    char title[256];
+    sprintf(title, "Main Window [fps: %.1f]", fps_.count());
+    glfwSetWindowTitle(renderer_.get_window(MAIN), title);
+
     clearBuffer(COLOR::COLOR_GREY);
     int w, h;
     glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
@@ -252,9 +246,7 @@ void GUI::update()
     ImGui_ImplGlfwGL3_NewFrame();
     ImGui::Begin("Control Panel", &show_control_panel_);
     
-    renderer_.fParam_.updateIMGUI();
-    renderer_.camera_.updateIMGUI();
-    renderer_.f2f_renderer_.updateIMGUI();
+    renderer_.face_module_.updateIMGUI();
 
     ImGui::End();
     ImGui::Render();

@@ -54,7 +54,7 @@ struct FaceParams
     void init(const FaceModel& model);
     
 #ifdef WITH_IMGUI
-    bool updateIMGUI();
+    void updateIMGUI();
 #endif
 };
 

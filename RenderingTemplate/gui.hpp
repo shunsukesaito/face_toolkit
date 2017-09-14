@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "renderer.hpp"
+#include "fps.hpp"
 
 #ifdef WITH_IMGUI
 #include "imgui.h"
@@ -53,6 +54,7 @@ public:
     void update();
     
 private:
+    FPSCounter fps_;
     Renderer renderer_;
     
 #ifdef WITH_IMGUI
@@ -63,8 +65,8 @@ private:
     MouseMode mouse_mode = MouseMode::None;
     bool mouse_down = false;
     Eigen::Matrix4f curRT;
-    Eigen::Vector3f rotCenter = Eigen::Vector3f::Zero();
     Eigen::Vector3f up, right;
+    Eigen::Vector3f lookat;
     double current_mouse_x, current_mouse_y;
     double down_mouse_x, down_mouse_y;
 };

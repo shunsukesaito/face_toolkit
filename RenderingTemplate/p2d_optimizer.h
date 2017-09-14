@@ -10,6 +10,10 @@
 
 #include <spdlog/spdlog.h>
 
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#endif
+
 using namespace std;
 
 struct P2DFitParams
@@ -21,16 +25,17 @@ struct P2DFitParams
     bool robust_ = false;
     
     float gn_thresh_ = 1.0e-4f;
-    float mc_thresh_ = 4.0f;
+    float mclose_thresh_ = 4.0f;
     float angle_thresh_ = 8.0f;
     
-    float w_land2d_ = 1.e-3f;
-    float w_landin_ = 1.e-3f;
-    float w_landcont_ = 1.e-3f;
+    float w_p2p_ = 1.e-3f;
+    float w_p2l_ = 1.e-3f;
     float w_reg_pca_id_ = 5.e-5f;
     float w_reg_pca_ex_ = 5.e-4f;
-    float w_sym_ = 1.f;
-    float w_mc_ = 100.f;
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
 };
 
 bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,

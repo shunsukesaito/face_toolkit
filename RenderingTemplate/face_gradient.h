@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 
-
 #include <opencv2/opencv.hpp>
 
 #include "EigenHelper.h"
@@ -55,27 +54,27 @@ struct TriPoint
 
 struct DOF
 {
-    unsigned int ID = 0;
-    unsigned int EX = 0;
-    unsigned int AL = 0;
-    unsigned int ROT = 0;
-    unsigned int TR = 0;
-    unsigned int CAM = 0;
-    unsigned int SH = 0;
+    int ID = 0;
+    int EX = 0;
+    int AL = 0;
+    int ROT = 0;
+    int TR = 0;
+    int CAM = 0;
+    int SH = 0;
     
     DOF() : ID(0), EX(0), AL(0), ROT(0), TR(0), CAM(0), SH(0){};
     
-    DOF(unsigned int _ID,
-        unsigned int _EX,
-        unsigned int _AL,
-        unsigned int _ROT,
-        unsigned int _TR,
-        unsigned int _CAM,
-        unsigned int _SH,
-        unsigned int _N_CAM = 1) :
+    DOF(int _ID,
+        int _EX,
+        int _AL,
+        int _ROT,
+        int _TR,
+        int _CAM,
+        int _SH,
+        int _N_CAM = 1) :
     ID(_ID), EX(_EX), AL(_AL), ROT(_ROT), TR(_TR), CAM(_CAM), SH(_SH){};
     
-    inline unsigned int all() const {
+    inline int all() const {
         return ID + EX + AL + ROT + TR + CAM + SH;
     }
 };

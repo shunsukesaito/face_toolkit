@@ -17,13 +17,10 @@
 #include "framebuffer.hpp"
 #include "gl_mesh.hpp"
 #include "camera.hpp"
-#include "face_model.hpp"
-#include "mesh_renderer.hpp"
-#include "f2f_renderer.hpp"
+#include "face_module.hpp"
 #include "bg_renderer.hpp"
 
 #include "gl_utils.h"
-#include "fps.hpp"
 
 enum WINDOW { MAIN, WINDOW_COUNT};
 
@@ -84,18 +81,11 @@ struct Window {
 };
 
 struct Renderer {
-    std::unordered_map<std::string, GLProgram> programs_;
-    Camera camera_;
-    FPSCounter fps_;
-    F2FRenderer f2f_renderer_;
-    MeshRenderer mesh_renderer_;
     BGRenderer bg_renderer_;
     cv::VideoCapture video_capture_;
-    // temp
-    FaceModel facemodel_;
-    FaceParams fParam_;
-
-    Eigen::Vector3f center_;
+    cv::Mat cur_img_;
+    
+    FaceModule face_module_;
     
     int frame_;
     std::chrono::time_point<std::chrono::system_clock> cur_time_;

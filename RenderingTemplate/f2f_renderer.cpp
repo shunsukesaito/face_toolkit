@@ -225,7 +225,7 @@ void F2FRenderParams::update(GLProgram& prog)
 }
 
 #ifdef WITH_IMGUI
-bool F2FRenderParams::updateIMGUI()
+void F2FRenderParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("F2F Rendering Parameters")){
         ImGui::Checkbox("mask", &enable_mask);
@@ -235,14 +235,10 @@ bool F2FRenderParams::updateIMGUI()
         const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
         ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
     }
-    else
-        return false;
-    
-    return true;
 }
 #endif
 
-void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
+void F2FRenderer::init(std::string data_dir, const Camera& camera, FaceModel& model)
 {
     programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
                                  data_dir + "shaders/face2face.geom",
@@ -269,7 +265,7 @@ void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
 }
 
-void F2FRenderer::render(Camera& camera, const FaceParams& fParam)
+void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
 {
     // render parameters update
     auto& prog_f2f = programs_["f2f"];
@@ -314,7 +310,7 @@ void F2FRenderer::render(Camera& camera, const FaceParams& fParam)
     prog_pl.draw();
 }
 
-void F2FRenderer::render(int w, int h, Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out)
+void F2FRenderer::render(int w, int h, const Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
     auto& prog_f2f = programs_["f2f"];
     

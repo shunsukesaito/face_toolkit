@@ -18,11 +18,15 @@
 #include "imgui.h"
 #endif
 
+//TOOD: include distortion coeff
 struct Camera
 {
+    std::string name_;
+    
     Eigen::Matrix4f extrinsic_ = Eigen::Matrix4f::Identity();
     Eigen::Matrix4f intrinsic_ = Eigen::Matrix4f::Identity();
-    Eigen::Matrix4f perspective_;
+    
+    Eigen::VectorXf distCoeff_;
     
     float zNear_ = 0.1f;
     float zFar_ = 10000.f;
@@ -33,15 +37,16 @@ struct Camera
     Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w = false);
     Camera(const Camera&);
     
-    void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias);
-    void updateUniforms(GLProgram& program, bool with_mv, bool with_bias);
-    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias);
+    void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias) const;
+    void updateUniforms(GLProgram& program, bool with_mv, bool with_bias) const;
+    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
     
+    static Camera parseCameraParams(std::string filename);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);
     static Eigen::Matrix4f loadRTFromTxt(std::string filename);
     
 #ifdef WITH_IMGUI
-    bool updateIMGUI();
+    void updateIMGUI();
 #endif
 };
 

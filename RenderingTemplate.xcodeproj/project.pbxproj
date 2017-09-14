@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8F1E48E81F6B2C6F0051FC8C /* face_module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E48E61F6B2C6F0051FC8C /* face_module.cpp */; };
 		8F212E811F50C5CD005099A2 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F212E801F50C5CD005099A2 /* OpenGL.framework */; };
 		8F3454171EEC9E30007B479B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F3454161EEC9E30007B479B /* main.cpp */; };
 		8F34541F1EECA0C1007B479B /* gl_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F34541D1EECA0C1007B479B /* gl_core.cpp */; };
@@ -20,9 +21,14 @@
 		8F3454331EECD439007B479B /* gui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F3454311EECD439007B479B /* gui.cpp */; };
 		8F3454361EECD460007B479B /* gl_mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F3454341EECD460007B479B /* gl_mesh.cpp */; };
 		8F3454391EECD473007B479B /* framebuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F3454371EECD473007B479B /* framebuffer.cpp */; };
+		8F45CB501F6AF2EB008B0590 /* face_2dtracker.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F45CB4E1F6AF2EB008B0590 /* face_2dtracker.cc */; };
 		8F5A98221F564B5300DDF204 /* f2f_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F5A981E1F564B5300DDF204 /* f2f_renderer.cpp */; };
 		8F5A98231F564B5300DDF204 /* face_gradient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F5A98201F564B5300DDF204 /* face_gradient.cpp */; };
 		8F71F1A91F520D4F00DE56D7 /* trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F71F1A71F520D4F00DE56D7 /* trackball.cpp */; };
+		8F8433831F6AF7AE00F1E003 /* source.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F8433821F6AF7AE00F1E003 /* source.cpp */; };
+		8F84338B1F6AF9DA00F1E003 /* common.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F8433851F6AF9DA00F1E003 /* common.cc */; };
+		8F84338C1F6AF9DA00F1E003 /* LearnGAB.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F8433871F6AF9DA00F1E003 /* LearnGAB.cc */; };
+		8F84338D1F6AF9DA00F1E003 /* TrainDetector.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F8433891F6AF9DA00F1E003 /* TrainDetector.cc */; };
 		8FB59A201F66F2C600D84C03 /* f2f_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A1C1F66F2C600D84C03 /* f2f_optimizer.cpp */; };
 		8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */; };
 		8FB59A241F66F7DB00D84C03 /* minitrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A221F66F7DB00D84C03 /* minitrace.c */; };
@@ -56,6 +62,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8F1E48E61F6B2C6F0051FC8C /* face_module.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = face_module.cpp; sourceTree = "<group>"; };
+		8F1E48E71F6B2C6F0051FC8C /* face_module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = face_module.hpp; sourceTree = "<group>"; };
 		8F212E801F50C5CD005099A2 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		8F3454131EEC9E30007B479B /* RenderingTemplate */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RenderingTemplate; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F3454161EEC9E30007B479B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -75,6 +83,8 @@
 		8F3454351EECD460007B479B /* gl_mesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = gl_mesh.hpp; sourceTree = "<group>"; };
 		8F3454371EECD473007B479B /* framebuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = framebuffer.cpp; sourceTree = "<group>"; };
 		8F3454381EECD473007B479B /* framebuffer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = framebuffer.hpp; sourceTree = "<group>"; };
+		8F45CB4E1F6AF2EB008B0590 /* face_2dtracker.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = face_2dtracker.cc; sourceTree = "<group>"; };
+		8F45CB4F1F6AF2EB008B0590 /* face_2dtracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = face_2dtracker.h; sourceTree = "<group>"; };
 		8F5A981E1F564B5300DDF204 /* f2f_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = f2f_renderer.cpp; sourceTree = "<group>"; };
 		8F5A981F1F564B5300DDF204 /* f2f_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = f2f_renderer.hpp; sourceTree = "<group>"; };
 		8F5A98201F564B5300DDF204 /* face_gradient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = face_gradient.cpp; sourceTree = "<group>"; };
@@ -82,6 +92,13 @@
 		8F71F1A61F5106D400DE56D7 /* EigenHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EigenHelper.h; sourceTree = "<group>"; };
 		8F71F1A71F520D4F00DE56D7 /* trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = trackball.cpp; sourceTree = "<group>"; };
 		8F71F1A81F520D4F00DE56D7 /* trackball.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = trackball.hpp; sourceTree = "<group>"; };
+		8F8433821F6AF7AE00F1E003 /* source.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = source.cpp; path = external/dlib/all/source.cpp; sourceTree = SOURCE_ROOT; };
+		8F8433851F6AF9DA00F1E003 /* common.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = common.cc; sourceTree = "<group>"; };
+		8F8433861F6AF9DA00F1E003 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		8F8433871F6AF9DA00F1E003 /* LearnGAB.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LearnGAB.cc; sourceTree = "<group>"; };
+		8F8433881F6AF9DA00F1E003 /* LearnGAB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LearnGAB.h; sourceTree = "<group>"; };
+		8F8433891F6AF9DA00F1E003 /* TrainDetector.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TrainDetector.cc; sourceTree = "<group>"; };
+		8F84338A1F6AF9DA00F1E003 /* TrainDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrainDetector.h; sourceTree = "<group>"; };
 		8FB59A1C1F66F2C600D84C03 /* f2f_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = f2f_optimizer.cpp; sourceTree = "<group>"; };
 		8FB59A1D1F66F2C600D84C03 /* f2f_optimizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = f2f_optimizer.h; sourceTree = "<group>"; };
 		8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = p2d_optimizer.cpp; sourceTree = "<group>"; };
@@ -178,6 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				8FE295421F61E76D0021E914 /* imgui */,
+				8F8433841F6AF9DA00F1E003 /* NPD */,
 				8F3454161EEC9E30007B479B /* main.cpp */,
 				8F71F1A61F5106D400DE56D7 /* EigenHelper.h */,
 				8F34541D1EECA0C1007B479B /* gl_core.cpp */,
@@ -191,6 +209,8 @@
 				8FB59A1D1F66F2C600D84C03 /* f2f_optimizer.h */,
 				8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */,
 				8FB59A1F1F66F2C600D84C03 /* p2d_optimizer.h */,
+				8F45CB4E1F6AF2EB008B0590 /* face_2dtracker.cc */,
+				8F45CB4F1F6AF2EB008B0590 /* face_2dtracker.h */,
 				8F5A981E1F564B5300DDF204 /* f2f_renderer.cpp */,
 				8F5A981F1F564B5300DDF204 /* f2f_renderer.hpp */,
 				8F5A98201F564B5300DDF204 /* face_gradient.cpp */,
@@ -217,8 +237,23 @@
 				8FB59A291F69F34000D84C03 /* mesh_renderer.hpp */,
 				8FB59A2C1F69F9A900D84C03 /* bg_renderer.cpp */,
 				8FB59A2D1F69F9A900D84C03 /* bg_renderer.hpp */,
+				8F1E48E61F6B2C6F0051FC8C /* face_module.cpp */,
+				8F1E48E71F6B2C6F0051FC8C /* face_module.hpp */,
 			);
 			path = RenderingTemplate;
+			sourceTree = "<group>";
+		};
+		8F8433841F6AF9DA00F1E003 /* NPD */ = {
+			isa = PBXGroup;
+			children = (
+				8F8433851F6AF9DA00F1E003 /* common.cc */,
+				8F8433861F6AF9DA00F1E003 /* common.h */,
+				8F8433871F6AF9DA00F1E003 /* LearnGAB.cc */,
+				8F8433881F6AF9DA00F1E003 /* LearnGAB.h */,
+				8F8433891F6AF9DA00F1E003 /* TrainDetector.cc */,
+				8F84338A1F6AF9DA00F1E003 /* TrainDetector.h */,
+			);
+			path = NPD;
 			sourceTree = "<group>";
 		};
 		8FDF97531F50EAFD0038065A /* shaders */ = {
@@ -244,6 +279,7 @@
 		8FE295421F61E76D0021E914 /* imgui */ = {
 			isa = PBXGroup;
 			children = (
+				8F8433821F6AF7AE00F1E003 /* source.cpp */,
 				8FE295431F61E76D0021E914 /* imconfig.h */,
 				8FE295441F61E76D0021E914 /* imgui.cpp */,
 				8FE295451F61E76D0021E914 /* imgui.h */,
@@ -319,17 +355,23 @@
 				8F5A98231F564B5300DDF204 /* face_gradient.cpp in Sources */,
 				8F3454301EECD42D007B479B /* renderer.cpp in Sources */,
 				8FE295511F61E76D0021E914 /* imgui_impl_glfw_gl3.cpp in Sources */,
+				8F84338D1F6AF9DA00F1E003 /* TrainDetector.cc in Sources */,
+				8F1E48E81F6B2C6F0051FC8C /* face_module.cpp in Sources */,
 				8F3454171EEC9E30007B479B /* main.cpp in Sources */,
+				8F8433831F6AF7AE00F1E003 /* source.cpp in Sources */,
 				8FDF976A1F50F8AF0038065A /* tiny_obj_loader.cc in Sources */,
 				8FE2954E1F61E76D0021E914 /* imgui.cpp in Sources */,
 				8FB59A271F671E0600D84C03 /* sh_optimizer.cpp in Sources */,
 				8F3454391EECD473007B479B /* framebuffer.cpp in Sources */,
+				8F84338B1F6AF9DA00F1E003 /* common.cc in Sources */,
+				8F45CB501F6AF2EB008B0590 /* face_2dtracker.cc in Sources */,
 				8FE295501F61E76D0021E914 /* imgui_draw.cpp in Sources */,
 				8F34542D1EECD419007B479B /* camera.cpp in Sources */,
 				8FE2954F1F61E76D0021E914 /* imgui_demo.cpp in Sources */,
 				8FE2953E1F5F1C120021E914 /* face_model.cpp in Sources */,
 				8F3454361EECD460007B479B /* gl_mesh.cpp in Sources */,
 				8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */,
+				8F84338C1F6AF9DA00F1E003 /* LearnGAB.cc in Sources */,
 				8F71F1A91F520D4F00DE56D7 /* trackball.cpp in Sources */,
 				8FB59A2E1F69F9A900D84C03 /* bg_renderer.cpp in Sources */,
 				8F3454331EECD439007B479B /* gui.cpp in Sources */,
@@ -442,6 +484,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 					WITH_IMGUI,
+					DLIB_NO_GUI_SUPPORT,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -477,7 +520,10 @@
 					"$(inherited)",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
-				GCC_PREPROCESSOR_DEFINITIONS = WITH_IMGUI;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					WITH_IMGUI,
+					DLIB_NO_GUI_SUPPORT,
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					external,
