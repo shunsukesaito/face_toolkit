@@ -24,7 +24,7 @@ struct BGRenderer
     void init(std::string data_dir,
               const cv::Mat& img);
 
-    void render(const cv::Mat& img = cv::Mat());
+    void render(const cv::Mat& img = cv::Mat(), bool mirror = false);
 };
 
 

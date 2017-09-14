@@ -438,6 +438,11 @@
 					"$(inherited)",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					WITH_IMGUI,
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					external,
@@ -472,6 +477,7 @@
 					"$(inherited)",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
+				GCC_PREPROCESSOR_DEFINITIONS = WITH_IMGUI;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					external,

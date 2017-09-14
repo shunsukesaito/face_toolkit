@@ -13,6 +13,10 @@
 
 #include "EigenHelper.h"
 
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#endif
+
 struct FaceModel;
 
 struct FaceParams
@@ -48,6 +52,10 @@ struct FaceParams
     Eigen::Vector3f computeV(int i, const FaceModel& model) const;
     
     void init(const FaceModel& model);
+    
+#ifdef WITH_IMGUI
+    bool updateIMGUI();
+#endif
 };
 
 struct FaceModel

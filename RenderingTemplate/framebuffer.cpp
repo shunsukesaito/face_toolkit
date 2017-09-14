@@ -268,7 +268,6 @@ void Framebuffer::init(unsigned int width, unsigned int height, int color_size)
 {
     if(handle_ == -1)
         glGenFramebuffers(1, &handle_);
-    std::cout << "Frame Buffer " << handle_ << std::endl;
     
     width_ = width;
     height_ = height;

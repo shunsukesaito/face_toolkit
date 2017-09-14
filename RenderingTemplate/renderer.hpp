@@ -90,7 +90,7 @@ struct Renderer {
     F2FRenderer f2f_renderer_;
     MeshRenderer mesh_renderer_;
     BGRenderer bg_renderer_;
-    
+    cv::VideoCapture video_capture_;
     // temp
     FaceModel facemodel_;
     FaceParams fParam_;

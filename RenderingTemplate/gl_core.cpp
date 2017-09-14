@@ -822,7 +822,7 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, const cv::Mat
     height = img.rows;
     
     location = CreateTexture(img);
-    
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, location);
     

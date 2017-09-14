@@ -9,11 +9,14 @@
 #ifndef camera_hpp
 #define camera_hpp
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 #include <fstream>
 
+#include "EigenHelper.h"
 #include "gl_core.hpp"
+
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#endif
 
 struct Camera
 {
@@ -36,6 +39,10 @@ struct Camera
     
     static Eigen::Matrix4f loadKFromTxt(std::string filename);
     static Eigen::Matrix4f loadRTFromTxt(std::string filename);
+    
+#ifdef WITH_IMGUI
+    bool updateIMGUI();
+#endif
 };
 
 #endif /* camera_hpp */

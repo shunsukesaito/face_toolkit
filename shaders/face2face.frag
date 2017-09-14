@@ -80,7 +80,7 @@ void main()
     
     frag_diffuse = vec4(clamp(frag_color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)), frag_color.a);
     
-    if(normalCamera[2] > u_cull_offset)
+    if(dot(normalize(frag_pos.xyz),normalCamera.xyz) > u_cull_offset)
         discard;
    
     if (u_enable_mask != uint(0)){

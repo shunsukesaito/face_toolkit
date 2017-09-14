@@ -73,12 +73,17 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     facemodel_.loadBinaryModel(data_dir + "data/PinModel.bin");
     fParam_.init(facemodel_);
-    
-    bg_renderer_.init(data_dir, data_dir + "data/cosimo.png");
+
+    video_capture_.open(0);
+    cv::Mat img;
+    video_capture_ >> img;
+    bg_renderer_.init(data_dir, img);
+    //bg_renderer_.init(data_dir, data_dir + "data/cosimo.png");
     f2f_renderer_.init(data_dir, camera_, facemodel_);
     mesh_renderer_.init(data_dir, camera_, fParam_.pts_, fParam_.nml_, facemodel_.tri_pts_);
     
     center_ = getCenter(fParam_.pts_);
+    
 }
 
 void Renderer::draw()
@@ -87,7 +92,9 @@ void Renderer::draw()
     sprintf(title, "Main Window [fps: %.1f]", fps_.count());
     glfwSetWindowTitle(windows_[MAIN], title);
 
-    bg_renderer_.render();
+    cv::Mat img;
+    video_capture_ >> img;
+    bg_renderer_.render(img, true);
     mesh_renderer_.render(camera_, fParam_.pts_, fParam_.nml_);
     f2f_renderer_.render(camera_, fParam_);
     

@@ -69,6 +69,33 @@ namespace Eigen{
 
 		return Rz * Ry * Rx;
 	}
+    
+    inline Vector3f matToEulerAngle(Matrix3f R)
+    {
+        float eps = (float)0.00001;
+        
+        float psi, theta, phi; // x,y,z axis angles
+        if (std::abs(R(2, 0) - 1) > eps || std::abs(R(2, 0) + 1) > eps) {
+            theta = -std::asin(R(2, 0)); // \pi - theta
+            float costheta = std::cos(theta);
+            psi = std::atan2(R(2, 1) / costheta, R(2, 2) / costheta);
+            phi = std::atan2(R(1, 0) / costheta, R(0, 0) / costheta);
+        }
+        else {
+            phi = 0;
+            float delta = std::atan2(R(0, 1), R(0, 2));
+            if (std::abs(R(2, 0) + 1) > eps) {
+                theta = (float)(M_PI / 2.0);
+                psi = phi + delta;
+            }
+            else {
+                theta = (float)(-M_PI / 2.0);
+                psi = -phi + delta;
+            }
+        }
+        
+        return Eigen::Vector3f(psi, theta, phi);
+    }
 
 	inline Vector3f ApplyTransform(const Matrix4f& A, const Vector3f& p)
 	{

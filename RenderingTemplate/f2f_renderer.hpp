@@ -10,6 +10,10 @@
 #include "framebuffer.hpp"
 #include "face_model.hpp"
 
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#endif
+
 struct F2FRenderParams{
     bool enable_tex = 0;
     bool enable_mask = 1;
@@ -26,6 +30,10 @@ struct F2FRenderParams{
     
     void init(GLProgram& prog, bool _preview = false);
     void update(GLProgram& prog);
+    
+#ifdef WITH_IMGUI
+    bool updateIMGUI();
+#endif
 };
 
 struct F2FRenderer
@@ -52,6 +60,10 @@ struct F2FRenderer
     void init(std::string data_dir, Camera& camera, FaceModel& model);
     void render(Camera& camera, const FaceParams& fParam);
     void render(int w, int h, Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
+    
+#ifdef WITH_IMGUI
+    inline bool updateIMGUI(){ return param_.updateIMGUI();}
+#endif
     
     static float computeJacobianColor(Eigen::VectorXf& Jtr,
                                       Eigen::MatrixXf& JtJ,

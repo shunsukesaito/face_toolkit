@@ -27,7 +27,7 @@ void main()
     
     vec4 posWorld = u_mvp * vec4(v_position, 1.0);
 
-    VertexOut.pos = posWorld;
+    VertexOut.pos = u_modelview * vec4(v_position, 1.0);;
 
     VertexOut.proj_texcoord[0] = 0.5*(posWorld[0] / posWorld[3]) + 0.5;
     VertexOut.proj_texcoord[1] = 1.0 - 0.5*(posWorld[1] / posWorld[3]) + 0.5;
@@ -36,5 +36,5 @@ void main()
 
     VertexOut.index = uint(gl_VertexID);
 
-    gl_Position = VertexOut.pos;
+    gl_Position = posWorld;
 }

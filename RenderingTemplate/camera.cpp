@@ -126,3 +126,25 @@ Eigen::Matrix4f Camera::loadRTFromTxt(std::string filename)
     return RT;
 }
 
+#ifdef WITH_IMGUI
+bool Camera::updateIMGUI()
+{
+    Eigen::Vector3f euler = Eigen::matToEulerAngle(extrinsic_.block<3,3>(0,0));
+    if (ImGui::CollapsingHeader("Camera Parameters")){
+        ImGui::InputFloat("zNear", &zNear_);
+        ImGui::InputFloat("zFar", &zFar_);
+        ImGui::InputFloat3("Rot", &euler(0));
+        ImGui::InputFloat3("Tr", &extrinsic_(0,3));
+        ImGui::InputFloat("fx", &intrinsic_(0,0));
+        ImGui::InputFloat("fy", &intrinsic_(1,1));
+        ImGui::InputFloat("px", &intrinsic_(0,2));
+        ImGui::InputFloat("py", &intrinsic_(1,2));
+        ImGui::InputInt("width", &width_);
+        ImGui::InputInt("height", &height_);
+    }
+    else
+        return false;
+    
+    return true;
+}
+#endif

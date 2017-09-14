@@ -97,6 +97,39 @@ void FaceParams::init(const FaceModel& model)
     updateExpression(model);
 }
 
+#ifdef WITH_IMGUI
+bool FaceParams::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader("Face Parameters")){
+        if (ImGui::TreeNode("ID")){
+            for(int i = 0; i < idCoeff.size(); ++i)
+                ImGui::SliderFloat(("id" + std::to_string(i)).c_str(), &idCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("EX")){
+            for(int i = 0; i < exCoeff.size(); ++i)
+                ImGui::SliderFloat(("ex" + std::to_string(i)).c_str(), &exCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("CL")){
+            for(int i = 0; i < alCoeff.size(); ++i)
+                ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &alCoeff[i], -2.0, 2.0);
+            ImGui::TreePop();
+        }
+        ImGui::InputFloat3("Tr", &RT(0,3));
+        if (ImGui::TreeNode("SH")){
+            for(int i = 0; i < SH.cols(); ++i)
+                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &SH.col(i)[0]);
+            ImGui::TreePop();
+        }
+    }
+    else
+        return false;
+    
+    return true;
+}
+#endif
+
 void FaceModel::saveBinaryModel(std::string file)
 {
     FILE* fp;

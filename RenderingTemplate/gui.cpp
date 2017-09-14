@@ -252,50 +252,10 @@ void GUI::update()
     ImGui_ImplGlfwGL3_NewFrame();
     ImGui::Begin("Control Panel", &show_control_panel_);
     
-    FaceParams& fParam = renderer_.fParam_;
-    
-    if (ImGui::CollapsingHeader("Face Parameters")){
-        if (ImGui::TreeNode("ID")){
-            for(int i = 0; i < fParam.idCoeff.size(); ++i)
-                ImGui::SliderFloat(("id" + std::to_string(i)).c_str(), &fParam.idCoeff[i], -2.0, 2.0);
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("EX")){
-            for(int i = 0; i < fParam.exCoeff.size(); ++i)
-                ImGui::SliderFloat(("ex" + std::to_string(i)).c_str(), &fParam.exCoeff[i], -2.0, 2.0);
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNode("CL")){
-            for(int i = 0; i < fParam.alCoeff.size(); ++i)
-                ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &fParam.alCoeff[i], -2.0, 2.0);
-            ImGui::TreePop();
-        }
-        ImGui::InputFloat3("Tr", &fParam.RT(0,3));
-        if (ImGui::TreeNode("SH")){
-            for(int i = 0; i < fParam.SH.cols(); ++i)
-                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &fParam.SH.col(i)[0]);
-            ImGui::TreePop();
-        }
-    }
-    if (ImGui::CollapsingHeader("Camera Parameters")){
-        Camera& cam = renderer_.camera_;
-        ImGui::InputFloat("zNear", &cam.zNear_);
-        ImGui::InputFloat("zFar", &cam.zFar_);
-        ImGui::InputFloat("fx", &cam.intrinsic_(0,0));
-        ImGui::InputFloat("fy", &cam.intrinsic_(1,1));
-        ImGui::InputFloat("px", &cam.intrinsic_(0,2));
-        ImGui::InputFloat("py", &cam.intrinsic_(1,2));
-        ImGui::InputInt("width", &cam.width_);
-        ImGui::InputInt("height", &cam.height_);
-    }
-    if (ImGui::CollapsingHeader("Rendering Parameters")){
-        F2FRenderParams& param = renderer_.f2f_renderer_.param_;
-        ImGui::Checkbox("mask", &param.enable_mask);
-        ImGui::Checkbox("seg", &param.enable_seg);
-        ImGui::Checkbox("texture", &param.enable_tex);
-        const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
-        ImGui::ListBox("RenderTarget", &param.location, listbox_items, 8);
-    }
+    renderer_.fParam_.updateIMGUI();
+    renderer_.camera_.updateIMGUI();
+    renderer_.f2f_renderer_.updateIMGUI();
+
     ImGui::End();
     ImGui::Render();
     

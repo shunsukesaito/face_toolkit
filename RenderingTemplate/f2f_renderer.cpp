@@ -1,6 +1,7 @@
 #include "f2f_renderer.hpp"
 
 
+
 float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                                         Eigen::MatrixXf& JtJ,
                                         const Eigen::MatrixXf& w_al,
@@ -222,6 +223,24 @@ void F2FRenderParams::update(GLProgram& prog)
         prog.setUniformData("u_inv_diffuse", (uint)enable_inv_diffuse);
     }
 }
+
+#ifdef WITH_IMGUI
+bool F2FRenderParams::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader("F2F Rendering Parameters")){
+        ImGui::Checkbox("mask", &enable_mask);
+        ImGui::Checkbox("seg", &enable_seg);
+        ImGui::Checkbox("texture", &enable_tex);
+        ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
+        const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
+        ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
+    }
+    else
+        return false;
+    
+    return true;
+}
+#endif
 
 void F2FRenderer::init(std::string data_dir, Camera& camera, FaceModel& model)
 {
