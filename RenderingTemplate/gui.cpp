@@ -127,8 +127,9 @@ void GUI::mouseMotion(double x, double y)
             trackball(width_, height_, rot_scale, down_mouse_x, down_mouse_y, current_mouse_x, current_mouse_y, q);
             
             Eigen::Matrix3f R = q.toRotationMatrix();
-            RT.block<3,3>(0,0) = R*curRT.block<3,3>(0,0);
-            RT.block<3,1>(0,3) = R*(curRT.block<3,1>(0,3)-rotCenter)+rotCenter;
+            Eigen::Matrix3f Rpre = curRT.block<3,3>(0,0);
+            RT.block<3,3>(0,0) = curRT.block<3,3>(0,0)*R;
+            RT.block<3,1>(0,3) = RT.block<3,3>(0,0)*Rpre.transpose()*(curRT.block<3,1>(0,3)-rotCenter)+rotCenter;
             break;
         }
         case MouseMode::Translation:

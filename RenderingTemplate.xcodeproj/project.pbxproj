@@ -27,6 +27,8 @@
 		8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A1E1F66F2C600D84C03 /* p2d_optimizer.cpp */; };
 		8FB59A241F66F7DB00D84C03 /* minitrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A221F66F7DB00D84C03 /* minitrace.c */; };
 		8FB59A271F671E0600D84C03 /* sh_optimizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */; };
+		8FB59A2A1F69F34000D84C03 /* mesh_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A281F69F34000D84C03 /* mesh_renderer.cpp */; };
+		8FB59A2E1F69F9A900D84C03 /* bg_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FB59A2C1F69F9A900D84C03 /* bg_renderer.cpp */; };
 		8FDF976A1F50F8AF0038065A /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8FDF97681F50F8AF0038065A /* tiny_obj_loader.cc */; };
 		8FE2953E1F5F1C120021E914 /* face_model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FE2953C1F5F1C120021E914 /* face_model.cpp */; };
 		8FE2954E1F61E76D0021E914 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8FE295441F61E76D0021E914 /* imgui.cpp */; };
@@ -88,6 +90,11 @@
 		8FB59A231F66F7DB00D84C03 /* minitrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = minitrace.h; sourceTree = "<group>"; };
 		8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sh_optimizer.cpp; sourceTree = "<group>"; };
 		8FB59A261F671E0600D84C03 /* sh_optimizer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sh_optimizer.hpp; sourceTree = "<group>"; };
+		8FB59A281F69F34000D84C03 /* mesh_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mesh_renderer.cpp; sourceTree = "<group>"; };
+		8FB59A291F69F34000D84C03 /* mesh_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = mesh_renderer.hpp; sourceTree = "<group>"; };
+		8FB59A2C1F69F9A900D84C03 /* bg_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bg_renderer.cpp; sourceTree = "<group>"; };
+		8FB59A2D1F69F9A900D84C03 /* bg_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = bg_renderer.hpp; sourceTree = "<group>"; };
+		8FB59A2F1F6A0B7A00D84C03 /* fps.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = fps.hpp; sourceTree = "<group>"; };
 		8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.frag; sourceTree = "<group>"; };
 		8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.vert; sourceTree = "<group>"; };
 		8FDF975D1F50ED910038065A /* point2d.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = point2d.frag; sourceTree = "<group>"; };
@@ -201,10 +208,15 @@
 				8FDF976B1F50F8DC0038065A /* obj_loader.hpp */,
 				8F3454371EECD473007B479B /* framebuffer.cpp */,
 				8F3454381EECD473007B479B /* framebuffer.hpp */,
+				8FB59A2F1F6A0B7A00D84C03 /* fps.hpp */,
 				8F71F1A71F520D4F00DE56D7 /* trackball.cpp */,
 				8F71F1A81F520D4F00DE56D7 /* trackball.hpp */,
 				8FB59A251F671E0600D84C03 /* sh_optimizer.cpp */,
 				8FB59A261F671E0600D84C03 /* sh_optimizer.hpp */,
+				8FB59A281F69F34000D84C03 /* mesh_renderer.cpp */,
+				8FB59A291F69F34000D84C03 /* mesh_renderer.hpp */,
+				8FB59A2C1F69F9A900D84C03 /* bg_renderer.cpp */,
+				8FB59A2D1F69F9A900D84C03 /* bg_renderer.hpp */,
 			);
 			path = RenderingTemplate;
 			sourceTree = "<group>";
@@ -319,8 +331,10 @@
 				8F3454361EECD460007B479B /* gl_mesh.cpp in Sources */,
 				8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */,
 				8F71F1A91F520D4F00DE56D7 /* trackball.cpp in Sources */,
+				8FB59A2E1F69F9A900D84C03 /* bg_renderer.cpp in Sources */,
 				8F3454331EECD439007B479B /* gui.cpp in Sources */,
 				8FB59A241F66F7DB00D84C03 /* minitrace.c in Sources */,
+				8FB59A2A1F69F34000D84C03 /* mesh_renderer.cpp in Sources */,
 				8FB59A201F66F2C600D84C03 /* f2f_optimizer.cpp in Sources */,
 				8F34541F1EECA0C1007B479B /* gl_core.cpp in Sources */,
 				8F5A98221F564B5300DDF204 /* f2f_renderer.cpp in Sources */,

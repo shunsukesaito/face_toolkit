@@ -289,6 +289,9 @@ void F2FRenderer::render(Camera& camera, const FaceParams& fParam)
     glfwGetFramebufferSize(window, &w, &h);
     glViewport(0, 0, w, h);
     glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     prog_pl.draw();
 }
 

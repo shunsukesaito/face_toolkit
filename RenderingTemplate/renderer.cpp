@@ -61,73 +61,41 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
-    programs_["main"] = GLProgram(data_dir + "shaders/mesh.vert", data_dir + "shaders/mesh.frag", DrawMode::TRIANGLES_IDX);
-    programs_["bg"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert", data_dir + "shaders/full_texture_bgr.frag", DrawMode::TRIANGLES);
-    programs_["p2d"] = GLProgram(data_dir + "shaders/point2d.vert", data_dir + "shaders/point2d.frag", DrawMode::POINTS);
-    programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert", data_dir + "shaders/point3d.frag", DrawMode::POINTS);
+    //programs_["p2d"] = GLProgram(data_dir + "shaders/point2d.vert", data_dir + "shaders/point2d.frag", DrawMode::POINTS);
+    //programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert", data_dir + "shaders/point3d.frag", DrawMode::POINTS);
     
     clearBuffer(COLOR::COLOR_GREEN);
-    CHECK_GL_ERROR();
-
-    glEnable(GL_DEPTH_TEST);
-    CHECK_GL_ERROR();
-    
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
     CHECK_GL_ERROR();
     
     Eigen::Matrix4f RT = Camera::loadRTFromTxt(data_dir + "data/RT.txt");
     Eigen::Matrix4f K = Camera::loadKFromTxt(data_dir + "data/K.txt");
     camera_ = Camera(RT, K, w, h, 1, 1000);
-
-    auto& prog = programs_["main"];
-    auto& prog2d = programs_["p2d"];
-    auto& prog3d = programs_["p3d"];
     
-    camera_.intializeUniforms(prog, true, false);
-    camera_.updateUniforms(prog, true, false);
-    
-    camera_.intializeUniforms(prog3d, false, false);
-    camera_.updateUniforms(prog3d, false, false);
-
     facemodel_.loadBinaryModel(data_dir + "data/PinModel.bin");
     fParam_.init(facemodel_);
-    mesh_.init_with_idx(prog, fParam_.pts_, fParam_.nml_, facemodel_.tri_pts_);
     
+    bg_renderer_.init(data_dir, data_dir + "data/cosimo.png");
     f2f_renderer_.init(data_dir, camera_, facemodel_);
-    
-    glPlane bg;
-    bg.init(programs_["bg"]);
-    programs_["bg"].createTexture("u_texture", data_dir + "data/cosimo.png");
+    mesh_renderer_.init(data_dir, camera_, fParam_.pts_, fParam_.nml_, facemodel_.tri_pts_);
     
     center_ = getCenter(fParam_.pts_);
 }
 
 void Renderer::draw()
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    char title[256];
+    sprintf(title, "Main Window [fps: %.1f]", fps_.count());
+    glfwSetWindowTitle(windows_[MAIN], title);
 
-    glDisable(GL_CULL_FACE);
-    programs_["bg"].draw();
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    //programs_["main"].draw();
-    
+    bg_renderer_.render();
+    mesh_renderer_.render(camera_, fParam_.pts_, fParam_.nml_);
     f2f_renderer_.render(camera_, fParam_);
     
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
 }
 
 void Renderer::update()
 {
-    auto& prog = programs_["main"];
-    camera_.updateUniforms(prog, true, false);
-    
     fParam_.updateColor(facemodel_);
     fParam_.updateIdentity(facemodel_);
     fParam_.updateExpression(facemodel_);
-    mesh_.update_with_idx(prog, fParam_.pts_, fParam_.nml_);
 }

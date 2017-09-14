@@ -89,6 +89,8 @@ void FaceParams::init(const FaceModel& model)
     idCoeff = Eigen::VectorXf::Zero(model.sigma_id_.size());
     exCoeff = Eigen::VectorXf::Zero(model.sigma_ex_.size());
     alCoeff = Eigen::VectorXf::Zero(model.sigma_cl_.size());
+    SH = Eigen::Matrix3Xf::Zero(3,9);
+    SH.col(0).setOnes();
     
     updateColor(model);
     updateIdentity(model);

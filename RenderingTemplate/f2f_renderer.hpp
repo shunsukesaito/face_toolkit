@@ -20,7 +20,7 @@ struct F2FRenderParams{
     bool tex_mode = 0;
     bool enable_inv_diffuse = 0;
     
-    int location;
+    int location = 4;
     
     bool preview = false;
     

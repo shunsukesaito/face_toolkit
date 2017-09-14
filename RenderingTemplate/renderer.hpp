@@ -18,9 +18,12 @@
 #include "gl_mesh.hpp"
 #include "camera.hpp"
 #include "face_model.hpp"
+#include "mesh_renderer.hpp"
 #include "f2f_renderer.hpp"
+#include "bg_renderer.hpp"
 
 #include "gl_utils.h"
+#include "fps.hpp"
 
 enum WINDOW { MAIN, WINDOW_COUNT};
 
@@ -81,11 +84,12 @@ struct Window {
 };
 
 struct Renderer {
-    FramebufferPtr fb_depth_;
     std::unordered_map<std::string, GLProgram> programs_;
     Camera camera_;
-    glMesh mesh_;
+    FPSCounter fps_;
     F2FRenderer f2f_renderer_;
+    MeshRenderer mesh_renderer_;
+    BGRenderer bg_renderer_;
     
     // temp
     FaceModel facemodel_;

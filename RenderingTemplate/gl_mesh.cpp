@@ -274,7 +274,6 @@ void glMesh::init_with_idx(GLProgram& program,
     program.createAttribute("v_position", DataType::VECTOR3, true);
     program.createAttribute("v_normal", DataType::VECTOR3, true);
     
-    
     pts_.resize(pts.size()/3);
     nml_.resize(pts.size()/3);
     tri_.resize(tri_pts.size());

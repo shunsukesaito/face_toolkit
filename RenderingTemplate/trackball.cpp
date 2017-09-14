@@ -46,8 +46,8 @@ void trackball(const double w,
     double n1 = sqrt(x*x + y*y + z*z);
     if(n0>1.e-8 && n1>1.e-8)
     {
-        Eigen::Vector3d v0(-original_x/n0, -original_y/n0, z/n0);
-        Eigen::Vector3d v1(-x/n1, -y/n1, z/n1);
+        Eigen::Vector3d v0(original_x/n0, -original_y/n0, z/n0);
+        Eigen::Vector3d v1(x/n1, -y/n1, z/n1);
         Eigen::Vector3d axis = v0.cross(v1);
         double sa = axis.norm();
         double ca = v0.dot(v1);

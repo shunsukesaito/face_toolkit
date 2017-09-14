@@ -123,8 +123,10 @@ public:
     void createUniform(std::string uniformName, DataType type);
     void createTexture(std::string textureName, std::string sourceFile);
     void createTexture(std::string textureName, GLuint location, int w, int h);
+    void createTexture(std::string textureName, const cv::Mat& img);
     void updateTexture(std::string textureName, std::string sourceFile, bool flip = false);
     void updateTexture(std::string textureName, GLuint location);
+    void updateTexture(std::string textureName, const cv::Mat& img);
     
     void setAttributeData(std::string attributeName, const std::vector<float> &vals);
     void setAttributeData(std::string attributeName, const std::vector<glm::vec4> &vals);

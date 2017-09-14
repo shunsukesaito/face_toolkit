@@ -258,6 +258,15 @@ void GLProgram::createTexture(std::string textureName, std::string sourceFile)
     textureMap[textureName] = GLTexture(this, textureName, sourceFile);
 }
 
+void GLProgram::createTexture(std::string textureName, const cv::Mat& img)
+{
+    if(textureMap.find(textureName) != textureMap.end()){
+        throw std::runtime_error("Attempted to create texture with duplicate name " + textureName);
+    }
+    
+    textureMap[textureName] = GLTexture(this, textureName, img);
+}
+
 void GLProgram::createTexture(std::string textureName, GLuint location, int w, int h)
 {
     if(textureMap.find(textureName) != textureMap.end()){
@@ -295,6 +304,17 @@ void GLProgram::updateTexture(std::string textureName, GLuint location)
     GLTexture& tex = textureMap[textureName];
     
     tex.location = location;
+}
+
+void GLProgram::updateTexture(std::string textureName, const cv::Mat& img)
+{
+    if(textureMap.find(textureName) == textureMap.end()){
+        throw std::runtime_error("Attempted to update texture which does not exist: " + textureName);
+    }
+    
+    GLTexture& tex = textureMap[textureName];
+    
+    GLTexture::UpdateTexture(img, tex.location);
 }
 
 void GLProgram::setUniformData(std::string uniformName, const Eigen::Matrix4f &val)
