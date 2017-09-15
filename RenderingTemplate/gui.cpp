@@ -86,12 +86,16 @@ void GUI::resize(int w, int h)
 
 void GUI::keyboard(int key, int s, int a, int m)
 {
-    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
+    Camera& cam = renderer_.face_module_.getCamera();
+    Eigen::Matrix4f& RT = cam.extrinsic_;
     
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         lookat = getCenter(renderer_.face_module_.fParam_.pts_);
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
+    }
+    if(key == GLFW_KEY_I && a == GLFW_PRESS){
+        renderer_.face_module_.reset();
     }
 }
 
@@ -107,7 +111,8 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_x = x;
     current_mouse_y = y;
     
-    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
+    Camera& cam = renderer_.face_module_.getCamera();
+    Eigen::Matrix4f& RT = cam.extrinsic_;
     
     switch (mouse_mode)
     {
@@ -162,7 +167,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = renderer_.face_module_.camera_.extrinsic_;
+    curRT = renderer_.face_module_.getCamera().extrinsic_;
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
     right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
@@ -185,7 +190,8 @@ void GUI::mouseDown(MouseButton mb, int m)
 
 void GUI::mouseUp(MouseButton mb, int m)
 {
-    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
+    Camera& cam = renderer_.face_module_.getCamera();
+    Eigen::Matrix4f& RT = cam.extrinsic_;
     
     if(mb == MouseButton::Right)
         lookat += RT.block<3,1>(0,3) - curRT.block<3,1>(0,3);
@@ -194,7 +200,8 @@ void GUI::mouseUp(MouseButton mb, int m)
 
 void GUI::mouseScroll(double x, double y)
 {
-    Eigen::Matrix4f& RT = renderer_.face_module_.camera_.extrinsic_;
+    Camera& cam = renderer_.face_module_.getCamera();
+    Eigen::Matrix4f& RT = cam.extrinsic_;
 
     float scale = 0.01;
     Eigen::Vector3f t = RT.block<3,1>(0,3) - lookat;

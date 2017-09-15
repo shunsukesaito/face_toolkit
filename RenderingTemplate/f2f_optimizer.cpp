@@ -2,6 +2,13 @@
 #include "f2f_optimizer.h"
 #include "minitrace.h"
 
+#ifdef WITH_IMGUI
+void F2FParams::updateIMGUI()
+{
+    
+}
+#endif
+
 // renderTarget contains
 // positions,normals,colors,vIndices,vBarycentric,texCoords
 // compute jacobian for color consistency term

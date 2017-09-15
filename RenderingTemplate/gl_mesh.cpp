@@ -188,7 +188,7 @@ void glMesh::init(GLProgram& program,
     
     pts_.resize(pts.size()/3);
     
-    for(int i = 0; i < pts_.size(); ++i)
+    for(int i = 0; i < pts_.size()/3; ++i)
     {
         pts_[i] = glm::vec3(pts(i*3+0),pts(i*3+1),pts(i*3+2));
     }
@@ -206,7 +206,7 @@ void glMesh::init(GLProgram& program,
     pts_.resize(pts.size()/3);
     clr_.resize(pts.size()/3);
     
-    for(int i = 0; i < pts_.size(); ++i)
+    for(int i = 0; i < pts_.size()/3; ++i)
     {
         pts_[i] = glm::vec3(pts(i*3+0),pts(i*3+1),pts(i*3+2));
         clr_[i] = glm::vec4(clr(0),clr(1),clr(2),clr(3));
@@ -216,6 +216,42 @@ void glMesh::init(GLProgram& program,
     program.setAttributeData("v_color", clr_);    
 }
 
+void glMesh::init(GLProgram& program,
+                  const std::vector<Eigen::Vector3f>& pts)
+{
+    program.createAttribute("v_position", DataType::VECTOR3, true);
+    
+    pts_.resize(pts.size());
+    
+    for(int i = 0; i < pts_.size(); ++i)
+    {
+        pts_[i] = glm::vec3(pts[i](0),pts[i](1),pts[i](2));
+    }
+    
+    program.setAttributeData("v_position", pts_);
+}
+
+void glMesh::init(GLProgram& program,
+                  const std::vector<Eigen::Vector3f>& pts,
+                  const Eigen::Vector4f& clr)
+{
+    program.createAttribute("v_position", DataType::VECTOR3, true);
+    program.createAttribute("v_color", DataType::VECTOR4, false);
+    
+    pts_.resize(pts.size());
+    clr_.resize(pts.size());
+    
+    for(int i = 0; i < pts_.size(); ++i)
+    {
+        pts_[i] = glm::vec3(pts[i](0),pts[i](1),pts[i](2));
+        clr_[i] = glm::vec4(clr(0),clr(1),clr(2),clr(3));
+    }
+    
+    program.setAttributeData("v_position", pts_);
+    program.setAttributeData("v_color", clr_);
+}
+
+
 void glMesh::init_with_idx(GLProgram& program,
                            const Eigen::VectorXf& pts,
                            const Eigen::MatrixX3f& nml,
@@ -395,6 +431,19 @@ void glMesh::init_with_idx(GLProgram& program,
     
     program.createElementIndex(tri_);
 }
+
+void glMesh::update(GLProgram& program,
+                    const std::vector<Eigen::Vector3f>& pts)
+{
+    pts_.resize(pts.size());
+    for(int i = 0; i < pts_.size(); ++i)
+    {
+        pts_[i] = glm::vec3(pts[i](0),pts[i](1),pts[i](2));
+    }
+    
+    program.setAttributeData("v_position", pts_);
+}
+
 
 void glMesh::update(GLProgram& program,
                   const Eigen::VectorXf& pts,

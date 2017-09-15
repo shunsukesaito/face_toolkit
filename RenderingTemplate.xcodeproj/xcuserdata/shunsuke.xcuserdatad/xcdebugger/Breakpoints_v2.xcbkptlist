@@ -184,11 +184,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/gl_mesh.cpp"
-            timestampString = "527038671.340741"
+            timestampString = "527128063.712288"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "298"
-            endingLineNumber = "298"
+            startingLineNumber = "334"
+            endingLineNumber = "334"
             landmarkName = "glMesh::init_with_idx(GLProgram&amp; program, const Eigen::VectorXf&amp; pts, const Eigen::MatrixX3f&amp; nml, const Eigen::MatrixX3i&amp; tri_pts)"
             landmarkType = "7">
          </BreakpointContent>
@@ -200,11 +200,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/gl_mesh.cpp"
-            timestampString = "527020380.900088"
+            timestampString = "527128063.712288"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "274"
-            endingLineNumber = "274"
+            startingLineNumber = "310"
+            endingLineNumber = "310"
             landmarkName = "glMesh::init_with_idx(GLProgram&amp; program, const Eigen::VectorXf&amp; pts, const Eigen::MatrixX3f&amp; nml, const Eigen::MatrixX3i&amp; tri_pts)"
             landmarkType = "7">
          </BreakpointContent>
@@ -216,11 +216,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/renderer.cpp"
-            timestampString = "527121371.761073"
+            timestampString = "527128063.712288"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "76"
-            endingLineNumber = "76"
+            startingLineNumber = "70"
+            endingLineNumber = "70"
             landmarkName = "Renderer::init(int w, int h, std::string data_dir)"
             landmarkType = "7">
          </BreakpointContent>
@@ -248,11 +248,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/face_model.cpp"
-            timestampString = "527121773.263639"
+            timestampString = "527132381.426792"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "138"
-            endingLineNumber = "138"
+            startingLineNumber = "139"
+            endingLineNumber = "139"
             landmarkName = "FaceModel::saveBinaryModel(std::string file)"
             landmarkType = "7">
          </BreakpointContent>
@@ -280,11 +280,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/gui.cpp"
-            timestampString = "527120041.72257"
+            timestampString = "527132315.614778"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "251"
-            endingLineNumber = "251"
+            startingLineNumber = "258"
+            endingLineNumber = "258"
             landmarkName = "GUI::update()"
             landmarkType = "7">
          </BreakpointContent>
@@ -374,11 +374,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/face_2dtracker.cc"
-            timestampString = "527115957.200939"
+            timestampString = "527122721.993402"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "552"
-            endingLineNumber = "552"
+            startingLineNumber = "521"
+            endingLineNumber = "521"
             landmarkName = "Face2DBoxTracker::detectFacesTemplateMatching(const cv::Mat &amp;frame)"
             landmarkType = "7">
          </BreakpointContent>
@@ -390,11 +390,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/face_2dtracker.cc"
-            timestampString = "527116002.525982"
+            timestampString = "527122721.993402"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "513"
-            endingLineNumber = "513"
+            startingLineNumber = "482"
+            endingLineNumber = "482"
             landmarkName = "Face2DBoxTracker::detectFaceAroundRoi(const cv::Mat &amp;frame)"
             landmarkType = "7">
          </BreakpointContent>
@@ -406,12 +406,92 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/face_2dtracker.cc"
-            timestampString = "527116018.782992"
+            timestampString = "527122721.993402"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "512"
-            endingLineNumber = "512"
+            startingLineNumber = "481"
+            endingLineNumber = "481"
             landmarkName = "Face2DBoxTracker::detectFaceAroundRoi(const cv::Mat &amp;frame)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "RenderingTemplate/p3d_renderer.cpp"
+            timestampString = "527128901.307053"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "17"
+            endingLineNumber = "17"
+            landmarkName = "P3DRenderer::init(std::string data_dir, const Camera&amp; camera, const std::vector&lt;Eigen::Vector3f&gt;&amp; pts)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "RenderingTemplate/gl_mesh.cpp"
+            timestampString = "527128270.375719"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "251"
+            endingLineNumber = "251"
+            landmarkName = "glMesh::init(GLProgram&amp; program, const std::vector&lt;Eigen::Vector3f&gt;&amp; pts, const Eigen::Vector4f&amp; clr)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "RenderingTemplate/gl_mesh.cpp"
+            timestampString = "527128308.378336"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "444"
+            endingLineNumber = "444"
+            landmarkName = "glMesh::update(GLProgram&amp; program, const std::vector&lt;Eigen::Vector3f&gt;&amp; pts)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "RenderingTemplate/face_gradient.cpp"
+            timestampString = "527133068.932239"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "925"
+            endingLineNumber = "925"
+            landmarkName = "computeJacobianPoint2Point2D(Eigen::VectorXf&amp; Jtr, Eigen::MatrixXf&amp; JtJ, const std::vector&lt;Eigen::Vector2f&gt;&amp; pV, const std::vector&lt;Eigen::MatrixX2f&gt;&amp; dpV, const std::vector&lt;Eigen::Vector3f&gt;&amp; qV, const float&amp; w, bool robust)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "RenderingTemplate/gui.cpp"
+            timestampString = "527132342.590981"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "98"
+            endingLineNumber = "98"
+            landmarkName = "GUI::keyboard(int key, int s, int a, int m)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

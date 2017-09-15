@@ -8,6 +8,9 @@
 #include "face_gradient.h"
 #include "f2f_renderer.hpp"
 
+#ifdef WITH_IMGUI
+#include "imgui.h"
+#endif
 
 struct F2FParams
 {
@@ -40,6 +43,10 @@ struct F2FParams
     int smoothLev_ = 2;
     
     char* dampDataDir_ = 0;
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
 };
 
 // renderTarget contains 

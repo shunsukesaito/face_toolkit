@@ -74,6 +74,14 @@ struct glMesh
     void init(GLProgram& prog,
               const Eigen::VectorXf& pts,
               const Eigen::Vector4f& clr);
+    
+    void init(GLProgram& prog,
+              const std::vector<Eigen::Vector3f>& pts);
+    
+    void init(GLProgram& prog,
+              const std::vector<Eigen::Vector3f>& pts,
+              const Eigen::Vector4f& clr);
+    
 
     void init_with_idx(GLProgram& prog,
                        const Eigen::VectorXf& pts,
@@ -100,6 +108,9 @@ struct glMesh
                        const Eigen::MatrixX2f& uvs,
                        const Eigen::MatrixX3i& tri_pts,
                        const Eigen::MatrixX3i& tri_uv);
+    
+    void update(GLProgram& prog,
+                const std::vector<Eigen::Vector3f>& pts);
     
     void update(GLProgram& prog,
                 const Eigen::VectorXf& pts,

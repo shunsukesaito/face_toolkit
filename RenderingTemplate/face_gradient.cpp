@@ -15,11 +15,11 @@ static Eigen::Vector2f calcLineSegment(const Eigen::Vector2f& p,
     float mindist = 1.e5;
     for(int i = start_idx; i < end_idx; ++i)
     {
-        l = (qV[i + 1].segment<2>(0)-qV[i].segment<2>(0)).normalized();
-        n << l[1], -l[0];
+        l = qV[i + 1].segment<2>(0)-qV[i].segment<2>(0);
+        n << l[1], -l[0]; n.normalize();
         pq = p - qV[i].segment<2>(0);
         
-        ratio = l.dot(pq.normalized());
+        ratio = l.dot(pq)/l.squaredNorm();
         if(ratio < 0 || ratio > 1.0)
             continue;
         
@@ -35,18 +35,18 @@ static Eigen::Vector2f calcLineSegment(const Eigen::Vector2f& p,
     
     // if p doesn't lie in the line segments
     if(mindist == 1.e5){
-        l = (qV[start_idx + 1].segment<2>(0)-qV[start_idx].segment<2>(0)).normalized();
-        n << l[1], -l[0];
-        
-        ratio = l.dot(pq.normalized());
+        l = (qV[start_idx + 1].segment<2>(0)-qV[start_idx].segment<2>(0));
+        n << l[1], -l[0]; n.normalize();
+    
+        ratio = l.dot(pq);
         if(ratio < 0){
             q = qV[start_idx];
             return n;
         }
         else{
             q = qV[end_idx];
-            l = (qV[end_idx].segment<2>(0)-qV[end_idx - 1].segment<2>(0)).normalized();
-            n << l[1], -l[0];
+            l = (qV[end_idx].segment<2>(0)-qV[end_idx - 1].segment<2>(0));
+            n << l[1], -l[0]; n.normalize();
             
             return n;
         }
@@ -77,6 +77,22 @@ void P2P2DC::updateConstraints(const std::vector<P2P2DC>& C,
     }
 }
 
+void P2P2DC::parseConstraints(std::string file_path,
+                              std::vector<P2P2DC>& C)
+{
+    C.clear();
+    std::ifstream fin(file_path);
+    int idx, v_idx;
+    while(fin.good())
+    {
+        fin >> idx;
+        if(!fin.good()) break;
+        fin >> v_idx;
+        
+        C.push_back(P2P2DC(v_idx, idx));
+    }
+}
+
 void P2P3DC::getIndexList(const std::vector<P2P3DC>& C,
                           std::vector<int>& idxs)
 {
@@ -97,6 +113,22 @@ void P2P3DC::updateConstraints(const std::vector<P2P3DC>& C,
     for(auto& c : C)
     {
         qoutV.push_back(qinV[c.idx]);
+    }
+}
+
+void P2P3DC::parseConstraints(std::string file_path,
+                              std::vector<P2P3DC>& C)
+{
+    C.clear();
+    std::ifstream fin(file_path);
+    int idx, v_idx;
+    while(fin.good())
+    {
+        fin >> idx;
+        if(!fin.good()) break;
+        fin >> v_idx;
+
+        C.push_back(P2P3DC(v_idx, idx));
     }
 }
 
@@ -127,6 +159,34 @@ void P2L2DC::updateConstraints(const std::vector<P2L2DC>& C,
     {
         nV.push_back(calcLineSegment(pV[i], qinV, q, C[i].start_idx, C[i].end_idx));
         qoutV.push_back(q);
+    }
+    
+//    cv::Mat_<cv::Vec3b> tmp(720,1280, cv::Vec3b(255,255,255));
+//    for(int i = 0; i < pV.size()-1; ++i)
+//    {
+//        cv::line(tmp, cv::Point(qinV[i](0),qinV[i](1)), cv::Point(qinV[i+1](0),qinV[i+1](1)), cv::Scalar(0,255,0));
+//        cv::line(tmp, cv::Point(qoutV[i](0),qoutV[i](1)), cv::Point(qoutV[i](0)+5*nV[i](0),qoutV[i](1)+5*nV[i](1)), cv::Scalar(255,0,0));
+//        cv::circle(tmp, cv::Point(pV[i](0),pV[i](1)), 1, cv::Scalar(0,0,255), -1);
+//    }
+//    
+//    cv::imshow("tmp", tmp);
+//    cv::waitKey(1);
+}
+
+void P2L2DC::parseConstraints(std::string file_path,
+                              std::vector<P2L2DC>& C)
+{
+    C.clear();
+    std::ifstream fin(file_path);
+    int v_idx, s_idx, e_idx;
+    while(fin.good())
+    {
+        fin >> v_idx;
+        if(!fin.good()) break;
+        fin >> s_idx;
+        fin >> e_idx;
+        
+        C.push_back(P2L2DC(v_idx, s_idx, e_idx));
     }
 }
 
@@ -305,10 +365,11 @@ void computeJacobiansP2D(Eigen::MatrixX2f& result,
 	const Eigen::Matrix3f& R = RTall.block<3, 3>(0, 0);
     
     int cur_dof = 0;
-    jacobianID(result, pp, z, id, I, R, cur_dof, dof.ID); cur_dof += dof.ID;
-    jacobianEX(result, pp, z, ex, I, R, cur_dof, dof.EX); cur_dof += dof.EX; cur_dof += dof.AL;
-    jacobianROT(result, pp, p3, z, I, RdRs, cur_dof, dof.ROT); cur_dof += dof.ROT;
-    jacobianTR(result, pp, p3, z, I, RTc, cur_dof, dof.TR); cur_dof += dof.TR;
+    float zsq = z*z;
+    jacobianID(result, pp, zsq, id, I, R, cur_dof, dof.ID); cur_dof += dof.ID;
+    jacobianEX(result, pp, zsq, ex, I, R, cur_dof, dof.EX); cur_dof += dof.EX; cur_dof += dof.AL;
+    jacobianROT(result, pp, p3, zsq, I, RdRs, cur_dof, dof.ROT); cur_dof += dof.ROT;
+    jacobianTR(result, pp, p3, zsq, I, RTc, cur_dof, dof.TR); cur_dof += dof.TR;
     jacobianCAM(result, pp, z, 10.f, cur_dof, dof.CAM);
 }
 
@@ -899,7 +960,6 @@ float computeJacobianPoint2Point2D(Eigen::VectorXf& Jtr,
         {
             pq = pV[i]-qV[i].segment<2>(0);
             w_all = w * qV[i][2];
-
             Jtr += w_all * dpV[i] * pq;
             JtJ += w_all * dpV[i] * dpV[i].transpose();
             
@@ -1231,6 +1291,8 @@ void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
                                          const std::vector<int>& vert_list)
 {
     assert(vert_list.size() == V.size());
+    if(vert_list.size() == 0) return;
+ 
     if (pV.size() != vert_list.size())
         pV.assign(vert_list.size(), Eigen::Vector2f::Zero());
     if (dpV.size() != vert_list.size())
@@ -1388,8 +1450,7 @@ void setFaceVector(Eigen::VectorXf& X,
 	if(Is.size() != cameras.size()) Is.resize(cameras.size());
 	for (int i = 0; i < Is.size(); ++i)
 	{
-        Is[i] = Eigen::Matrix4f::Identity();
-		Is[i].block(0,0,3,3) = cameras[i].intrinsic_;
+		Is[i] = cameras[i].intrinsic_;
 	}
 	
 	// for debugging

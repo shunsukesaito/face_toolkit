@@ -61,12 +61,6 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
-    //programs_["p2d"] = GLProgram(data_dir + "shaders/point2d.vert", data_dir + "shaders/point2d.frag", DrawMode::POINTS);
-    //programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert", data_dir + "shaders/point3d.frag", DrawMode::POINTS);
-    
-    clearBuffer(COLOR::COLOR_GREEN);
-    CHECK_GL_ERROR();
-        
     video_capture_.open(0);
     video_capture_ >> cur_img_;
 
@@ -78,7 +72,7 @@ void Renderer::init(int w, int h, std::string data_dir)
 
 void Renderer::draw()
 {
-    bg_renderer_.render(cur_img_, true);
+    bg_renderer_.render(cur_img_);
     face_module_.preview();
 }
 

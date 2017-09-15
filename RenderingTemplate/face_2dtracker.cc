@@ -433,37 +433,6 @@ bool Face2DBoxTracker::detectFaceAllSizes(const cv::Mat &frame)
     
     if(rects.size() == 0) return false;
     
-//    if (rects.empty()){
-//        std::vector<dlib::rectangle> dets;
-//        
-//        dlib::array2d<dlib::rgb_pixel> img_dlib;
-//        img_dlib.set_size(frame.rows, frame.cols);
-//        for(int i = 0; i < frame.rows; ++i)
-//        {
-//            const cv::Vec3b* ptr = frame.ptr<cv::Vec3b>(i);
-//            for(int j = 0; j < frame.cols; ++j)
-//            {
-//                img_dlib[i][j].blue = ptr[j](0);
-//                img_dlib[i][j].green = ptr[j](1);
-//                img_dlib[i][j].red = ptr[j](2);
-//            }
-//        }
-//        
-//        dets = faceDetector_->detector_(img_dlib,-0.2);
-//        
-//       // if(dets.size() == 0) return false;
-//        
-//        rects.clear();
-//        for(int i = 0; i < dets.size(); ++i)
-//        {
-//            cv::Rect rect;
-//            rect.x = (int)dets[i].left();
-//            rect.y = (int)dets[i].top();
-//            rect.width = (int)dets[i].width();
-//            rect.height = (int)dets[i].height();
-//            rects.push_back(rect);
-//        }
-//    }
     
     foundFace_ = true;
     

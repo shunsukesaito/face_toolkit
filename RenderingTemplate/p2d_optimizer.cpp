@@ -7,6 +7,8 @@
 void P2DFitParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("P2DFit Parameters")){
+        ImGui::Checkbox("robust", &robust_);
+        ImGui::InputInt("maxIter", &maxIter_);
         ImGui::InputInt("DOF ID", &dof.ID);
         ImGui::InputInt("DOF EX", &dof.EX);
         ImGui::InputInt("DOF ROT", &dof.ROT);
@@ -19,8 +21,6 @@ void P2DFitParams::updateIMGUI()
         ImGui::InputFloat("GN threshold", &gn_thresh_);
         ImGui::InputFloat("MC threshold", &mclose_thresh_);
         ImGui::InputFloat("Ang threshold", &angle_thresh_);
-        ImGui::Checkbox("robust", &robust_);
-        ImGui::InputInt("maxIter", &maxIter_);
     }
 }
 #endif
@@ -108,13 +108,13 @@ bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,
     return true;
 }
 
-void Landmark2DFittingMultiView(FaceParams& fParam,
-                                std::vector< Camera >& cameras,
-                                const FaceModel& fModel,
-                                const std::vector<P2P2DC>& C_P2P,
-                                std::vector<P2L2DC>& C_P2L,
-                                const std::vector<std::vector<Eigen::Vector3f>>& q2V,
-                                const P2DFitParams& params)
+void P2DFittingMultiView(FaceParams& fParam,
+                         std::vector< Camera >& cameras,
+                         const FaceModel& fModel,
+                         const std::vector<P2P2DC>& C_P2P,
+                         std::vector<P2L2DC>& C_P2L,
+                         const std::vector<std::vector<Eigen::Vector3f>>& q2V,
+                         const P2DFitParams& params)
 {
     MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
     const DOF& dof = params.dof;
@@ -149,6 +149,7 @@ void Landmark2DFittingMultiView(FaceParams& fParam,
         JtJ.setZero();
         Jtr.setZero();
         
+        float err_p2p = 0.0, err_p2l = 0.0;
         for (int j = 0; j < cameras.size(); ++j)
         {
             const Eigen::Matrix4f& RTc = cameras[j].extrinsic_;
@@ -178,8 +179,8 @@ void Landmark2DFittingMultiView(FaceParams& fParam,
                 P2L2DC::updateConstraints(C_P2L, q2V[j], p_p2l, q_p2l, n_p2l);
 
                 // compute landmark jacobian
-                computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2l, q_p2p, params.w_p2p_, params.robust_);
-                computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
+                err_p2p += computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2p, q_p2p, params.w_p2p_, params.robust_);
+                err_p2l += computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
             }
         }
         
@@ -187,10 +188,15 @@ void Landmark2DFittingMultiView(FaceParams& fParam,
         computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, 0, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
         computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
         
+        for(int j = 0; j < Jtr.size(); ++j)
+        {
+            JtJ(j,j) += 1.e-6;
+        }
+        
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "|dX| = " << dX.norm() << std::endl;
+        std::cout << "iter " << i << " errP2P = " << err_p2p << " errP2L = " << err_p2l << "|dX| = " << dX.norm() << std::endl;
         loadFaceVector(X, Is, rt, fParam, cameras, dof);
         
         if (dX.norm() < params.gn_thresh_) break;
