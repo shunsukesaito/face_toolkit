@@ -71,7 +71,7 @@ void Renderer::init(int w, int h, std::string data_dir)
 }
 
 void Renderer::draw()
-{
+{  
     bg_renderer_.render(cur_img_);
     face_module_.preview();
 }

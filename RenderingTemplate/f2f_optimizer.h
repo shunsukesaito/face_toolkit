@@ -16,7 +16,7 @@ struct F2FParams
 {
     DOF dof = DOF( 40, 40, 40, 3, 3, 0, 27);
 
-    std::vector<int> maxIter_ = {20, 10, 10, 0};
+    std::vector<int> maxIter_ = {0, 3, 5, 5};
     
     bool verbose_ = false;
     bool robust_ = false;

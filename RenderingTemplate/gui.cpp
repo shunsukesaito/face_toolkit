@@ -250,12 +250,13 @@ void GUI::update()
     sprintf(title, "Main Window [fps: %.1f]", fps_.count());
     glfwSetWindowTitle(renderer_.get_window(MAIN), title);
 
+    renderer_.update();
+    
     clearBuffer(COLOR::COLOR_GREY);
     int w, h;
     glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
     glViewport(0, 0, w, h);
     
-    renderer_.update();
     renderer_.draw();
     
 #ifdef WITH_IMGUI

@@ -68,7 +68,7 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
     
     Eigen::VectorXf X(dof.all());
     Eigen::VectorXf dX(dof.all());
-    Eigen::Vector6f rt, rtEx;
+    Eigen::Vector6f rt, rtall;
     std::vector<Eigen::Matrix4f> Is(cameras.size());
     
     std::vector<cv::Mat> dIxs(cameras.size()), dIys(cameras.size());
@@ -109,15 +109,8 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
     
     tm1 = clock(); logger->info(" setFaceVec: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
-    // the following part is always the same, so it'd be better to keep it
-    if (params.verbose_)
-        logger->info("	Computing Edge Basis...");
-    
-    tm1 = clock(); logger->info(" computeEdgeBasis: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-    
     if (params.verbose_)
         logger->info("	First Color Evaluation + Contour Line Search...");
-    
     
     tm1 = clock(); logger->info(" renderFace: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
@@ -147,13 +140,8 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
             const int h = inputRGBs[j].rows;
 
             const Eigen::Matrix4f& RTc = cameras[j].extrinsic_;
-            Eigen::Matrix4f RTEx = RTc * fParam.RT;
-            Eigen::ConvertToEulerAnglesPose(RTEx, rtEx);
-
-            if (params.verbose_)
-                logger->info("	Rendering Multi-pass for Jacobian Computation...");
-            
-            renderer.render(w, h, cameras[j], fParam, renderTarget);
+            Eigen::Matrix4f RTall = RTc * fParam.RT;
+            Eigen::ConvertToEulerAnglesPose(RTall, rtall);
             
             if (params.verbose_)
                 logger->info("	Computing Vert-wise Position and its Gradient...");
@@ -170,7 +158,13 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
             // P2P remains same for the whole iterations. no need to execute here...
             P2P2DC::updateConstraints(C_P2P, q2V[j], q_p2p);
             P2L2DC::updateConstraints(C_P2L, q2V[j], p_p2l, q_p2l, n_p2l);
-         
+            
+            if (params.verbose_)
+                logger->info("	Rendering Multi-pass for Jacobian Computation...");
+            
+            if (params.w_pix_ != 0.f)
+                renderer.render(w, h, cameras[j], fParam, renderTarget);
+            
             if (params.verbose_)
                 logger->info("	Computing Pixel-wise Color Jacobian...");
             
@@ -185,16 +179,16 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
                 //    (q2V[j][63] - q2V[j][65]).norm() < params.mc_thresh_)
                 //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
 
-                if (fabs(Eigen::radiansToDegrees(rtEx[0])) < params.angle_thresh_ &&
-                    fabs(Eigen::radiansToDegrees(rtEx[1])) < params.angle_thresh_ &&
-                    fabs(Eigen::radiansToDegrees(rtEx[2])) < params.angle_thresh_){
+//                if (fabs(Eigen::radiansToDegrees(rtEx[0])) < params.angle_thresh_ &&
+//                    fabs(Eigen::radiansToDegrees(rtEx[1])) < params.angle_thresh_ &&
+//                    fabs(Eigen::radiansToDegrees(rtEx[2])) < params.angle_thresh_){
                     if (params.verbose_)
                         logger->info("	Computing Landmark Jacobian...");
                     
                     // compute landmark jacobian
                     computeJacobianPoint2Point2D(Jtr, JtJ, pV, dpV, q_p2p, params.w_p2p_, params.robust_, idx_p2p);
                     computeJacobianPoint2Line2D(Jtr, JtJ, pV, dpV, q_p2l, n_p2l, params.w_p2l_, params.robust_, idx_p2l);
-                }
+//                }
             }
             tm1 = clock(); logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
         }
@@ -279,7 +273,7 @@ void F2FHierarchicalGaussNewtonMultiView(FaceParams& fParam,
     MTR_END("GaussNewton", "cv::pyrDown");
     for (int i = hieLev - 1; i >= 0; --i)
     {
-        F2FGaussNewtonMultiView(fParam, cameras, renderer, faceModel, inputHieRGB[i], C_P2P, C_P2L, q2V, i, params);
+        F2FGaussNewtonMultiView(fParam, cameras, renderer, faceModel, inputHieRGB[i], C_P2P, C_P2L, q2V, i, params, logger);
     }
 }
 

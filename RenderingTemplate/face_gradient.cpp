@@ -1268,8 +1268,8 @@ void computeVertexWisePositionGradient2D(std::vector<Eigen::Vector2f>& pV,
         }
     }
     else{
-        assert(V.size()/3 == w_id.rows());
-        assert(V.size()/3 == w_ex.rows());
+        assert(V.size() == w_id.rows());
+        assert(V.size() == w_ex.rows());
         for (int i = 0; i < V.size()/3; ++i)
         {
             const Eigen::Matrix3Xf& w_idV = w_id.block(3 * i, 0, 3, (dof.ID>0 ? dof.ID : 1));

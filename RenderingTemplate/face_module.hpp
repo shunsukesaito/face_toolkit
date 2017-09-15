@@ -41,6 +41,8 @@ struct FaceModule
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
     
+    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
+    
     P2DFitParams p2d_param_;
     F2FParams f2f_param_;
     

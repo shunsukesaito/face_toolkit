@@ -280,11 +280,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/gui.cpp"
-            timestampString = "527143989.881506"
+            timestampString = "527149079.271857"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "267"
-            endingLineNumber = "267"
+            startingLineNumber = "268"
+            endingLineNumber = "268"
             landmarkName = "GUI::update()"
             landmarkType = "7">
          </BreakpointContent>
@@ -328,11 +328,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/f2f_optimizer.cpp"
-            timestampString = "527144838.955171"
+            timestampString = "527149284.724176"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "222"
-            endingLineNumber = "222"
+            startingLineNumber = "216"
+            endingLineNumber = "216"
             landmarkName = "F2FGaussNewtonMultiView(FaceParams&amp; fParam, std::vector&lt;Camera&gt;&amp; cameras, F2FRenderer&amp; renderer, const FaceModel&amp; fModel, const std::vector&lt; cv::Mat_&lt;cv::Vec4f&gt; &gt;&amp; inputRGBs, const std::vector&lt;P2P2DC&gt;&amp; C_P2P, std::vector&lt;P2L2DC&gt;&amp; C_P2L, const std::vector&lt; std::vector&lt;Eigen::Vector3f&gt; &gt;&amp; q2V, unsigned int level, const F2FParams&amp; params, std::shared_ptr&lt;spdlog::logger&gt; logger)"
             landmarkType = "9">
          </BreakpointContent>

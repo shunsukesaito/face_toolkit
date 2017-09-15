@@ -79,7 +79,7 @@ void FaceModule::update(cv::Mat& img)
         cv::cvtColor(img, tmp, CV_BGR2RGBA);
         tmp.convertTo(inputRGBs[0], CV_32F);
         inputRGBs[0] *= 1.f / 255.f;
-        F2FHierarchicalGaussNewtonMultiView(fParam_, cameras_, f2f_renderer_, fModel_, inputRGBs, c_p2p_, c_p2l_, convPoint(p2d_), f2f_param_);
+        F2FHierarchicalGaussNewtonMultiView(fParam_, cameras_, f2f_renderer_, fModel_, inputRGBs, c_p2p_, c_p2l_, convPoint(p2d_), f2f_param_, logger_);
     }
     
     fParam_.updateAll(fModel_);
