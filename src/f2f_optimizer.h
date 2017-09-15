@@ -24,7 +24,6 @@ struct F2FParams
     
     float gn_thresh_ = 1.e-6f; // gauss-newton threshold
     float mclose_thresh_ = 4.0f; // mouth close threshold
-    float angle_thresh_ = 20.0f; // head angle threshold
     float w_pix_ = 1.0f;
 //    float w_mc_ = 1000.0f; // mouth close
     float w_reg_pca_id_ = 5.e-5f;

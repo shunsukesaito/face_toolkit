@@ -28,7 +28,6 @@ void F2FParams::updateIMGUI()
         ImGui::InputInt("smoothLev", &smoothLev_);
         ImGui::InputFloat("GN threshold", &gn_thresh_);
         ImGui::InputFloat("MC threshold", &mclose_thresh_);
-        ImGui::InputFloat("Ang threshold", &angle_thresh_);
     }
 }
 #endif
@@ -105,18 +104,20 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
     }
     MTR_END("GaussNewton", "cv::Scharr");
     
-    tm1 = clock(); logger->info(" img grad: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
-    tm1 = clock(); logger->info(" setFaceVec: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+    tm1 = clock(); if (params.verbose_) logger->info(" img grad: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+    
+
+    tm1 = clock(); if (params.verbose_) logger->info(" setFaceVec: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
     if (params.verbose_)
         logger->info("	First Color Evaluation + Contour Line Search...");
     
-    tm1 = clock(); logger->info(" renderFace: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+    tm1 = clock(); if (params.verbose_)logger->info(" renderFace: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
     setFaceVector(X, Is, rt, fParam, cameras, dof);
     
-    tm1 = clock(); logger->info(" data/cucg init: ", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+    tm1 = clock(); if (params.verbose_) logger->info(" data/cucg init: ", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
     for (int i = 0; i < params.maxIter_[level]; ++i)
     {
@@ -179,21 +180,18 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
                 //    (q2V[j][63] - q2V[j][65]).norm() < params.mc_thresh_)
                 //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
 
-//                if (fabs(Eigen::radiansToDegrees(rtEx[0])) < params.angle_thresh_ &&
-//                    fabs(Eigen::radiansToDegrees(rtEx[1])) < params.angle_thresh_ &&
-//                    fabs(Eigen::radiansToDegrees(rtEx[2])) < params.angle_thresh_){
-                    if (params.verbose_)
-                        logger->info("	Computing Landmark Jacobian...");
-                    
-                    // compute landmark jacobian
-                    computeJacobianPoint2Point2D(Jtr, JtJ, pV, dpV, q_p2p, params.w_p2p_, params.robust_, idx_p2p);
-                    computeJacobianPoint2Line2D(Jtr, JtJ, pV, dpV, q_p2l, n_p2l, params.w_p2l_, params.robust_, idx_p2l);
-//                }
+                if (params.verbose_)
+                    logger->info("	Computing Landmark Jacobian...");
+                
+                // compute landmark jacobian
+                computeJacobianPoint2Point2D(Jtr, JtJ, pV, dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
+                computeJacobianPoint2Line2D(Jtr, JtJ, pV, dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
             }
-            tm1 = clock(); logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+            
+            tm1 = clock(); if (params.verbose_) logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
         }
-        
-        tm1 = clock(); logger->info(" camDataSet: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
+    
+        tm1 = clock(); if (params.verbose_)logger->info(" camDataSet: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
         
         if (dof.ID)
         {

@@ -68,9 +68,7 @@ void FaceModule::update(cv::Mat& img)
 {
     cv::Rect rect;
     fdetector_->GetFaceLandmarks(img, p2d_, rect);
-    //DrawLandmarks(img, p2d);
-    //cv::rectangle(img, rect, cv::Scalar(255,0,0));
-    
+
     if(enable_p2pfit_)
         P2DGaussNewtonMultiView(fParam_, cameras_, fModel_, c_p2p_, c_p2l_, convPoint(p2d_), p2d_param_);
     if(enable_f2f_){

@@ -63,9 +63,7 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     video_capture_.open(0);
     video_capture_ >> cur_img_;
-
     bg_renderer_.init(data_dir, cur_img_);
-    //bg_renderer_.init(data_dir, data_dir + "data/cosimo.png");
     
     face_module_.init(data_dir);
 }
@@ -79,6 +77,7 @@ void Renderer::draw()
 void Renderer::update()
 {
     video_capture_ >> cur_img_;
+    cv::flip(cur_img_, cur_img_, 1);
 
     face_module_.update(cur_img_);
 }

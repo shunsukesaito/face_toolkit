@@ -216,11 +216,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/renderer.cpp"
-            timestampString = "527128063.712288"
+            timestampString = "527191270.245865"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "70"
-            endingLineNumber = "70"
+            startingLineNumber = "68"
+            endingLineNumber = "68"
             landmarkName = "Renderer::init(int w, int h, std::string data_dir)"
             landmarkType = "7">
          </BreakpointContent>
@@ -280,11 +280,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/gui.cpp"
-            timestampString = "527149079.271857"
+            timestampString = "527190442.314442"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "268"
-            endingLineNumber = "268"
+            startingLineNumber = "271"
+            endingLineNumber = "271"
             landmarkName = "GUI::update()"
             landmarkType = "7">
          </BreakpointContent>
@@ -328,11 +328,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "RenderingTemplate/f2f_optimizer.cpp"
-            timestampString = "527149284.724176"
+            timestampString = "527191240.912877"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "216"
-            endingLineNumber = "216"
+            startingLineNumber = "214"
+            endingLineNumber = "214"
             landmarkName = "F2FGaussNewtonMultiView(FaceParams&amp; fParam, std::vector&lt;Camera&gt;&amp; cameras, F2FRenderer&amp; renderer, const FaceModel&amp; fModel, const std::vector&lt; cv::Mat_&lt;cv::Vec4f&gt; &gt;&amp; inputRGBs, const std::vector&lt;P2P2DC&gt;&amp; C_P2P, std::vector&lt;P2L2DC&gt;&amp; C_P2L, const std::vector&lt; std::vector&lt;Eigen::Vector3f&gt; &gt;&amp; q2V, unsigned int level, const F2FParams&amp; params, std::shared_ptr&lt;spdlog::logger&gt; logger)"
             landmarkType = "9">
          </BreakpointContent>

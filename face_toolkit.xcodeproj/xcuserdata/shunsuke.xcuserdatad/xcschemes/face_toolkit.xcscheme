@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "8F3454121EEC9E30007B479B"
-               BuildableName = "RenderingTemplate"
-               BlueprintName = "RenderingTemplate"
-               ReferencedContainer = "container:RenderingTemplate.xcodeproj">
+               BuildableName = "face_toolkit"
+               BlueprintName = "face_toolkit"
+               ReferencedContainer = "container:face_toolkit.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8F3454121EEC9E30007B479B"
-            BuildableName = "RenderingTemplate"
-            BlueprintName = "RenderingTemplate"
-            ReferencedContainer = "container:RenderingTemplate.xcodeproj">
+            BuildableName = "face_toolkit"
+            BlueprintName = "face_toolkit"
+            ReferencedContainer = "container:face_toolkit.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -47,7 +47,7 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "/Users/shunsuke/workspace/RenderingTemplate"
+      customWorkingDirectory = "/Users/shunsuke/workspace/face_toolkit"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
@@ -57,9 +57,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8F3454121EEC9E30007B479B"
-            BuildableName = "RenderingTemplate"
-            BlueprintName = "RenderingTemplate"
-            ReferencedContainer = "container:RenderingTemplate.xcodeproj">
+            BuildableName = "face_toolkit"
+            BlueprintName = "face_toolkit"
+            ReferencedContainer = "container:face_toolkit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -76,9 +76,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "8F3454121EEC9E30007B479B"
-            BuildableName = "RenderingTemplate"
-            BlueprintName = "RenderingTemplate"
-            ReferencedContainer = "container:RenderingTemplate.xcodeproj">
+            BuildableName = "face_toolkit"
+            BlueprintName = "face_toolkit"
+            ReferencedContainer = "container:face_toolkit.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

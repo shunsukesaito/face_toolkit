@@ -18,7 +18,6 @@
 #include "imgui.h"
 #endif
 
-//TOOD: include distortion coeff
 struct Camera
 {
     std::string name_;

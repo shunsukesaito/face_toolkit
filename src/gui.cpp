@@ -97,6 +97,9 @@ void GUI::keyboard(int key, int s, int a, int m)
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
         renderer_.face_module_.reset();
     }
+    if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
+        renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
+    }
 }
 
 void GUI::charMods(unsigned int c, int m)
