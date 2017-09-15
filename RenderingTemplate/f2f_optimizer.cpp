@@ -5,7 +5,31 @@
 #ifdef WITH_IMGUI
 void F2FParams::updateIMGUI()
 {
-    
+    if (ImGui::CollapsingHeader("F2F Parameters")){
+        ImGui::Checkbox("verbose", &verbose_);
+        ImGui::Checkbox("robust", &robust_);
+        ImGui::Checkbox("sym including exp", &sym_with_exp_);
+        ImGui::InputIntn("maxIter", &maxIter_[0], maxIter_.size());
+        ImGui::InputInt("DOF ID", &dof.ID);
+        ImGui::InputInt("DOF EX", &dof.EX);
+        ImGui::InputInt("DOF AL", &dof.AL);
+        ImGui::InputInt("DOF ROT", &dof.ROT);
+        ImGui::InputInt("DOF TR", &dof.TR);
+        ImGui::InputInt("DOF SH", &dof.SH);
+        ImGui::InputInt("DOF CAM", &dof.CAM);
+        ImGui::InputFloat("w P2P", &w_p2p_);
+        ImGui::InputFloat("w P2L", &w_p2l_);
+        ImGui::InputFloat("w P3D", &w_p3d_);
+        ImGui::InputFloat("w color", &w_pix_);
+        ImGui::InputFloat("w sym", &w_sym_);
+        ImGui::InputFloat("w PCA ex", &w_reg_pca_ex_);
+        ImGui::InputFloat("w PCA id", &w_reg_pca_id_);
+        ImGui::InputFloat("w PCA cl", &w_reg_pca_cl_);
+        ImGui::InputInt("smoothLev", &smoothLev_);
+        ImGui::InputFloat("GN threshold", &gn_thresh_);
+        ImGui::InputFloat("MC threshold", &mclose_thresh_);
+        ImGui::InputFloat("Ang threshold", &angle_thresh_);
+    }
 }
 #endif
 
@@ -131,8 +155,6 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
             
             renderer.render(w, h, cameras[j], fParam, renderTarget);
             
-            const auto& renderRGB = renderTarget[F2FRenderer::RT_NAMES::diffuse];
-
             if (params.verbose_)
                 logger->info("	Computing Vert-wise Position and its Gradient...");
             
@@ -153,7 +175,7 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
                 logger->info("	Computing Pixel-wise Color Jacobian...");
             
             if (params.w_pix_ != 0.f)
-                F2FRenderer::computeJacobianColor(Jtr, JtJ, w_cl, pV, dpV, nV, dnV, fParam.SH, renderTarget, renderRGB,
+                F2FRenderer::computeJacobianColor(Jtr, JtJ, w_cl, pV, dpV, nV, dnV, fParam.SH, renderTarget,
                                                   inputRGBs[j], dIxs[j], dIys[j], dof, params.w_pix_);
             
             if (q2V[j].size() != 0){
@@ -170,8 +192,8 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
                         logger->info("	Computing Landmark Jacobian...");
                     
                     // compute landmark jacobian
-                    computeJacobianPoint2Point2D(Jtr, JtJ, pV, dpV, q_p2p, params.w_landin_, params.robust_, idx_p2p);
-                    computeJacobianPoint2Line2D(Jtr, JtJ, pV, dpV, q_p2l, n_p2l, params.w_landcont_, params.robust_, idx_p2l);
+                    computeJacobianPoint2Point2D(Jtr, JtJ, pV, dpV, q_p2p, params.w_p2p_, params.robust_, idx_p2p);
+                    computeJacobianPoint2Line2D(Jtr, JtJ, pV, dpV, q_p2l, n_p2l, params.w_p2l_, params.robust_, idx_p2l);
                 }
             }
             tm1 = clock(); logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
@@ -184,7 +206,7 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
             // head test debug
             //computeJacobianModel3D(Jtr, JtJ, faceModel, faceModel.GetHeadVerts(), dof, params.w_head_, faceModel.get_head_indices());
             
-            computeJacobianSymmetry(Jtr, JtJ, d_id, d_ex, w_id, w_ex, sym_list, dof, params.w_sym_, params.with_exp_);
+            computeJacobianSymmetry(Jtr, JtJ, d_id, d_ex, w_id, w_ex, sym_list, dof, params.w_sym_, params.sym_with_exp_);
         }
         if (params.verbose_)
             logger->info("	Computing Regularization Jacobian...");

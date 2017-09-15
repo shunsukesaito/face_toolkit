@@ -47,13 +47,13 @@ void compute_rigid_motion(const Eigen::Matrix4f &intrinsic,
 						  const std::vector<Eigen::Vector3f> &q2d,
                           Eigen::Matrix4f& extrinsic);
 
-void P2DFittingMultiView(FaceParams& fParam,
-                         std::vector< Camera >& cameras,
-                         const FaceModel& fModel,
-                         const std::vector<P2P2DC>& C_P2P,
-                         std::vector<P2L2DC>& C_P2L,
-                         const std::vector<std::vector<Eigen::Vector3f>>& p2d,
-                         const P2DFitParams& params = P2DFitParams());
+void P2DGaussNewtonMultiView(FaceParams& fParam,
+                             std::vector< Camera >& cameras,
+                             const FaceModel& fModel,
+                             const std::vector<P2P2DC>& C_P2P,
+                             std::vector<P2L2DC>& C_P2L,
+                             const std::vector<std::vector<Eigen::Vector3f>>& p2d,
+                             const P2DFitParams& params = P2DFitParams());
 
 //void Landmark2DFittingWithContourMultiView(F2FFaceModel& faceModel,
 //                                           std::vector<hfm::Camera>& cameras,

@@ -74,7 +74,6 @@ struct F2FRenderer
                                       const std::vector<Eigen::MatrixXf>& dnV,
                                       const Eigen::MatrixX3f& sh,
                                       const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
-                                      const cv::Mat_<cv::Vec4f>& renderRGB,
                                       const cv::Mat_<cv::Vec4f>& inputRGB,
                                       const cv::Mat_<cv::Vec3f>& dIx,
                                       const cv::Mat_<cv::Vec3f>& dIy,

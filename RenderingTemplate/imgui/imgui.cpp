@@ -8530,6 +8530,11 @@ bool ImGui::InputInt4(const char* label, int v[4], ImGuiInputTextFlags extra_fla
     return InputIntN(label, v, 4, extra_flags);
 }
 
+bool ImGui::InputIntn(const char* label, int* v, int size,  ImGuiInputTextFlags extra_flags)
+{
+    return InputIntN(label, v, size, extra_flags);
+}
+
 static bool Items_ArrayGetter(void* data, int idx, const char** out_text)
 {
     const char* const* items = (const char* const*)data;

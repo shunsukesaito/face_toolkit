@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8F1E48E81F6B2C6F0051FC8C /* face_module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E48E61F6B2C6F0051FC8C /* face_module.cpp */; };
 		8F1E48F01F6B4F230051FC8C /* p3d_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E48EE1F6B4F230051FC8C /* p3d_renderer.cpp */; };
+		8F1E48F31F6B99B50051FC8C /* p2d_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E48F11F6B99B50051FC8C /* p2d_renderer.cpp */; };
 		8F212E811F50C5CD005099A2 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F212E801F50C5CD005099A2 /* OpenGL.framework */; };
 		8F3454171EEC9E30007B479B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F3454161EEC9E30007B479B /* main.cpp */; };
 		8F34541F1EECA0C1007B479B /* gl_core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F34541D1EECA0C1007B479B /* gl_core.cpp */; };
@@ -67,6 +68,8 @@
 		8F1E48E71F6B2C6F0051FC8C /* face_module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = face_module.hpp; sourceTree = "<group>"; };
 		8F1E48EE1F6B4F230051FC8C /* p3d_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = p3d_renderer.cpp; sourceTree = "<group>"; };
 		8F1E48EF1F6B4F230051FC8C /* p3d_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = p3d_renderer.hpp; sourceTree = "<group>"; };
+		8F1E48F11F6B99B50051FC8C /* p2d_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = p2d_renderer.cpp; sourceTree = "<group>"; };
+		8F1E48F21F6B99B50051FC8C /* p2d_renderer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = p2d_renderer.hpp; sourceTree = "<group>"; };
 		8F212E801F50C5CD005099A2 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		8F3454131EEC9E30007B479B /* RenderingTemplate */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RenderingTemplate; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F3454161EEC9E30007B479B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -180,6 +183,8 @@
 				8F5A981F1F564B5300DDF204 /* f2f_renderer.hpp */,
 				8F1E48EE1F6B4F230051FC8C /* p3d_renderer.cpp */,
 				8F1E48EF1F6B4F230051FC8C /* p3d_renderer.hpp */,
+				8F1E48F11F6B99B50051FC8C /* p2d_renderer.cpp */,
+				8F1E48F21F6B99B50051FC8C /* p2d_renderer.hpp */,
 			);
 			name = renderer;
 			sourceTree = "<group>";
@@ -406,6 +411,7 @@
 				8F34542D1EECD419007B479B /* camera.cpp in Sources */,
 				8FE2954F1F61E76D0021E914 /* imgui_demo.cpp in Sources */,
 				8FE2953E1F5F1C120021E914 /* face_model.cpp in Sources */,
+				8F1E48F31F6B99B50051FC8C /* p2d_renderer.cpp in Sources */,
 				8F3454361EECD460007B479B /* gl_mesh.cpp in Sources */,
 				8FB59A211F66F2C600D84C03 /* p2d_optimizer.cpp in Sources */,
 				8F84338C1F6AF9DA00F1E003 /* LearnGAB.cc in Sources */,

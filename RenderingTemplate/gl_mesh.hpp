@@ -30,11 +30,13 @@ struct glPoint2D
     std::vector<glm::vec2> pts_;
     std::vector<glm::vec4> clr_;
     
-    void init(GLProgram&,
-              int width,
-              int height,
-              const std::vector<Eigen::Vector2f>&,
-              const Eigen::Vector4f&);
+    void init(GLProgram& prog);
+    
+    void update(GLProgram& prog,
+                int width,
+                int height,
+                const std::vector<Eigen::Vector2f>& pts,
+                const Eigen::Vector4f& clr);
 };
 
 struct glMesh
@@ -111,6 +113,10 @@ struct glMesh
     
     void update(GLProgram& prog,
                 const std::vector<Eigen::Vector3f>& pts);
+    
+    void update(GLProgram& prog,
+                const std::vector<Eigen::Vector3f>& pts,
+                const Eigen::Vector4f& clr);
     
     void update(GLProgram& prog,
                 const Eigen::VectorXf& pts,

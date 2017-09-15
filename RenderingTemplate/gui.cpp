@@ -112,12 +112,13 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_y = y;
     
     Camera& cam = renderer_.face_module_.getCamera();
-    Eigen::Matrix4f& RT = cam.extrinsic_;
     
     switch (mouse_mode)
     {
         case MouseMode::Rotation:
         {
+            Eigen::Matrix4f RT = curRT;
+            
             Eigen::Quaternion<float> q;
             trackball(width_, height_, rot_scale, down_mouse_x, down_mouse_y, current_mouse_x, current_mouse_y, q);
             
@@ -125,13 +126,19 @@ void GUI::mouseMotion(double x, double y)
             Eigen::Matrix3f Rpre = curRT.block<3,3>(0,0);
             RT.block<3,3>(0,0) = curRT.block<3,3>(0,0)*R;
             RT.block<3,1>(0,3) = RT.block<3,3>(0,0)*Rpre.transpose()*(curRT.block<3,1>(0,3)-lookat)+lookat;
+            
+            cam.extrinsic_ = RT.inverse();
             break;
         }
         case MouseMode::Translation:
         {
+            Eigen::Matrix4f RT = curRT;
+            
             double dx = down_mouse_x - current_mouse_x;
             double dy = down_mouse_y - current_mouse_y;
             RT.block<3,1>(0,3) = tr_scale*((float)dx * right + (float)dy * up) + curRT.block<3,1>(0,3);
+            
+            cam.extrinsic_ = RT.inverse();
             break;
         }
         case MouseMode::Zoom:
@@ -167,7 +174,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = renderer_.face_module_.getCamera().extrinsic_;
+    curRT = renderer_.face_module_.getCamera().extrinsic_.inverse();
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
     right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
@@ -191,7 +198,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 void GUI::mouseUp(MouseButton mb, int m)
 {
     Camera& cam = renderer_.face_module_.getCamera();
-    Eigen::Matrix4f& RT = cam.extrinsic_;
+    Eigen::Matrix4f RT = cam.extrinsic_.inverse();
     
     if(mb == MouseButton::Right)
         lookat += RT.block<3,1>(0,3) - curRT.block<3,1>(0,3);
@@ -201,7 +208,7 @@ void GUI::mouseUp(MouseButton mb, int m)
 void GUI::mouseScroll(double x, double y)
 {
     Camera& cam = renderer_.face_module_.getCamera();
-    Eigen::Matrix4f& RT = cam.extrinsic_;
+    Eigen::Matrix4f RT = cam.extrinsic_.inverse();
 
     float scale = 0.01;
     Eigen::Vector3f t = RT.block<3,1>(0,3) - lookat;
@@ -209,6 +216,8 @@ void GUI::mouseScroll(double x, double y)
     t = (1.0 + scale * y)*t;
     
     RT.block<3,1>(0,3) = t + lookat;
+    
+    cam.extrinsic_ = RT.inverse();
 }
 
 void GUI::init(int w, int h)

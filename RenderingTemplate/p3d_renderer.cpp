@@ -47,7 +47,7 @@ void P3DRenderer::render(const Camera& camera,
     
     camera.updateUniforms(prog, RT, false, false);
     
-    p3d_.update(prog, pts);
+    p3d_.update(prog, pts, Eigen::Vector4f(0,0,1,1));
     
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);

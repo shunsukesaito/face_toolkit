@@ -57,7 +57,7 @@ void Camera::updateUniforms(GLProgram& program, bool with_mv, bool with_bias) co
     
     Eigen::Matrix4f MVP;
     Eigen::Matrix4f perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    Eigen::Matrix4f MV = extrinsic_.inverse();
+    Eigen::Matrix4f MV = extrinsic_;
     MVP = perspective * MV;
     
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
@@ -76,7 +76,7 @@ void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool 
 
     Eigen::Matrix4f MVP;
     Eigen::Matrix4f perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    Eigen::Matrix4f MV = extrinsic_.inverse() * RT;
+    Eigen::Matrix4f MV = extrinsic_ * RT;
     MVP = perspective * MV;
     
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;

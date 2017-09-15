@@ -34,27 +34,34 @@ void glPlane::init(GLProgram &program, float z)
     program.setAttributeData("v_texcoord", uvs_);
 }
 
-void glPoint2D::init(GLProgram& program,
-                     int width,
-                     int height,
-                     const std::vector<Eigen::Vector2f>& pts,
-                     const Eigen::Vector4f& clr)
+void glPoint2D::init(GLProgram& program)
 {
     pts_.clear();
     clr_.clear();
 
     program.createAttribute("v_p2d", DataType::VECTOR2, false);
     program.createAttribute("v_color", DataType::VECTOR4, false);
+}
+
+void glPoint2D::update(GLProgram& program,
+                       int width,
+                       int height,
+                       const std::vector<Eigen::Vector2f>& pts,
+                       const Eigen::Vector4f& clr)
+{
+    pts_.clear();
+    clr_.clear();
     
     for(int i = 0; i < pts.size(); ++i)
     {
         pts_.push_back(glm::vec2(pts[i](0)/(float)width,pts[i](1)/(float)height));
         clr_.push_back(glm::vec4(clr(0),clr(1),clr(2),clr(3)));
     }
-
-   program.setAttributeData("v_p2d", pts_);
-   program.setAttributeData("v_color", clr_);
+    
+    program.setAttributeData("v_p2d", pts_);
+    program.setAttributeData("v_color", clr_);
 }
+
 
 void glMesh::init(GLProgram& program,
                   const Eigen::VectorXf& pts,
@@ -442,6 +449,22 @@ void glMesh::update(GLProgram& program,
     }
     
     program.setAttributeData("v_position", pts_);
+}
+
+void glMesh::update(GLProgram& program,
+                    const std::vector<Eigen::Vector3f>& pts,
+                    const Eigen::Vector4f& clr)
+{
+    pts_.resize(pts.size());
+    clr_.resize(pts.size());
+    for(int i = 0; i < pts_.size(); ++i)
+    {
+        pts_[i] = glm::vec3(pts[i](0),pts[i](1),pts[i](2));
+        clr_[i] = glm::vec4(clr(0),clr(1),clr(2),clr(3));
+    }
+    
+    program.setAttributeData("v_position", pts_);
+    program.setAttributeData("v_color", clr_);
 }
 
 

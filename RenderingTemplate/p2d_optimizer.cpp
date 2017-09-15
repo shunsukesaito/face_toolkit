@@ -108,13 +108,13 @@ bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,
     return true;
 }
 
-void P2DFittingMultiView(FaceParams& fParam,
-                         std::vector< Camera >& cameras,
-                         const FaceModel& fModel,
-                         const std::vector<P2P2DC>& C_P2P,
-                         std::vector<P2L2DC>& C_P2L,
-                         const std::vector<std::vector<Eigen::Vector3f>>& q2V,
-                         const P2DFitParams& params)
+void P2DGaussNewtonMultiView(FaceParams& fParam,
+                             std::vector< Camera >& cameras,
+                             const FaceModel& fModel,
+                             const std::vector<P2P2DC>& C_P2P,
+                             std::vector<P2L2DC>& C_P2L,
+                             const std::vector<std::vector<Eigen::Vector3f>>& q2V,
+                             const P2DFitParams& params)
 {
     MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
     const DOF& dof = params.dof;
@@ -154,7 +154,7 @@ void P2DFittingMultiView(FaceParams& fParam,
         {
             const Eigen::Matrix4f& RTc = cameras[j].extrinsic_;
             Eigen::Matrix4f RTall = RTc * fParam.RT;
-            Eigen::Vector6f rtall = Eigen::ConvertToEulerAnglesPose(RTall);
+            //Eigen::Vector6f rtall = Eigen::ConvertToEulerAnglesPose(RTall);
             
             if (q2V[j].size() != 0){
                 //faceModel.UpdateFaceContour(cameras[j]);
@@ -190,7 +190,7 @@ void P2DFittingMultiView(FaceParams& fParam,
         
         for(int j = 0; j < Jtr.size(); ++j)
         {
-            JtJ(j,j) += 1.e-6;
+            JtJ(j,j) += 1.e-4;
         }
         
         dX = JtJ.ldlt().solve(Jtr);

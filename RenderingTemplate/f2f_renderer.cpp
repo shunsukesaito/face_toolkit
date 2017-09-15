@@ -11,7 +11,6 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                                         const std::vector<Eigen::MatrixXf>& dnV,
                                         const Eigen::MatrixX3f& sh,
                                         const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
-                                        const cv::Mat_<cv::Vec4f>& renderRGB,
                                         const cv::Mat_<cv::Vec4f>& inputRGB,
                                         const cv::Mat_<cv::Vec3f>& dIx,
                                         const cv::Mat_<cv::Vec3f>& dIy,
@@ -51,7 +50,7 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     {
         for (unsigned int i = 1; i < width - 1; ++i)
         {
-            const auto& c = renderRGB(j, i);
+            const auto& c = renderTarget[RT_NAMES::diffuse](j, i);
             const auto& al = renderTarget[RT_NAMES::colors](j, i);
             // if it's face region
             // NOTE: we probably wanna consider facial segmentation later on.
