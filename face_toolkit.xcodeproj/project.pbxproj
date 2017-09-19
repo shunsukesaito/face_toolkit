@@ -37,6 +37,10 @@
 		8F1E49521F6C507C0051FC8C /* tiny_obj_loader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49331F6C507C0051FC8C /* tiny_obj_loader.cc */; };
 		8F1E49531F6C507C0051FC8C /* trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49351F6C507C0051FC8C /* trackball.cpp */; };
 		8F1E495A1F6C517F0051FC8C /* source.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49591F6C517F0051FC8C /* source.cpp */; };
+		8F1E49731F6C7B4F0051FC8C /* fern.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E496D1F6C7B4F0051FC8C /* fern.cc */; };
+		8F1E49741F6C7B4F0051FC8C /* regressor.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E496F1F6C7B4F0051FC8C /* regressor.cc */; };
+		8F1E49751F6C7B4F0051FC8C /* model.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49711F6C7B4F0051FC8C /* model.cc */; };
+		8F1E49781F70DDCF0051FC8C /* train_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49761F70DDCF0051FC8C /* train_util.cpp */; };
 		8F212E811F50C5CD005099A2 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F212E801F50C5CD005099A2 /* OpenGL.framework */; };
 		8F3454241EECA18F007B479B /* libgflags.2.2.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */; };
 		8F3454261EECA1A0007B479B /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3454251EECA1A0007B479B /* libGLEW.a */; };
@@ -129,6 +133,14 @@
 		8F1E49351F6C507C0051FC8C /* trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = trackball.cpp; path = src/trackball.cpp; sourceTree = SOURCE_ROOT; };
 		8F1E49361F6C507C0051FC8C /* trackball.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = trackball.hpp; path = src/trackball.hpp; sourceTree = SOURCE_ROOT; };
 		8F1E49591F6C517F0051FC8C /* source.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = source.cpp; path = external/dlib/all/source.cpp; sourceTree = SOURCE_ROOT; };
+		8F1E496D1F6C7B4F0051FC8C /* fern.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fern.cc; path = src/regressor/fern.cc; sourceTree = SOURCE_ROOT; };
+		8F1E496E1F6C7B4F0051FC8C /* fern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fern.h; path = src/regressor/fern.h; sourceTree = SOURCE_ROOT; };
+		8F1E496F1F6C7B4F0051FC8C /* regressor.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = regressor.cc; path = src/regressor/regressor.cc; sourceTree = SOURCE_ROOT; };
+		8F1E49701F6C7B4F0051FC8C /* regressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = regressor.h; path = src/regressor/regressor.h; sourceTree = SOURCE_ROOT; };
+		8F1E49711F6C7B4F0051FC8C /* model.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = model.cc; path = src/regressor/model.cc; sourceTree = SOURCE_ROOT; };
+		8F1E49721F6C7B4F0051FC8C /* model.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = model.h; path = src/regressor/model.h; sourceTree = SOURCE_ROOT; };
+		8F1E49761F70DDCF0051FC8C /* train_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = train_util.cpp; path = src/regressor/train_util.cpp; sourceTree = SOURCE_ROOT; };
+		8F1E49771F70DDCF0051FC8C /* train_util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = train_util.hpp; path = src/regressor/train_util.hpp; sourceTree = SOURCE_ROOT; };
 		8F212E801F50C5CD005099A2 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		8F3454131EEC9E30007B479B /* RenderingTemplate */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = RenderingTemplate; path = face_toolkit; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgflags.2.2.0.dylib; path = external/gflags/lib/mac/libgflags.2.2.0.dylib; sourceTree = "<group>"; };
@@ -316,8 +328,9 @@
 				8F1E49581F6C51000051FC8C /* module */,
 				8F1E49571F6C50E70051FC8C /* optimizer */,
 				8F1E49561F6C50CB0051FC8C /* renderer */,
-				8F1E49551F6C50AC0051FC8C /* gl_utility */,
+				8F530E0D1F71A12D00E4380E /* regressor */,
 				8F1E49541F6C50830051FC8C /* utility */,
+				8F1E49551F6C50AC0051FC8C /* gl_utility */,
 				8F1E49021F6C507C0051FC8C /* face_model.cpp */,
 				8F1E49031F6C507C0051FC8C /* face_model.hpp */,
 				8F1E490E1F6C507C0051FC8C /* gui.cpp */,
@@ -326,6 +339,21 @@
 			);
 			name = src;
 			path = RenderingTemplate;
+			sourceTree = "<group>";
+		};
+		8F530E0D1F71A12D00E4380E /* regressor */ = {
+			isa = PBXGroup;
+			children = (
+				8F1E496D1F6C7B4F0051FC8C /* fern.cc */,
+				8F1E496E1F6C7B4F0051FC8C /* fern.h */,
+				8F1E496F1F6C7B4F0051FC8C /* regressor.cc */,
+				8F1E49701F6C7B4F0051FC8C /* regressor.h */,
+				8F1E49711F6C7B4F0051FC8C /* model.cc */,
+				8F1E49721F6C7B4F0051FC8C /* model.h */,
+				8F1E49761F70DDCF0051FC8C /* train_util.cpp */,
+				8F1E49771F70DDCF0051FC8C /* train_util.hpp */,
+			);
+			name = regressor;
 			sourceTree = "<group>";
 		};
 		8FDF97531F50EAFD0038065A /* shaders */ = {
@@ -410,6 +438,7 @@
 				8F1E49411F6C507C0051FC8C /* gl_mesh.cpp in Sources */,
 				8F1E49451F6C507C0051FC8C /* imgui_draw.cpp in Sources */,
 				8F1E49401F6C507C0051FC8C /* gl_core.cpp in Sources */,
+				8F1E49751F6C7B4F0051FC8C /* model.cc in Sources */,
 				8F1E494E1F6C507C0051FC8C /* p2d_renderer.cpp in Sources */,
 				8F1E49501F6C507C0051FC8C /* renderer.cpp in Sources */,
 				8F1E494D1F6C507C0051FC8C /* p2d_optimizer.cpp in Sources */,
@@ -418,6 +447,8 @@
 				8F1E495A1F6C517F0051FC8C /* source.cpp in Sources */,
 				8F1E49471F6C507C0051FC8C /* main.cpp in Sources */,
 				8F1E49381F6C507C0051FC8C /* camera.cpp in Sources */,
+				8F1E49731F6C7B4F0051FC8C /* fern.cc in Sources */,
+				8F1E49741F6C7B4F0051FC8C /* regressor.cc in Sources */,
 				8F1E493B1F6C507C0051FC8C /* face_2dtracker.cc in Sources */,
 				8F1E493A1F6C507C0051FC8C /* f2f_renderer.cpp in Sources */,
 				8F1E49521F6C507C0051FC8C /* tiny_obj_loader.cc in Sources */,
@@ -432,6 +463,7 @@
 				8F1E493D1F6C507C0051FC8C /* face_model.cpp in Sources */,
 				8F1E49491F6C507C0051FC8C /* minitrace.c in Sources */,
 				8F1E494C1F6C507C0051FC8C /* TrainDetector.cc in Sources */,
+				8F1E49781F70DDCF0051FC8C /* train_util.cpp in Sources */,
 				8F1E49441F6C507C0051FC8C /* imgui_demo.cpp in Sources */,
 				8F1E49391F6C507C0051FC8C /* f2f_optimizer.cpp in Sources */,
 				8F1E49481F6C507C0051FC8C /* mesh_renderer.cpp in Sources */,

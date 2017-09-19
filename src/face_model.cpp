@@ -39,6 +39,8 @@ static void computeEdgeBasis(std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_ed
 
 void FaceParams::updateIdentity(const FaceModel& model)
 {
+    if(model.sigma_id_.size() == 0) return;
+
     assert(model.w_id_.cols() == idCoeff.size());
     d_id_ = model.w_id_ * idCoeff;
     neu_ = model.mu_id_ + d_id_;
@@ -46,6 +48,7 @@ void FaceParams::updateIdentity(const FaceModel& model)
 
 void FaceParams::updateExpression(const FaceModel& model)
 {
+    if(model.sigma_ex_.size() == 0) return;
     assert(model.w_ex_.cols() == exCoeff.size());
 
     d_ex_ = model.w_ex_ * exCoeff;
@@ -56,6 +59,7 @@ void FaceParams::updateExpression(const FaceModel& model)
 
 void FaceParams::updateColor(const FaceModel& model)
 {
+    if(model.sigma_cl_.size() == 0) return;
     assert(model.w_cl_.cols() == alCoeff.size());
 
     clr_ = model.mu_cl_ + model.w_cl_ * alCoeff;
