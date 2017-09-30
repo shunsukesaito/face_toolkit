@@ -6,6 +6,8 @@
 void F2FParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("F2F Parameters")){
+        ImGui::Checkbox("Run", &run_);
+        
         ImGui::Checkbox("verbose", &verbose_);
         ImGui::Checkbox("robust", &robust_);
         ImGui::Checkbox("sym including exp", &sym_with_exp_);
@@ -174,11 +176,7 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
                                                   inputRGBs[j], dIxs[j], dIys[j], dof, params.w_pix_);
             
             if (q2V[j].size() != 0){
-                // TODO:
-                //if ((q2V[j][61] - q2V[j][67]).norm() < params.mc_thresh_ &&
-                //    (q2V[j][62] - q2V[j][66]).norm() < params.mc_thresh_ &&
-                //    (q2V[j][63] - q2V[j][65]).norm() < params.mc_thresh_)
-                //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
+                // TODO: add mouth close contraints 
 
                 if (params.verbose_)
                     logger->info("	Computing Landmark Jacobian...");
@@ -195,8 +193,7 @@ void F2FGaussNewtonMultiView(FaceParams& fParam,
         
         if (dof.ID)
         {
-            // head test debug
-            //computeJacobianModel3D(Jtr, JtJ, faceModel, faceModel.GetHeadVerts(), dof, params.w_head_, faceModel.get_head_indices());
+            // TODO: head constraints
             
             computeJacobianSymmetry(Jtr, JtJ, d_id, d_ex, w_id, w_ex, sym_list, dof, params.w_sym_, params.sym_with_exp_);
         }

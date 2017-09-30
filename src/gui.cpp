@@ -11,7 +11,26 @@
 #include "obj_loader.hpp"
 #include "trackball.hpp"
 
+struct Session{
+    ModuleHandle capture_module_;
+    ModuleHandle face_module_;
+    
+    CapQueueHandle capture_queue_;
+    FaceQueueHandle result_queue_;
+    
+    CmdQueueHandle capture_control_queue_;
+    CmdQueueHandle face_control_queue_;
+    
+    std::thread capture_thread, face_thread;
+};
+
 GUI* GUI::instance = new GUI();
+
+// Leak session, because otherwise the application
+// crashes in the CaptureModule destructor.
+// The problem might be windows-specific. Needs some investigation.
+// XXX: remove when the problem is fixed
+Session &session = *(new Session());
 
 void GUI::setInstance(GUI *gui)
 {
@@ -86,19 +105,24 @@ void GUI::resize(int w, int h)
 
 void GUI::keyboard(int key, int s, int a, int m)
 {
-    Camera& cam = renderer_.face_module_.getCamera();
+    Camera& cam = result_.camera;
     Eigen::Matrix4f& RT = cam.extrinsic_;
     
+    if(key == GLFW_KEY_F1 && a == GLFW_PRESS){
+        std::lock_guard<std::mutex> lock(result_mutex_);
+        result_.fParam.saveObj("cur_mesh.obj", *face_model_);
+    }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
-        lookat = getCenter(renderer_.face_module_.fParam_.pts_);
+        std::lock_guard<std::mutex> lock(result_mutex_);
+        lookat = getCenter(result_.fParam.pts_);
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
-        renderer_.face_module_.reset();
+        //renderer_.face_module_.reset();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
-        renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
+        //renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
     }
 }
 
@@ -114,7 +138,7 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_x = x;
     current_mouse_y = y;
     
-    Camera& cam = renderer_.face_module_.getCamera();
+    Camera& cam = result_.camera;
     
     switch (mouse_mode)
     {
@@ -177,7 +201,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = renderer_.face_module_.getCamera().extrinsic_.inverse();
+    curRT = result_.camera.extrinsic_.inverse();
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
     right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
@@ -200,7 +224,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 
 void GUI::mouseUp(MouseButton mb, int m)
 {
-    Camera& cam = renderer_.face_module_.getCamera();
+    Camera& cam = result_.camera;
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
     
     if(mb == MouseButton::Right)
@@ -210,7 +234,7 @@ void GUI::mouseUp(MouseButton mb, int m)
 
 void GUI::mouseScroll(double x, double y)
 {
-    Camera& cam = renderer_.face_module_.getCamera();
+    Camera& cam = result_.camera;
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
 
     float scale = 0.01;
@@ -228,9 +252,24 @@ void GUI::init(int w, int h)
     width_ = w;
     height_ = h;
     
-    renderer_.init(w, h, "./");
+    std::string data_dir = "./";
     
-    lookat = getCenter(renderer_.face_module_.fParam_.pts_);
+    session.capture_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
+    session.result_queue_ = FaceQueueHandle(new SPSCQueue<FaceResult>(4));
+    session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
+    session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
+
+    face_model_ = FaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    renderer_.init(w, h, face_model_, data_dir);
+    
+    p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
+    f2f_param_ = F2FParamsPtr(new F2FParams());
+    
+    session.capture_module_ = CaptureModule::Create("capture", data_dir, session.capture_queue_, session.capture_control_queue_);
+    session.face_module_ = FaceModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
+                                              session.capture_queue_, session.result_queue_, session.face_control_queue_);
+    
+    //lookat = getCenter(renderer_.face_module_.fParam_.pts_);
     
     GLFWwindow* window = renderer_.windows_[MAIN];
 
@@ -247,42 +286,65 @@ void GUI::init(int w, int h)
     glfwSetDropCallback(window,drop_callback);
 }
 
-void GUI::update()
-{
-    char title[256];
-    sprintf(title, "Main Window [fps: %.1f]", fps_.count());
-    glfwSetWindowTitle(renderer_.get_window(MAIN), title);
-
-    renderer_.update();
-    
-    clearBuffer(COLOR::COLOR_GREY);
-    int w, h;
-    glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
-    glViewport(0, 0, w, h);
-    
-    renderer_.draw();
-    
-#ifdef WITH_IMGUI
-    ImGui_ImplGlfwGL3_NewFrame();
-    ImGui::Begin("Control Panel", &show_control_panel_);
-    
-    renderer_.face_module_.updateIMGUI();
-
-    ImGui::End();
-    ImGui::Render();
-    
-#endif
-    
-    renderer_.flush();
-}
-
 void GUI::loop()
 {
     //GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     
+    session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
+    session.face_thread = std::thread([&](){ session.face_module_->Process(); });
+    
+    // this makes sure result has some value
+    while(!session.result_queue_->front())
+        ;
+    result_ = *session.result_queue_->front();
+    session.result_queue_->pop();
+    lookat = getCenter(result_.fParam.pts_);
+
     while(!glfwWindowShouldClose(renderer_.windows_[MAIN]))
     {
-        update();
+        if(session.result_queue_->front()){
+            std::lock_guard<std::mutex> lock(result_mutex_);
+            auto& result = *session.result_queue_->front();
+            
+            result_.img = result.img;
+            if(result.processed_){
+                result_.camera = result.camera;
+                result_.fParam = result.fParam;
+                result_.c_p2l = result.c_p2l;
+                result_.c_p2p = result.c_p2p;
+                result_.p2d = result.p2d;
+            }
+            
+            session.result_queue_->pop();
+            result_.fParam.updateAll(*face_model_);
+        }
+        
+        char title[256];
+        sprintf(title, "Main Window [fps: %.1f]", fps_.count());
+        glfwSetWindowTitle(renderer_.get_window(MAIN), title);
+
+        clearBuffer(COLOR::COLOR_GREY);
+        int w, h;
+        glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
+        glViewport(0, 0, w, h);
+        
+        renderer_.draw(result_);
+        
+#ifdef WITH_IMGUI
+        ImGui_ImplGlfwGL3_NewFrame();
+        ImGui::Begin("Control Panel", &show_control_panel_);
+        
+        renderer_.updateIMGUI();
+        result_.camera.updateIMGUI();
+        result_.fParam.updateIMGUI();
+        p2d_param_->updateIMGUI();
+        f2f_param_->updateIMGUI();
+        
+        ImGui::End();
+        ImGui::Render();
+#endif
+        
+        renderer_.flush();
         
         //glDeleteSync(tsync);
         //tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

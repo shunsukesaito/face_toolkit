@@ -17,8 +17,14 @@
 #include "framebuffer.hpp"
 #include "gl_mesh.hpp"
 #include "camera.hpp"
-#include "face_module.hpp"
+
 #include "bg_renderer.hpp"
+#include "f2f_renderer.hpp"
+#include "mesh_renderer.hpp"
+#include "p3d_renderer.hpp"
+#include "p2d_renderer.hpp"
+
+#include "face_module.hpp"
 
 #include "gl_utils.h"
 
@@ -81,33 +87,35 @@ struct Window {
 };
 
 struct Renderer {
+    std::string data_dir_;
+    
+    FaceModelPtr face_model_;
+    
     BGRenderer bg_renderer_;
-    cv::VideoCapture video_capture_;
-    cv::Mat cur_img_;
-    
-    FaceModule face_module_;
-    
+    F2FRenderer f2f_renderer_;
+    MeshRenderer mesh_renderer_;
+    P3DRenderer p3d_renderer_;
+    P2DRenderer p2d_renderer_;
+        
     int frame_;
     std::chrono::time_point<std::chrono::system_clock> cur_time_;
+    
+    bool initialized_ = false;
+    
+    bool show_mesh_ = false;
+    bool show_f2f_ = false;
+    bool show_p3d_ = false;
+    bool show_p2d_ = false;
 
     std::map<WINDOW, Window> windows_;
     Window & operator[](WINDOW idx) {return windows_[idx];}
     Window& get_window(WINDOW idx) { return windows_[idx]; }
     
-//    void launch(WINDOW window, void (RendererImpl::*func)(void)) {
-//        GLFWwindow* prev = glfwGetCurrentContext();
-//        if(prev != windows_[window])
-//            glfwMakeContextCurrent(windows_[window]);
-//        (this->*func)();
-//        if(prev != windows_[window])
-//            glfwMakeContextCurrent(prev);
-//    }
-    
     Renderer() {}
-    Renderer(int w, int h, std::string data_dir){ std::cout << w << " " << h << std::endl; init(w, h, data_dir); }
+    Renderer(int w, int h, FaceModelPtr fm, std::string data_dir){ init(w, h, fm, data_dir); }
     ~Renderer() {}
     
-    void init(int w, int h, std::string data_dir = "./");
+    void init(int w, int h, FaceModelPtr fm, std::string data_dir = "./");
     
     void flush() {
         glfwSwapBuffers(windows_[WINDOW::MAIN]);
@@ -115,8 +123,11 @@ struct Renderer {
     void resize(int supsample_scale, int width, int height) {
         windows_[WINDOW::MAIN].resize(supsample_scale, width, height);
     }
-    void draw();
-    void update();
+    void draw(FaceResult& result);
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
 };
 
 

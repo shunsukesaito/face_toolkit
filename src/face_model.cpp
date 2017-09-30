@@ -6,6 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -53,7 +54,7 @@ void FaceParams::updateExpression(const FaceModel& model)
 
     d_ex_ = model.w_ex_ * exCoeff;
     pts_ = neu_ + d_ex_;
-    
+
     calcNormal(nml_, pts_, model.tri_pts_);
 }
 
@@ -97,9 +98,35 @@ void FaceParams::init(const FaceModel& model)
     SH.col(0).setOnes();
     RT.setIdentity();
     
-    updateColor(model);
-    updateIdentity(model);
-    updateExpression(model);
+    updateAll(model);
+}
+
+void FaceParams::saveObj(const std::string& filename, const FaceModel& model)
+{
+    std::ofstream fout(filename);
+    if(fout.is_open()){
+        for(int i = 0; i < pts_.size()/3; ++i)
+        {
+            fout << "v " << pts_(i*3+0) << " " << pts_(i*3+1) << " " << pts_(i*3+2);
+            fout << " " << clr_(i*3+0) << " " << clr_(i*3+1) << " " << clr_(i*3+2) << std::endl;
+            fout << "vn " << nml_(i,0) << " " << nml_(i,1) << " " << nml_(i,2) << std::endl;
+        }
+        for(int i = 0; i < model.uvs_.rows(); ++i)
+        {
+            fout << "vt " << model.uvs_(i,0) << " " << model.uvs_(i,1) << std::endl;
+        }
+        
+        for(int i = 0; i < model.tri_pts_.rows(); ++i)
+        {
+            fout << "f " << model.tri_pts_(i,0)+1 << "/" << model.tri_uv_(i,0)+1 << "/" << model.tri_pts_(i,0)+1;
+            fout << " " << model.tri_pts_(i,1)+1 << "/" << model.tri_uv_(i,1)+1 << "/" << model.tri_pts_(i,1)+1;
+            fout << " " << model.tri_pts_(i,2)+1 << "/" << model.tri_uv_(i,2)+1 << "/" << model.tri_pts_(i,2)+1 << std::endl;
+        }
+        fout.close();
+    }
+    else{
+        std::cout << "Error: cannot open the file :" << filename << std::endl;
+    }
 }
 
 #ifdef WITH_IMGUI
@@ -134,7 +161,7 @@ void FaceParams::updateIMGUI()
 }
 #endif
 
-void FaceModel::saveBinaryModel(std::string file)
+void FaceModel::saveBinaryModel(const std::string& file)
 {
     FILE* fp;
     fp = fopen(file.c_str(), "wb");
@@ -181,7 +208,7 @@ void FaceModel::saveBinaryModel(std::string file)
     fclose(fp);
 }
 
-void FaceModel::loadBinaryModel(std::string file)
+void FaceModel::loadBinaryModel(const std::string& file)
 {
     FILE* fp;
     fp = fopen(file.c_str(), "rb");
@@ -234,7 +261,7 @@ void FaceModel::loadBinaryModel(std::string file)
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }
 
-void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
+void FaceModel::loadOldBinaryModel(const std::string& modelfile, const std::string& meshfile)
 {
     FILE* fp;
     fp = fopen(modelfile.c_str(), "rb");
@@ -322,8 +349,8 @@ void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
     fread(&w_cl_.data()[0], sizeof(float), w_cl_.size(), fp);
     
     // transforming shapeCoreTensor
-    float scale = 0.1;
-    Eigen::Matrix3f R = Eigen::Quaternion<float>(0,1,0,0).toRotationMatrix();
+    float scale = 1.e-4;
+    Eigen::Matrix3f R = Eigen::Matrix3f::Identity();//Eigen::Quaternion<float>(0,1,0,0).toRotationMatrix();
     for (int i = 0; i < property[0]; ++i)
     {
         mu_id_.b3(i) = scale*R*mu_id_.b3(i);
@@ -332,6 +359,18 @@ void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
         w_ex_.block(3 * i, 0, 3, property[3]) = scale*R*w_ex_.block(3 * i, 0, 3, property[3]);
     }
     
+//    // normalizing albedo basis + rescale to [0,1]
+//    w_id_ = w_id_*sigma_id_.asDiagonal();
+//    sigma_id_.setConstant(1.0f);
+//    
+//    w_ex_ = 0.02f*w_ex_*sigma_ex_.asDiagonal();
+//    sigma_ex_.setConstant(1.0f);
+//    
+//    // normalizing albedo basis + rescale to [0,1]
+//    mu_cl_ *= 1.f / 255.f;
+//    w_cl_ = 1.f / 255.f * w_cl_*sigma_cl_.asDiagonal();
+//    sigma_cl_.setOnes();
+
     // normalizing albedo basis + rescale to [0,1]
     mu_cl_ *= 1.f / 255.f;
     w_cl_ *= 1.f / 255.f;
@@ -343,4 +382,148 @@ void FaceModel::loadOldBinaryModel(std::string modelfile, std::string meshfile)
     loadObjFile(meshfile, pts, nml, uvs_, tri_pts_, tri_uv_);
     
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
+}
+
+void FaceModel::loadMMBinaryModel(const std::string& modelfile)
+{
+    std::string binary_model_name = modelfile;
+    
+    FILE* fp;
+    fp = fopen(binary_model_name.c_str(), "rb");
+    
+    if ( fp == NULL )
+    {   std::cout << binary_model_name << std::endl;
+        return;
+    }
+    
+    int property[8];
+    // 0: #vertices, 1:#triangles, 2: #identities, 3: #expression, 4: #symlist, 5: #symlist_tri, 6: #keypoints, 7: #segbin_tri
+    fread(&property[0], sizeof(int), 8, fp);
+    
+    // load triangle list
+    std::vector<int> tmp_tri(property[1]*3);
+    fread(&tmp_tri[0], sizeof(int), property[1]*3, fp);
+    
+    // load segmentation bin
+    std::vector<int> tmp_segbin(property[0]*4);
+    fread(&tmp_segbin[0],sizeof(int), property[0]*4, fp);
+    std::vector<int> tmp_segbintri(property[7]*4);
+    fread(&tmp_segbintri[0], sizeof(int), property[7]*4, fp);
+    
+    // load symmetry vertices list
+    std::vector<int> sym_list(property[4]*2);
+    if (property[4] != 0){
+        fread(&sym_list[0], sizeof(int), property[4] * 2, fp);
+    }
+    sym_list_.resize(property[4],2);
+    for(int i = 0; i < property[4]; ++i)
+    {
+        sym_list_(i, 0) = sym_list[i*2+0];
+        sym_list_(i, 1) = sym_list[i*2+1];
+    }
+    
+    // load symmetry triangles list
+    std::vector<int> tmp_sym_tri(property[5]*2);
+    if (property[5] != 0){
+        fread(&tmp_sym_tri[0], sizeof(int), property[5] * 2, fp);
+    }
+    // load key points
+    std::vector<int> key_points(property[6]);
+    fread(&key_points[0], sizeof(int), property[6], fp);
+    
+    std::vector<int> trimIndex(property[0]);
+    fread(&trimIndex[0], sizeof(int), property[0], fp);
+    
+    std::vector<int> map_tri(property[0]*2,-1);
+    int x = 0;
+    
+    for(int i = 0; i < trimIndex.size(); ++i)
+    {
+        map_tri[trimIndex[i]] = x++;
+    }
+    assert(x == property[0]);
+    
+    // note: somehow the original triangle is fliped
+    std::vector<int> tri_v;
+    for(int i = 0; i < tmp_tri.size()/3; ++i)
+    {
+        if(map_tri[tmp_tri[i*3+0]] != -1 && map_tri[tmp_tri[i*3+1]] != -1 && map_tri[tmp_tri[i*3+2]] != -1){
+            tri_v.push_back(map_tri[tmp_tri[i*3+2]]);
+            tri_v.push_back(map_tri[tmp_tri[i*3+1]]);
+            tri_v.push_back(map_tri[tmp_tri[i*3+0]]);
+        }
+    }
+    
+    tri_pts_.resize(tri_v.size()/3, 3);
+    tri_uv_.resize(tri_v.size()/3, 3);
+    for (size_t f = 0; f < tri_v.size()/3; f++)
+    {
+        tri_pts_(f,0) = tri_v[f*3+0];
+        tri_pts_(f,1) = tri_v[f*3+1];
+        tri_pts_(f,2) = tri_v[f*3+2];
+
+        tri_uv_(f,0) = tri_pts_(f,0);
+        tri_uv_(f,1) = tri_pts_(f,1);
+        tri_uv_(f,2) = tri_pts_(f,2);
+    }
+    
+    // load mean for shape, expression, and albedo
+    mu_id_.resize(property[0]*3);
+    mu_ex_.resize(property[0]*3);
+    mu_cl_.resize(property[0]*3);
+    
+    fread(&mu_id_.data()[0], sizeof(float), mu_id_.size(), fp);
+    fread(&mu_ex_.data()[0], sizeof(float), mu_ex_.size(), fp);
+    fread(&mu_cl_.data()[0], sizeof(float), mu_cl_.size(), fp);
+    
+    // load standard deviation for shape, expression, and albedo
+    sigma_id_.resize(property[2]);
+    sigma_ex_.resize(property[3]);
+    sigma_cl_.resize(property[2]);
+    
+    fread(&sigma_id_.data()[0], sizeof(float), sigma_id_.size(), fp);
+    fread(&sigma_ex_.data()[0], sizeof(float), sigma_ex_.size(), fp);
+    fread(&sigma_cl_.data()[0], sizeof(float), sigma_cl_.size(), fp);
+    
+    // load pca delta for shape, expression, and albedo
+    w_id_.resize(property[0]*3,property[2]);
+    w_ex_.resize(property[0]*3,property[3]);
+    w_cl_.resize(property[0]*3,property[2]);
+    
+    fread(&w_id_.data()[0], sizeof(float), w_id_.size(), fp);
+    fread(&w_ex_.data()[0], sizeof(float), w_ex_.size(), fp);
+    fread(&w_cl_.data()[0], sizeof(float), w_cl_.size(), fp);
+    
+    uvs_.resize(property[0],2);
+    std::vector<float> uvs(property[0]*2);
+    fread(&uvs[0], sizeof(float), uvs_.size(), fp);
+    for(int i = 0; i < uvs_.rows(); ++i)
+    {
+        uvs_(i,0) = uvs[i*2+0];
+        uvs_(i,1) = uvs[i*2+1];
+    }
+    
+    // transforming shapeCoreTensor
+    float scale = 1.e4;
+    Eigen::Matrix3f R = Eigen::Matrix3f::Identity();//Eigen::Quaternion<float>(0,1,0,0).toRotationMatrix();
+    for (int i = 0; i < property[0]; ++i)
+    {
+        mu_id_.b3(i) = scale*R*mu_id_.b3(i);
+        mu_ex_.b3(i) = scale*R*mu_ex_.b3(i);
+        w_id_.block(3 * i, 0, 3, property[2]) = scale*R*w_id_.block(3 * i, 0, 3, property[2]);
+        w_ex_.block(3 * i, 0, 3, property[3]) = scale*R*w_ex_.block(3 * i, 0, 3, property[3]);
+    }
+    
+    fclose(fp);
+    
+    computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
+}
+
+FaceModelPtr FaceModel::LoadModel(const std::string& file)
+{
+    auto model = FaceModelPtr(new FaceModel());
+    
+    model->loadBinaryModel(file);
+    
+    return model;
 }

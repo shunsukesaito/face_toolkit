@@ -18,6 +18,8 @@ using namespace std;
 
 struct P2DFitParams
 {
+    bool run_ = false;
+    
     DOF dof = DOF(40, 20, 0, 3, 3, 0, 0);
     
     int maxIter_ = 10;
@@ -37,6 +39,8 @@ struct P2DFitParams
     void updateIMGUI();
 #endif
 };
+
+typedef std::shared_ptr<P2DFitParams> P2DFitParamsPtr;
 
 bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,
                     const std::vector<Eigen::Vector3f> &p,

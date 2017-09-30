@@ -10,7 +10,10 @@
 #define GUI_hpp
 
 #include <stdio.h>
+#include <thread>
 
+#include "capture_module.hpp"
+#include "face_module.hpp"
 #include "renderer.hpp"
 #include "fps.hpp"
 
@@ -51,11 +54,18 @@ public:
 
     void init(int w, int h);
     void loop();
-    void update();
     
 private:
     FPSCounter fps_;
+    
     Renderer renderer_;
+    
+    FaceModelPtr face_model_;
+    P2DFitParamsPtr p2d_param_;
+    F2FParamsPtr f2f_param_;
+    
+    std::mutex result_mutex_;
+    FaceResult result_;
     
 #ifdef WITH_IMGUI
     bool show_control_panel_ = true;

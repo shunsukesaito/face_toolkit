@@ -14,6 +14,8 @@
 
 struct F2FParams
 {
+    bool run_ = false;
+    
     DOF dof = DOF( 40, 40, 40, 3, 3, 0, 27);
 
     std::vector<int> maxIter_ = {0, 3, 5, 5};
@@ -44,6 +46,8 @@ struct F2FParams
     void updateIMGUI();
 #endif
 };
+
+typedef std::shared_ptr<F2FParams> F2FParamsPtr;
 
 // renderTarget contains 
 // positions,normals,colors,vIndices,vBarycentric,texCoords

@@ -18,6 +18,10 @@
 #include "imgui.h"
 #endif
 
+struct Camera;
+
+typedef std::shared_ptr<Camera> CameraPtr;
+
 struct Camera
 {
     std::string name_;
@@ -36,7 +40,7 @@ struct Camera
     Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w = false);
     Camera(const Camera&);
     
-    void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias) const;
+    static void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias);
     void updateUniforms(GLProgram& program, bool with_mv, bool with_bias) const;
     void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
     

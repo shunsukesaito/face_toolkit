@@ -9,7 +9,6 @@
 #include "p3d_renderer.hpp"
 
 void P3DRenderer::init(std::string data_dir,
-                       const Camera& camera,
                        const std::vector<Eigen::Vector3f>& pts)
 {
     programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert",
@@ -17,8 +16,7 @@ void P3DRenderer::init(std::string data_dir,
                                   DrawMode::POINTS);
     auto& prog = programs_["p3d"];
     
-    camera.intializeUniforms(prog, false, false);
-    camera.updateUniforms(prog, false, false);
+    Camera::intializeUniforms(prog, false, false);
     
     p3d_.init(prog, pts, Eigen::Vector4f(0,0,1,1));
 }

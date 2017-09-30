@@ -10,6 +10,7 @@
 #define face_model_hpp
 
 #include <array>
+#include <mutex>
 
 #include "EigenHelper.h"
 
@@ -18,6 +19,10 @@
 #endif
 
 struct FaceModel;
+struct FaceParams;
+
+typedef std::shared_ptr<FaceParams> FaceParamsPtr;
+typedef std::shared_ptr<FaceModel> FaceModelPtr;
 
 struct FaceParams
 {
@@ -52,6 +57,7 @@ struct FaceParams
     Eigen::Vector3f computeV(int i, const FaceModel& model) const;
     
     void init(const FaceModel& model);
+    void saveObj(const std::string& filename, const FaceModel& model);
     
 #ifdef WITH_IMGUI
     void updateIMGUI();
@@ -87,10 +93,13 @@ struct FaceModel
     std::vector<std::array<Eigen::Matrix3Xf, 2>> id_edge_;
     std::vector<std::array<Eigen::Matrix3Xf, 2>> ex_edge_;
     
-    void saveBinaryModel(std::string file);
-    void loadBinaryModel(std::string file);
+    void saveBinaryModel(const std::string& file);
+    void loadBinaryModel(const std::string& file);
     
-    void loadOldBinaryModel(std::string modelfile, std::string meshfile);
+    void loadOldBinaryModel(const std::string& modelfile, const std::string& meshfile);
+    void loadMMBinaryModel(const std::string& modelfile);
+    
+    static FaceModelPtr LoadModel(const std::string& file);
 };
 
 #endif /* face_model_hpp */

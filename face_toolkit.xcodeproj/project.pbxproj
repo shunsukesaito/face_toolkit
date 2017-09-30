@@ -47,6 +47,8 @@
 		8F3454281EECA1AF007B479B /* libopencv_world.3.2.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3454271EECA1AF007B479B /* libopencv_world.3.2.0.dylib */; };
 		8F3454291EECA1B6007B479B /* libgflags.2.2.0.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */; };
 		8F34542A1EECA1B6007B479B /* libopencv_world.3.2.0.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8F3454271EECA1AF007B479B /* libopencv_world.3.2.0.dylib */; };
+		8F4B76F81F7EB4F900033525 /* module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F4B76F61F7EB4F900033525 /* module.cpp */; };
+		8F4B76FB1F7EB6EE00033525 /* capture_module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F4B76F91F7EB6EE00033525 /* capture_module.cpp */; };
 		8FE2955C1F61FD620021E914 /* libglfw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FE2955B1F61FD620021E914 /* libglfw3.a */; };
 		8FE295601F61FD9C0021E914 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FE2955D1F61FD9C0021E914 /* CoreVideo.framework */; };
 		8FE295611F61FD9C0021E914 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8FE2955E1F61FD9C0021E914 /* IOKit.framework */; };
@@ -146,6 +148,11 @@
 		8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgflags.2.2.0.dylib; path = external/gflags/lib/mac/libgflags.2.2.0.dylib; sourceTree = "<group>"; };
 		8F3454251EECA1A0007B479B /* libGLEW.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLEW.a; path = external/glew/lib/libGLEW.a; sourceTree = "<group>"; };
 		8F3454271EECA1AF007B479B /* libopencv_world.3.2.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_world.3.2.0.dylib; path = external/opencv/lib/mac/libopencv_world.3.2.0.dylib; sourceTree = "<group>"; };
+		8F4B76F51F7DDF1700033525 /* SPSCQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SPSCQueue.h; path = src/SPSCQueue.h; sourceTree = SOURCE_ROOT; };
+		8F4B76F61F7EB4F900033525 /* module.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = module.cpp; path = src/module.cpp; sourceTree = SOURCE_ROOT; };
+		8F4B76F71F7EB4F900033525 /* module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = module.hpp; path = src/module.hpp; sourceTree = SOURCE_ROOT; };
+		8F4B76F91F7EB6EE00033525 /* capture_module.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = capture_module.cpp; path = src/capture_module.cpp; sourceTree = SOURCE_ROOT; };
+		8F4B76FA1F7EB6EE00033525 /* capture_module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = capture_module.hpp; path = src/capture_module.hpp; sourceTree = SOURCE_ROOT; };
 		8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.frag; sourceTree = "<group>"; };
 		8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.vert; sourceTree = "<group>"; };
 		8FDF975D1F50ED910038065A /* point2d.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = point2d.frag; sourceTree = "<group>"; };
@@ -220,6 +227,7 @@
 		8F1E49541F6C50830051FC8C /* utility */ = {
 			isa = PBXGroup;
 			children = (
+				8F4B76F51F7DDF1700033525 /* SPSCQueue.h */,
 				8F1E48FE1F6C507C0051FC8C /* face_2dtracker.cc */,
 				8F1E48FF1F6C507C0051FC8C /* face_2dtracker.h */,
 				8F1E48F71F6C507C0051FC8C /* camera.cpp */,
@@ -288,6 +296,10 @@
 		8F1E49581F6C51000051FC8C /* module */ = {
 			isa = PBXGroup;
 			children = (
+				8F4B76F91F7EB6EE00033525 /* capture_module.cpp */,
+				8F4B76FA1F7EB6EE00033525 /* capture_module.hpp */,
+				8F4B76F61F7EB4F900033525 /* module.cpp */,
+				8F4B76F71F7EB4F900033525 /* module.hpp */,
 				8F1E49041F6C507C0051FC8C /* face_module.cpp */,
 				8F1E49051F6C507C0051FC8C /* face_module.hpp */,
 				8F1E492F1F6C507C0051FC8C /* renderer.cpp */,
@@ -441,6 +453,7 @@
 				8F1E49751F6C7B4F0051FC8C /* model.cc in Sources */,
 				8F1E494E1F6C507C0051FC8C /* p2d_renderer.cpp in Sources */,
 				8F1E49501F6C507C0051FC8C /* renderer.cpp in Sources */,
+				8F4B76FB1F7EB6EE00033525 /* capture_module.cpp in Sources */,
 				8F1E494D1F6C507C0051FC8C /* p2d_optimizer.cpp in Sources */,
 				8F1E494B1F6C507C0051FC8C /* LearnGAB.cc in Sources */,
 				8F1E49511F6C507C0051FC8C /* sh_optimizer.cpp in Sources */,
@@ -460,6 +473,7 @@
 				8F1E49421F6C507C0051FC8C /* gui.cpp in Sources */,
 				8F1E494F1F6C507C0051FC8C /* p3d_renderer.cpp in Sources */,
 				8F1E494A1F6C507C0051FC8C /* common.cc in Sources */,
+				8F4B76F81F7EB4F900033525 /* module.cpp in Sources */,
 				8F1E493D1F6C507C0051FC8C /* face_model.cpp in Sources */,
 				8F1E49491F6C507C0051FC8C /* minitrace.c in Sources */,
 				8F1E494C1F6C507C0051FC8C /* TrainDetector.cc in Sources */,
@@ -608,8 +622,8 @@
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					WITH_IMGUI,
 					DLIB_NO_GUI_SUPPORT,
+					WITH_IMGUI,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

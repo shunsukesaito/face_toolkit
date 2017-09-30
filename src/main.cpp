@@ -11,8 +11,10 @@
 #include "gui.hpp"
 #include "obj_loader.hpp"
 
+#include "SPSCQueue.h"
+
 int main(int argc, const char * argv[]) try
-{
+{    
     // insert code here...
     GUI *gui = GUI::getInstance();
     

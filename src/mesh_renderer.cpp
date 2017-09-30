@@ -9,7 +9,6 @@
 #include "mesh_renderer.hpp"
 
 void MeshRenderer::init(std::string data_dir,
-                        const Camera& camera,
                         const Eigen::VectorXf& pts,
                         const Eigen::MatrixX3f& nml,
                         const Eigen::MatrixX3i& tri_pts)
@@ -20,8 +19,7 @@ void MeshRenderer::init(std::string data_dir,
     
     auto& prog = programs_["mesh"];
     
-    camera.intializeUniforms(prog, true, false);
-    camera.updateUniforms(prog, true, false);
+    Camera::intializeUniforms(prog, true, false);
     
     mesh_.init_with_idx(prog, pts, nml, tri_pts);
 }

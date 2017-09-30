@@ -57,7 +57,7 @@ struct F2FRenderer
     FramebufferPtr fb_;
     F2FRenderParams param_;
     
-    void init(std::string data_dir, const Camera& camera, FaceModel& model);
+    void init(std::string data_dir, FaceModel& model);
     void render(const Camera& camera, const FaceParams& fParam);
     void render(int w, int h, const Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
     

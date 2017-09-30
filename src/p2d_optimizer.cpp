@@ -7,6 +7,8 @@
 void P2DFitParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("P2DFit Parameters")){
+        ImGui::Checkbox("Run", &run_);
+
         ImGui::Checkbox("robust", &robust_);
         ImGui::InputInt("maxIter", &maxIter_);
         ImGui::InputInt("DOF ID", &dof.ID);

@@ -404,7 +404,6 @@ void glMesh::init_with_idx(GLProgram& program,
     nml_.resize(pts.size()/3);
     clr_.resize(pts.size()/3);
     tri_.resize(tri_pts.size());
-    
     for(int i = 0; i < pts_.size(); ++i)
     {
         pts_[i] = glm::vec3(pts(i*3+0),pts(i*3+1),pts(i*3+2));

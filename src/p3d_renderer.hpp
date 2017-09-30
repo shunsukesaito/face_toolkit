@@ -20,7 +20,6 @@ struct P3DRenderer
     glMesh p3d_;
     
     void init(std::string data_dir,
-              const Camera& camera,
               const std::vector<Eigen::Vector3f>& pts);
     
     void render(const Camera& camera,

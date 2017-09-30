@@ -41,7 +41,7 @@ Camera::Camera(const Camera& other)
     distCoeff_ = other.distCoeff_;
 }
 
-void Camera::intializeUniforms(GLProgram& program, bool with_mv, bool with_bias) const
+void Camera::intializeUniforms(GLProgram& program, bool with_mv, bool with_bias)
 {
     program.createUniform("u_mvp", DataType::MATRIX44);
     if(with_mv)

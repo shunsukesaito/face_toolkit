@@ -237,7 +237,7 @@ void F2FRenderParams::updateIMGUI()
 }
 #endif
 
-void F2FRenderer::init(std::string data_dir, const Camera& camera, FaceModel& model)
+void F2FRenderer::init(std::string data_dir, FaceModel& model)
 {
     programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
                                  data_dir + "shaders/face2face.geom",
@@ -253,8 +253,8 @@ void F2FRenderer::init(std::string data_dir, const Camera& camera, FaceModel& mo
     param_.init(prog_f2f);
     prog_f2f.createUniform("u_SHCoeffs", DataType::VECTOR3);
     prog_f2f.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
-    fb_ = Framebuffer::Create(camera.width_, camera.height_, 8);
-    camera.intializeUniforms(prog_f2f, true, false);
+    fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
+    Camera::intializeUniforms(prog_f2f, true, false);
     
     Eigen::MatrixX3f nml;
     calcNormal(nml, model.mu_id_, model.tri_pts_);
@@ -266,6 +266,9 @@ void F2FRenderer::init(std::string data_dir, const Camera& camera, FaceModel& mo
 
 void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
 {
+    if(camera.width_ != fb_->width() || camera.height_ != fb_->height())
+        fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
+    
     // render parameters update
     auto& prog_f2f = programs_["f2f"];
     auto& prog_pl = programs_["plane"];

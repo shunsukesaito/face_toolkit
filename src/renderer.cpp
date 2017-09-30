@@ -14,8 +14,11 @@ void error_callback(int error, const char* description)
     fputs(description, stderr);
 }
 
-void Renderer::init(int w, int h, std::string data_dir)
+void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
 {
+    data_dir_ = data_dir;
+    face_model_ = fm;
+    
     glfwSetErrorCallback(error_callback);
     
     if (!glfwInit())
@@ -61,23 +64,47 @@ void Renderer::init(int w, int h, std::string data_dir)
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
-    video_capture_.open(0);
-    video_capture_ >> cur_img_;
-    bg_renderer_.init(data_dir, cur_img_);
-    
-    face_module_.init(data_dir);
 }
 
-void Renderer::draw()
-{  
-    bg_renderer_.render(cur_img_);
-    face_module_.preview();
-}
-
-void Renderer::update()
+void Renderer::draw(FaceResult& result)
 {
-    video_capture_ >> cur_img_;
-    cv::flip(cur_img_, cur_img_, 1);
+    auto& camera = result.camera;
+    auto& fParam = result.fParam;
+    
+    if(!initialized_){
+        bg_renderer_.init(data_dir_, result.img);
+        f2f_renderer_.init(data_dir_, *face_model_);
+        mesh_renderer_.init(data_dir_, fParam.pts_, fParam.nml_, face_model_->tri_pts_);
+        p3d_renderer_.init(data_dir_, getP3DFromP2PC(fParam.pts_, result.c_p2p));
+        p2d_renderer_.init(data_dir_);
+        
+        initialized_ = true;
+    }
+    
+    if(initialized_){
+        bg_renderer_.render(result.img);
 
-    face_module_.update(cur_img_);
+        if(show_mesh_)
+            mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_);
+        if(show_f2f_)
+            f2f_renderer_.render(camera, result.fParam);
+        if(show_p3d_){
+            p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2PC(result.fParam.pts_, result.c_p2p));
+            p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2LC(result.fParam.pts_, result.c_p2l));
+        }
+        if(show_p2d_)
+            p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
+    }
 }
+
+#ifdef WITH_IMGUI
+void Renderer::updateIMGUI()
+{
+    ImGui::Checkbox("show mesh", &show_mesh_);
+    ImGui::Checkbox("show f2f", &show_f2f_);
+    ImGui::Checkbox("show p2d", &show_p2d_);
+    ImGui::Checkbox("show p3d", &show_p3d_);
+    f2f_renderer_.updateIMGUI();
+}
+#endif
+

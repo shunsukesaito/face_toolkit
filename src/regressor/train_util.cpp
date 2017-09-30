@@ -50,15 +50,16 @@ void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const Trai
             data.cur_x = x.clone();
             
 #ifdef DEBUG_AUGMENTATION
-            std::vector<Eigen::Vector2f> estimated_landmark = face3d_utility_->GetProjectedLandmark2DWithContourUpdate(data, true);
-            cv::Mat_<cv::Vec3b> temp;
-            cv::cvtColor(data.image_, temp, CV_GRAY2BGR);
-            for(int i = 0; i < estimated_landmark.size(); ++i)
+            cv::Mat_<cv::Vec2f> p2d;
+            // TODO: update 2d projection
+            cv::Mat_<cv::Vec3b> debug_img;
+            cv::cvtColor(data.img, debug_img, CV_GRAY2BGR);
+            for(int i = 0; i < p2d.rows; ++i)
             {
-                cv::circle(temp, cv::Point(estimated_landmark[i](0)-data.face_rect_.x,estimated_landmark[i](1)-data.face_rect_.y), 2.0, cv::Scalar(255,0,0), -1);
-                cv::circle(temp, cv::Point(data.landmark_points_[i](0)-data.face_rect_.x,data.landmark_points_[i](1)-data.face_rect_.y), 1.0, cv::Scalar(0,255,0), -1);
+                cv::circle(debug_img, cv::Point(p2d(i)(0)-data.rect.x,p2d(i)(1)-data.rect.y), 2.0, cv::Scalar(255,0,0), -1);
+                cv::circle(debug_img, cv::Point(data.gt_p2d(i)(0)-data.rect.x,data.gt_p2d(i)(1)-data.rect.y), 1.0, cv::Scalar(0,255,0), -1);
             }
-            cv::imshow("Augmented Data: Rotation", temp);
+            cv::imshow("Augmented Data: Rotation", debug_img);
             cv::waitKey(1);
 #endif
             
@@ -89,14 +90,16 @@ void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const Trai
             data.cur_x = x.clone();
             
 #ifdef DEBUG_AUGMENTATION
-            cv::Mat_<cv::Vec3b> temp;
-            cv::cvtColor(data.image_, temp, CV_GRAY2BGR);
-            for(int i = 0; i < estimated_landmark.size(); ++i)
+            cv::Mat_<cv::Vec2f> p2d;
+            // TODO: update 2d projection
+            cv::Mat_<cv::Vec3b> debug_img;
+            cv::cvtColor(data.img, debug_img, CV_GRAY2BGR);
+            for(int i = 0; i < p2d.rows; ++i)
             {
-                cv::circle(temp, cv::Point(estimated_landmark[i](0)-data.face_rect_.x,estimated_landmark[i](1)-data.face_rect_.y), 2.0, cv::Scalar(255,0,0), -1);
-                cv::circle(temp, cv::Point(data.landmark_points_[i](0)-data.face_rect_.x,data.landmark_points_[i](1)-data.face_rect_.y), 1.0, cv::Scalar(0,255,0), -1);
+                cv::circle(debug_img, cv::Point(p2d(i)(0)-data.rect.x,p2d(i)(1)-data.rect.y), 2.0, cv::Scalar(255,0,0), -1);
+                cv::circle(debug_img, cv::Point(data.gt_p2d(i)(0)-data.rect.x,data.gt_p2d(i)(1)-data.rect.y), 1.0, cv::Scalar(0,255,0), -1);
             }
-            cv::imshow("Augmented Data: Translation", temp);
+            cv::imshow("Augmented Data: Translation", debug_img);
             cv::waitKey(1);
 #endif
             
@@ -122,15 +125,16 @@ void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const Trai
             data.cur_x = x.clone();
             
 #ifdef DEBUG_AUGMENTATION
-            std::vector<Eigen::Vector2f> estimated_landmark = face3d_utility_->GetProjectedLandmark2DWithContourUpdate(data, true);
-            cv::Mat_<cv::Vec3b> temp;
-            cv::cvtColor(data.image_, temp, CV_GRAY2BGR);
-            for(int i = 0; i < estimated_landmark.size(); ++i)
+            cv::Mat_<cv::Vec2f> p2d;
+            // TODO: update 2d projection
+            cv::Mat_<cv::Vec3b> debug_img;
+            cv::cvtColor(data.img, debug_img, CV_GRAY2BGR);
+            for(int i = 0; i < p2d.rows; ++i)
             {
-                cv::circle(temp, cv::Point(estimated_landmark[i](0)-data.face_rect_.x,estimated_landmark[i](1)-data.face_rect_.y), 2.0, cv::Scalar(255,0,0), -1);
-                cv::circle(temp, cv::Point(data.landmark_points_[i](0)-data.face_rect_.x,data.landmark_points_[i](1)-data.face_rect_.y), 1.0, cv::Scalar(0,255,0), -1);
+                cv::circle(debug_img, cv::Point(p2d(i)(0)-data.rect.x,p2d(i)(1)-data.rect.y), 2.0, cv::Scalar(255,0,0), -1);
+                cv::circle(debug_img, cv::Point(data.gt_p2d(i)(0)-data.rect.x,data.gt_p2d(i)(1)-data.rect.y), 1.0, cv::Scalar(0,255,0), -1);
             }
-            cv::imshow("Augmented Data: Blend Shape", temp);
+            cv::imshow("Augmented Data: Blend Shape", debug_img);
             cv::waitKey(1);
 #endif
             
@@ -168,18 +172,18 @@ void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const Trai
             data.cur_x = x.clone();
             
 #ifdef DEBUG_AUGMENTATION
-            cv::Mat_<cv::Vec3b> temp;
-            cv::cvtColor(data.image_, temp, CV_GRAY2BGR);
-            std::vector<Eigen::Vector2f> estimated_landmark = face3d_utility_->GetProjectedLandmark2DWithContourUpdate(data,true);
-            for(int i = 0; i < data.landmark_points_.size(); ++i)
+            cv::Mat_<cv::Vec2f> p2d;
+            // TODO: update 2d projection
+            cv::Mat_<cv::Vec3b> debug_img;
+            cv::cvtColor(data.img, debug_img, CV_GRAY2BGR);
+            for(int i = 0; i < p2d.rows; ++i)
             {
-                cv::circle(temp, cv::Point(estimated_landmark[i](0)-data.face_rect_.x,estimated_landmark[i](1)-data.face_rect_.y), 1.0, cv::Scalar(255,0,0), -1);
-                cv::circle(temp, cv::Point(data.landmark_points_[i](0)-data.face_rect_.x,data.landmark_points_[i](1)-data.face_rect_.y), 1.0, cv::Scalar(0,255,0), -1);
+                cv::circle(debug_img, cv::Point(p2d(i)(0)-data.rect.x,p2d(i)(1)-data.rect.y), 2.0, cv::Scalar(255,0,0), -1);
+                cv::circle(debug_img, cv::Point(data.gt_p2d(i)(0)-data.rect.x,data.gt_p2d(i)(1)-data.rect.y), 1.0, cv::Scalar(0,255,0), -1);
             }
-            cv::imshow("Augmented Data: Identity", temp);
+            cv::imshow("Augmented Data: Identity", debug_img);
             cv::waitKey(1);
 #endif
-            
             out.push_back(data);
         }
         
@@ -207,15 +211,16 @@ void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const Trai
             data.cur_x = x.clone();
             
 #ifdef DEBUG_AUGMENTATION
-            cv::Mat_<cv::Vec3b> temp;
-            cv::cvtColor(data.image_, temp, CV_GRAY2BGR);
-            std::vector<Eigen::Vector2f> estimated_landmark = face3d_utility_->GetProjectedLandmark2DWithContourUpdate(data,true);
-            for(int i = 0; i < estimated_landmark.size(); ++i)
+            cv::Mat_<cv::Vec2f> p2d;
+            // TODO: update 2d projection
+            cv::Mat_<cv::Vec3b> debug_img;
+            cv::cvtColor(data.img, debug_img, CV_GRAY2BGR);
+            for(int i = 0; i < p2d.rows; ++i)
             {
-                cv::circle(temp, cv::Point(estimated_landmark[i](0)-data.face_rect_.x,estimated_landmark[i](1)-data.face_rect_.y), 2.0, cv::Scalar(255,0,0), -1);
-                cv::circle(temp, cv::Point(data.landmark_points_[i](0)-data.face_rect_.x,data.landmark_points_[i](1)-data.face_rect_.y), 1.0, cv::Scalar(0,255,0), -1);
+                cv::circle(debug_img, cv::Point(p2d(i)(0)-data.rect.x,p2d(i)(1)-data.rect.y), 2.0, cv::Scalar(255,0,0), -1);
+                cv::circle(debug_img, cv::Point(data.gt_p2d(i)(0)-data.rect.x,data.gt_p2d(i)(1)-data.rect.y), 1.0, cv::Scalar(0,255,0), -1);
             }
-            cv::imshow("Augmented Data: Focal Length", temp);
+            cv::imshow("Augmented Data: Focal Length", debug_img);
             cv::waitKey(1);
 #endif
             out.push_back(data);
