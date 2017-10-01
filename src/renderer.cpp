@@ -64,6 +64,11 @@ void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     
+    bg_renderer_.init(data_dir_, cv::Mat_<cv::Vec3b>(1,1));
+    f2f_renderer_.init(data_dir_, *face_model_);
+    mesh_renderer_.init(data_dir_, face_model_->tri_pts_);
+    p3d_renderer_.init(data_dir_);
+    p2d_renderer_.init(data_dir_);
 }
 
 void Renderer::draw(FaceResult& result)
@@ -71,30 +76,18 @@ void Renderer::draw(FaceResult& result)
     auto& camera = result.camera;
     auto& fParam = result.fParam;
     
-    if(!initialized_){
-        bg_renderer_.init(data_dir_, result.img);
-        f2f_renderer_.init(data_dir_, *face_model_);
-        mesh_renderer_.init(data_dir_, fParam.pts_, fParam.nml_, face_model_->tri_pts_);
-        p3d_renderer_.init(data_dir_, getP3DFromP2PC(fParam.pts_, result.c_p2p));
-        p2d_renderer_.init(data_dir_);
-        
-        initialized_ = true;
-    }
-    
-    if(initialized_){
-        bg_renderer_.render(result.img);
+    bg_renderer_.render(result.img);
 
-        if(show_mesh_)
-            mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_);
-        if(show_f2f_)
-            f2f_renderer_.render(camera, result.fParam);
-        if(show_p3d_){
-            p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2PC(result.fParam.pts_, result.c_p2p));
-            p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2LC(result.fParam.pts_, result.c_p2l));
-        }
-        if(show_p2d_)
-            p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
+    if(show_mesh_)
+        mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_);
+    if(show_f2f_)
+        f2f_renderer_.render(camera, result.fParam);
+    if(show_p3d_){
+        p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2PC(result.fParam.pts_, result.c_p2p));
+        p3d_renderer_.render(camera, result.fParam.RT, getP3DFromP2LC(result.fParam.pts_, result.c_p2l));
     }
+    if(show_p2d_)
+        p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
 }
 
 #ifdef WITH_IMGUI

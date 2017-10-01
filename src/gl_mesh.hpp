@@ -17,6 +17,13 @@
 #include "gl_core.hpp"
 #include "gl_utils.h"
 
+// flags for attributes
+static const int AT_POSITION = 0x0001;
+static const int AT_NORMAL   = 0x0002;
+static const int AT_COLOR    = 0x0004;
+static const int AT_UV       = 0x0008;
+static const int AT_TRI      = 0x0010;
+
 struct glPlane
 {
     std::vector<glm::vec2> uvs_;
@@ -39,6 +46,21 @@ struct glPoint2D
                 const Eigen::Vector4f& clr);
 };
 
+struct glSphere
+{
+    glSphere(){ generateSphere(10.0,24,48);}
+    
+    void generateSphere(float radius, unsigned int rings, unsigned int sectors);
+    void init(GLProgram& prog, int flag);
+    
+    std::vector<glm::vec2> uvs_;
+    std::vector<glm::vec3> nml_;
+    std::vector<glm::vec3> pts_;
+    std::vector<glm::vec4> clr_;
+    
+    std::vector<unsigned int> tri_;
+};
+
 struct glMesh
 {
     std::vector<glm::vec2> uvs_;
@@ -48,95 +70,29 @@ struct glMesh
     
     std::vector<unsigned int> tri_;
     
-    GLuint idx_vbo_;
+    void init(GLProgram& prog, int flag);
+    void update(GLProgram& prog, int flag);
     
-    void init(GLProgram& prog,
-              const Eigen::VectorXf& pts,
-              const Eigen::MatrixX3f& nml,
-              const Eigen::MatrixX2f& uv,
-              const Eigen::MatrixX3i& tri_pts,
-              const Eigen::MatrixX3i& tri_uv);
+    void update_position(const Eigen::VectorXf& pts,
+                         const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const Eigen::VectorXf& pts,
-              const Eigen::VectorXf& clr,
-              const Eigen::MatrixX3f& nml,
-              const Eigen::MatrixX2f& uv,
-              const Eigen::MatrixX3i& tri_pts,
-              const Eigen::MatrixX3i& tri_uv);
+    void update_position(const std::vector<Eigen::Vector3f>& pts,
+                         const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const Eigen::VectorXf& pts,
-              const Eigen::MatrixX3f& nml,
-              const Eigen::MatrixX3i& tri_pts);
+    void update_normal(const Eigen::MatrixX3f& nml,
+                       const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const Eigen::VectorXf& pts);
+    void update_color(const Eigen::VectorXf& clr,
+                      const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const Eigen::VectorXf& pts,
-              const Eigen::Vector4f& clr);
+    void update_color(const Eigen::Vector4f& clr,
+                      const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const std::vector<Eigen::Vector3f>& pts);
+    void update_uv(const Eigen::MatrixX2f& uvs,
+                   const Eigen::MatrixX3i& tri_uv,
+                   const Eigen::MatrixX3i& tri_pts = Eigen::MatrixX3i());
     
-    void init(GLProgram& prog,
-              const std::vector<Eigen::Vector3f>& pts,
-              const Eigen::Vector4f& clr);
-    
-
-    void init_with_idx(GLProgram& prog,
-                       const Eigen::VectorXf& pts,
-                       const Eigen::MatrixX3f& nml,
-                       const Eigen::MatrixX2f& uv,
-                       const Eigen::MatrixX3i& tri_pts,
-                       const Eigen::MatrixX3i& tri_uv);
-    
-    void init_with_idx(GLProgram& prog,
-                       const Eigen::VectorXf& pts,
-                       const Eigen::MatrixX3f& nml,
-                       const Eigen::MatrixX3i& tri_pts);
-    
-    void init_with_idx(GLProgram& prog,
-                       const Eigen::VectorXf& pts,
-                       const Eigen::VectorXf& clr,
-                       const Eigen::MatrixX3f& nml,
-                       const Eigen::MatrixX3i& tri_pts);
-    
-    void init_with_idx(GLProgram& program,
-                       const Eigen::VectorXf& pts,
-                       const Eigen::VectorXf& clr,
-                       const Eigen::MatrixX3f& nml,
-                       const Eigen::MatrixX2f& uvs,
-                       const Eigen::MatrixX3i& tri_pts,
-                       const Eigen::MatrixX3i& tri_uv);
-    
-    void update(GLProgram& prog,
-                const std::vector<Eigen::Vector3f>& pts);
-    
-    void update(GLProgram& prog,
-                const std::vector<Eigen::Vector3f>& pts,
-                const Eigen::Vector4f& clr);
-    
-    void update(GLProgram& prog,
-                const Eigen::VectorXf& pts,
-                const Eigen::MatrixX3f& nml,
-                const Eigen::MatrixX3i& tri_pts);
-    
-    void update(GLProgram& prog,
-                const Eigen::VectorXf& pts,
-                const Eigen::VectorXf& clr,
-                const Eigen::MatrixX3f& nml,
-                const Eigen::MatrixX3i& tri_pts);
-    
-    void update_with_idx(GLProgram& prog,
-                         const Eigen::VectorXf& pts,
-                         const Eigen::MatrixX3f& nml);
-    
-    void update_with_idx(GLProgram& prog,
-                         const Eigen::VectorXf& pts,
-                         const Eigen::VectorXf& clr,
-                         const Eigen::MatrixX3f& nml);
+    void update_tri(const Eigen::MatrixX3i& tri);
 };
 
 #endif /* gl_mesh_hpp */

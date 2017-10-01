@@ -9,9 +9,7 @@
 #include "mesh_renderer.hpp"
 
 void MeshRenderer::init(std::string data_dir,
-                        const Eigen::VectorXf& pts,
-                        const Eigen::MatrixX3f& nml,
-                        const Eigen::MatrixX3i& tri_pts)
+                        const Eigen::MatrixX3i& tri)
 {
     programs_["mesh"] = GLProgram(data_dir + "shaders/mesh.vert",
                                   data_dir + "shaders/mesh.frag",
@@ -21,7 +19,9 @@ void MeshRenderer::init(std::string data_dir,
     
     Camera::intializeUniforms(prog, true, false);
     
-    mesh_.init_with_idx(prog, pts, nml, tri_pts);
+    mesh_.update_tri(tri);
+    mesh_.init(prog, AT_POSITION | AT_NORMAL | AT_TRI);
+//    mesh_.init_with_idx(prog, pts, nml, tri_pts);
 }
 
 void MeshRenderer::render(const Camera& camera,
@@ -32,7 +32,10 @@ void MeshRenderer::render(const Camera& camera,
     
     camera.updateUniforms(prog, true, false);
     
-    mesh_.update_with_idx(prog, pts, nml);
+    mesh_.update_position(pts);
+    mesh_.update_normal(nml);
+    mesh_.update(prog, AT_POSITION | AT_NORMAL);
+    //mesh_.update_with_idx(prog, pts, nml);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -49,7 +52,10 @@ void MeshRenderer::render(const Camera& camera,
     
     camera.updateUniforms(prog, RT, true, false);
     
-    mesh_.update_with_idx(prog, pts, nml);
+    mesh_.update_position(pts);
+    mesh_.update_normal(nml);
+    mesh_.update(prog, AT_POSITION | AT_NORMAL);
+    //mesh_.update_with_idx(prog, pts, nml);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);

@@ -501,22 +501,6 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "src/regressor/train_util.cpp"
-            timestampString = "527834349.640399"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "111"
-            endingLineNumber = "111"
-            landmarkName = "augmentData(std::vector&lt;Data&gt;&amp; out, const std::vector&lt;Data&gt;&amp; in, const TrainParams&amp; params)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
             filePath = "src/f2f_renderer.cpp"
             timestampString = "528418486.116734"
             startingColumnNumber = "9223372036854775807"

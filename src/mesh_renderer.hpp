@@ -20,9 +20,7 @@ struct MeshRenderer
     glMesh mesh_;
     
     void init(std::string data_dir,
-              const Eigen::VectorXf& pts,
-              const Eigen::MatrixX3f& nml,
-              const Eigen::MatrixX3i& tri_pts);
+              const Eigen::MatrixX3i& tri);
     
     void render(const Camera& camera,
                 const Eigen::VectorXf& pts,

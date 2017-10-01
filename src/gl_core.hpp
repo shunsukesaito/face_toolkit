@@ -95,7 +95,8 @@ struct GLTexture {
     GLTexture(GLProgram* parentProgram_, std::string name_, GLuint location_, int w, int h);
     
     static GLuint CreateTexture(const cv::Mat& img);
-    static void UpdateTexture(const cv::Mat& img, GLuint &_location);
+    
+    void UpdateTexture(const cv::Mat& img);
     
     // member variables
     GLProgram* parentProgram;

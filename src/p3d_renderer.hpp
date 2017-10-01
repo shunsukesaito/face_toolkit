@@ -19,8 +19,7 @@ struct P3DRenderer
     std::unordered_map<std::string, GLProgram> programs_;
     glMesh p3d_;
     
-    void init(std::string data_dir,
-              const std::vector<Eigen::Vector3f>& pts);
+    void init(std::string data_dir);
     
     void render(const Camera& camera,
                 const std::vector<Eigen::Vector3f>& pts);

@@ -292,7 +292,7 @@ void GLProgram::updateTexture(std::string textureName, std::string sourceFile, b
     if(img.empty()){
         throw std::runtime_error("Attempted to load image which does not exist: " + textureName);
     }
-    GLTexture::UpdateTexture(img, tex.location);
+    tex.UpdateTexture(img);
 }
 
 void GLProgram::updateTexture(std::string textureName, GLuint location)
@@ -314,7 +314,7 @@ void GLProgram::updateTexture(std::string textureName, const cv::Mat& img)
     
     GLTexture& tex = textureMap[textureName];
     
-    GLTexture::UpdateTexture(img, tex.location);
+    tex.UpdateTexture(img);
 }
 
 void GLProgram::setUniformData(std::string uniformName, const Eigen::Matrix4f &val)
@@ -732,52 +732,6 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
     return location;
 }
 
-void GLTexture::UpdateTexture(const cv::Mat& img,GLuint &_location)
-{
-    if(_location < 1){
-        _location = CreateTexture(img);
-        return;
-    }
-    
-    GLint mode;
-    switch (img.channels())
-    {
-        case 4:
-            mode = GL_BGRA;
-            break;
-        case 3:
-            mode = GL_BGR;
-            break;
-        case 1:
-            mode = GL_RED;
-            break;
-        default:
-            cerr << "ERROR: Unsupported channels" << endl;
-            break;
-    }
-    
-    GLint type;
-    if ((img.type() & CV_MAT_DEPTH_MASK) == CV_8U)
-    {
-        type = GL_UNSIGNED_BYTE;
-    }
-    else if ((img.type() & CV_MAT_DEPTH_MASK) == CV_32F)
-    {
-        type = GL_FLOAT;
-    }
-    else
-    {
-        cerr << "ERROR: Unsupported image type." << endl;
-    }
-    
-    glBindTexture(GL_TEXTURE_2D, _location);
-    CHECK_GL_ERROR();
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img.cols, img.rows, mode, type, img.ptr());
-    CHECK_GL_ERROR();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    CHECK_GL_ERROR();
-}
-
 GLTexture::GLTexture() {}
 
 GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, std::string sourceFile_)
@@ -856,6 +810,62 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, GLuint locati
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     CHECK_GL_ERROR();
 }
+
+void GLTexture::UpdateTexture(const cv::Mat& img)
+{
+    if(location < 1){
+        location = CreateTexture(img);
+        return;
+    }
+    if(width != img.cols || height != img.rows){
+        glDeleteTextures(1, &location);
+        location = CreateTexture(img);
+    
+        width = img.cols;
+        height = img.rows;
+        
+        return;
+    }
+    
+    GLint mode;
+    switch (img.channels())
+    {
+        case 4:
+            mode = GL_BGRA;
+            break;
+        case 3:
+            mode = GL_BGR;
+            break;
+        case 1:
+            mode = GL_RED;
+            break;
+        default:
+            cerr << "ERROR: Unsupported channels" << endl;
+            break;
+    }
+    
+    GLint type;
+    if ((img.type() & CV_MAT_DEPTH_MASK) == CV_8U)
+    {
+        type = GL_UNSIGNED_BYTE;
+    }
+    else if ((img.type() & CV_MAT_DEPTH_MASK) == CV_32F)
+    {
+        type = GL_FLOAT;
+    }
+    else
+    {
+        cerr << "ERROR: Unsupported image type." << endl;
+    }
+    
+    glBindTexture(GL_TEXTURE_2D, location);
+    CHECK_GL_ERROR();
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img.cols, img.rows, mode, type, img.ptr());
+    CHECK_GL_ERROR();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    CHECK_GL_ERROR();
+}
+
 
 Drawable::~Drawable() {}
 

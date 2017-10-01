@@ -44,6 +44,7 @@ struct DOF
     
 struct TrainParams
 {
+    bool with_oh = false; // with occlusion handling
     int l_eye_idx = -1;
     int r_eye_idx = -1;
     
@@ -99,9 +100,41 @@ struct Data
         
         id = other.id;
     }
-};
     
-void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const TrainParams& params);
+    const Data &operator = (const Data &other){
+        // check for self-assignment
+        if(&other == this)
+            return *this;
+        // reuse storage when possible
+        
+        // shallow copy
+        this->gt_x = other.gt_x;
+        this->gt_p2d = other.gt_p2d;
+        this->img = other.img;
+        this->mask = other.mask;
+        
+        // deep copy
+        this->cur_x = other.cur_x.clone();
+        this->cur_p2d = other.cur_p2d.clone();
+        
+        this->rect = other.rect;
+        this->fl = other.fl;
+        this->idCoeff = other.idCoeff;
+        
+        this->id = other.id;
+        
+        return *this;
+    }
+};
+  
+    void augmentRotation(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dR, const DOF& dof);
+    void augmentTranslation(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dTxy, float dTz, const DOF& dof);
+    void augmentExpression(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, const DOF& dof);
+    void augmentFocalLength(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dF, const DOF& dof);
+    void augmentIdentity(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, const DOF& dof);
+    void augmentOcclusion(std::vector<Data>& in);
+    
+    void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const TrainParams& params);
     
 }
 

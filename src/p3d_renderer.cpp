@@ -8,8 +8,7 @@
 
 #include "p3d_renderer.hpp"
 
-void P3DRenderer::init(std::string data_dir,
-                       const std::vector<Eigen::Vector3f>& pts)
+void P3DRenderer::init(std::string data_dir)
 {
     programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert",
                                   data_dir + "shaders/point3d.frag",
@@ -18,7 +17,8 @@ void P3DRenderer::init(std::string data_dir,
     
     Camera::intializeUniforms(prog, false, false);
     
-    p3d_.init(prog, pts, Eigen::Vector4f(0,0,1,1));
+    p3d_.init(prog, AT_POSITION | AT_COLOR);
+    //p3d_.init(prog, pts, Eigen::Vector4f(0,0,1,1));
 }
 
 void P3DRenderer::render(const Camera& camera,
@@ -28,7 +28,10 @@ void P3DRenderer::render(const Camera& camera,
     
     camera.updateUniforms(prog, false, false);
     
-    p3d_.update(prog, pts);
+    p3d_.update_position(pts);
+    p3d_.update_color(Eigen::Vector4f(0,0,1,1));
+    p3d_.update(prog, AT_POSITION | AT_COLOR);
+    //p3d_.update(prog, pts);
     
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -44,8 +47,11 @@ void P3DRenderer::render(const Camera& camera,
     auto& prog = programs_["p3d"];
     
     camera.updateUniforms(prog, RT, false, false);
-    
-    p3d_.update(prog, pts, Eigen::Vector4f(0,0,1,1));
+
+    p3d_.update_position(pts);
+    p3d_.update_color(Eigen::Vector4f(0,0,1,1));
+    p3d_.update(prog, AT_POSITION | AT_COLOR);
+    //p3d_.update(prog, pts, Eigen::Vector4f(0,0,1,1));
     
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);

@@ -227,6 +227,8 @@
 		8F1E49541F6C50830051FC8C /* utility */ = {
 			isa = PBXGroup;
 			children = (
+				8F1E49101F6C507C0051FC8C /* imgui */,
+				8F1E49211F6C507C0051FC8C /* NPD */,
 				8F4B76F51F7DDF1700033525 /* SPSCQueue.h */,
 				8F1E48FE1F6C507C0051FC8C /* face_2dtracker.cc */,
 				8F1E48FF1F6C507C0051FC8C /* face_2dtracker.h */,
@@ -234,10 +236,8 @@
 				8F1E48F81F6C507C0051FC8C /* camera.hpp */,
 				8F1E48F91F6C507C0051FC8C /* EigenHelper.h */,
 				8F1E49061F6C507C0051FC8C /* fps.hpp */,
-				8F1E49101F6C507C0051FC8C /* imgui */,
 				8F1E491F1F6C507C0051FC8C /* minitrace.c */,
 				8F1E49201F6C507C0051FC8C /* minitrace.h */,
-				8F1E49211F6C507C0051FC8C /* NPD */,
 				8F1E49281F6C507C0051FC8C /* obj_loader.hpp */,
 				8F1E49331F6C507C0051FC8C /* tiny_obj_loader.cc */,
 				8F1E49341F6C507C0051FC8C /* tiny_obj_loader.h */,
@@ -337,20 +337,28 @@
 			isa = PBXGroup;
 			children = (
 				8F1E49591F6C517F0051FC8C /* source.cpp */,
+				8F4B76FC1F80434E00033525 /* shape_model */,
 				8F1E49581F6C51000051FC8C /* module */,
 				8F1E49571F6C50E70051FC8C /* optimizer */,
 				8F1E49561F6C50CB0051FC8C /* renderer */,
 				8F530E0D1F71A12D00E4380E /* regressor */,
 				8F1E49541F6C50830051FC8C /* utility */,
 				8F1E49551F6C50AC0051FC8C /* gl_utility */,
-				8F1E49021F6C507C0051FC8C /* face_model.cpp */,
-				8F1E49031F6C507C0051FC8C /* face_model.hpp */,
 				8F1E490E1F6C507C0051FC8C /* gui.cpp */,
 				8F1E490F1F6C507C0051FC8C /* gui.hpp */,
 				8F1E491C1F6C507C0051FC8C /* main.cpp */,
 			);
 			name = src;
 			path = RenderingTemplate;
+			sourceTree = "<group>";
+		};
+		8F4B76FC1F80434E00033525 /* shape_model */ = {
+			isa = PBXGroup;
+			children = (
+				8F1E49021F6C507C0051FC8C /* face_model.cpp */,
+				8F1E49031F6C507C0051FC8C /* face_model.hpp */,
+			);
+			name = shape_model;
 			sourceTree = "<group>";
 		};
 		8F530E0D1F71A12D00E4380E /* regressor */ = {

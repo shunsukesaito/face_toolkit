@@ -256,9 +256,15 @@ void F2FRenderer::init(std::string data_dir, FaceModel& model)
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     Camera::intializeUniforms(prog_f2f, true, false);
     
-    Eigen::MatrixX3f nml;
-    calcNormal(nml, model.mu_id_, model.tri_pts_);
-    mesh_.init_with_idx(prog_f2f, model.mu_id_, model.mu_cl_, nml, model.uvs_, model.tri_pts_, model.tri_uv_);
+    //Eigen::MatrixX3f nml;
+    //calcNormal(nml, model.mu_id_, model.tri_pts_);
+    
+    mesh_.update_tri(model.tri_pts_);
+    mesh_.init(prog_f2f, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TRI);
+    
+    mesh_.update_uv(model.uvs_, model.tri_uv_, model.tri_pts_);
+    mesh_.update(prog_f2f, AT_UV);
+    //mesh_.init_with_idx(prog_f2f, model.mu_id_, model.mu_cl_, nml, model.uvs_, model.tri_pts_, model.tri_uv_);
     
     plane_.init(prog_pl,0.5);
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
@@ -287,7 +293,12 @@ void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
     camera.updateUniforms(prog_f2f, fParam.RT, true, false);
     
     // update mesh attributes
-    mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
+    mesh_.update_position(fParam.pts_);
+    mesh_.update_color(fParam.clr_);
+    mesh_.update_normal(fParam.nml_);
+    
+    mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
+    //mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
     
     fb_->Bind();
     
@@ -331,7 +342,12 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceParams& f
     camera.updateUniforms(prog_f2f, fParam.RT, true, false);
     
     // update mesh attributes
-    mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
+    mesh_.update_position(fParam.pts_);
+    mesh_.update_color(fParam.clr_);
+    mesh_.update_normal(fParam.nml_);
+    
+    mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
+    //mesh_.update_with_idx(prog_f2f, fParam.pts_, fParam.clr_, fParam.nml_);
     
     // binding framebuffer
     fb_->Bind();
