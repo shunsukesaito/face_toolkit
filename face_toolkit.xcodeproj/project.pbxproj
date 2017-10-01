@@ -153,6 +153,8 @@
 		8F4B76F71F7EB4F900033525 /* module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = module.hpp; path = src/module.hpp; sourceTree = SOURCE_ROOT; };
 		8F4B76F91F7EB6EE00033525 /* capture_module.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = capture_module.cpp; path = src/capture_module.cpp; sourceTree = SOURCE_ROOT; };
 		8F4B76FA1F7EB6EE00033525 /* capture_module.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = capture_module.hpp; path = src/capture_module.hpp; sourceTree = SOURCE_ROOT; };
+		8F4B76FE1F80CCAC00033525 /* IBL.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = IBL.frag; sourceTree = "<group>"; };
+		8F4B76FF1F80CCAC00033525 /* IBL.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = IBL.vert; sourceTree = "<group>"; };
 		8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.frag; sourceTree = "<group>"; };
 		8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.vert; sourceTree = "<group>"; };
 		8FDF975D1F50ED910038065A /* point2d.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = point2d.frag; sourceTree = "<group>"; };
@@ -400,6 +402,8 @@
 				8FDF975E1F50ED910038065A /* point2d.vert */,
 				8FDF975F1F50ED9C0038065A /* point3d.frag */,
 				8FDF97601F50ED9C0038065A /* point3d.vert */,
+				8F4B76FE1F80CCAC00033525 /* IBL.frag */,
+				8F4B76FF1F80CCAC00033525 /* IBL.vert */,
 			);
 			path = shaders;
 			sourceTree = "<group>";

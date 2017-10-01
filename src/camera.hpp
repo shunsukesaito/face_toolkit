@@ -21,6 +21,13 @@
 struct Camera;
 typedef std::shared_ptr<Camera> CameraPtr;
 
+// flags for attributes
+static const int U_CAMERA_MVP    = 0x0001;
+static const int U_CAMERA_MV     = 0x0002;
+static const int U_CAMERA_WORLD  = 0x0004;
+static const int U_CAMERA_SHADOW = 0x0008;
+static const int U_CAMERA_POS    = 0x0010;
+
 struct Camera
 {
     std::string name_;
@@ -39,12 +46,12 @@ struct Camera
     Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w = false);
     Camera(const Camera&);
     
-    static void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias);
-    void updateUniforms(GLProgram& program, bool with_mv, bool with_bias) const;
-    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
+    static void initializeUniforms(GLProgram& programs, int flag);
+    void updateUniforms(GLProgram& program, int flag) const;
+    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const;
     
-    void updateUniforms4Sphere(GLProgram& program, bool with_mv, bool with_bias) const;
-    void updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
+    void updateUniforms4Sphere(GLProgram& program, int flag) const;
+    void updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const;
     
     static Camera parseCameraParams(std::string filename);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);

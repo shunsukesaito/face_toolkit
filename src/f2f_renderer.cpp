@@ -254,7 +254,8 @@ void F2FRenderer::init(std::string data_dir, FaceModel& model)
     prog_f2f.createUniform("u_SHCoeffs", DataType::VECTOR3);
     prog_f2f.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
-    Camera::intializeUniforms(prog_f2f, true, false);
+    
+    Camera::initializeUniforms(prog_f2f, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_tri(model.tri_pts_);
     mesh_.init(prog_f2f, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TRI);
@@ -286,7 +287,7 @@ void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fParam.RT, true, false);
+    camera.updateUniforms(prog_f2f, fParam.RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     // update mesh attributes
     mesh_.update_position(fParam.pts_);
@@ -334,7 +335,7 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceParams& f
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fParam.RT, true, false);
+    camera.updateUniforms(prog_f2f, fParam.RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     // update mesh attributes
     mesh_.update_position(fParam.pts_);

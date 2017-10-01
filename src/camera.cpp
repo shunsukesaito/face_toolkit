@@ -47,16 +47,21 @@ Camera::Camera(const Camera& other)
     distCoeff_ = other.distCoeff_;
 }
 
-void Camera::intializeUniforms(GLProgram& program, bool with_mv, bool with_bias)
+void Camera::initializeUniforms(GLProgram& program, int flag)
 {
-    program.createUniform("u_mvp", DataType::MATRIX44);
-    if(with_mv)
+    if(flag & U_CAMERA_MVP)
+        program.createUniform("u_mvp", DataType::MATRIX44);
+    if(flag & U_CAMERA_MV)
         program.createUniform("u_modelview", DataType::MATRIX44);
-    if(with_bias)
+    if(flag & U_CAMERA_WORLD)
+        program.createUniform("u_world", DataType::MATRIX44);
+    if(flag & U_CAMERA_SHADOW)
         program.createUniform("u_shadow_mvp", DataType::MATRIX44);
+    if(flag & U_CAMERA_POS)
+        program.createUniform("u_cam_pos", DataType::VECTOR3);
 }
 
-void Camera::updateUniforms(GLProgram& program, bool with_mv, bool with_bias) const
+void Camera::updateUniforms(GLProgram& program, int flag) const
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
@@ -66,16 +71,24 @@ void Camera::updateUniforms(GLProgram& program, bool with_mv, bool with_bias) co
     Eigen::Matrix4f MV = extrinsic_;
     MVP = perspective * MV;
     
+    Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
+    glm::vec3 pos(inv_extrinsic(0,3),inv_extrinsic(1,3),inv_extrinsic(2,3));
+    
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     
-    program.setUniformData("u_mvp", MVP);
-    if(with_mv)
+    if(flag & U_CAMERA_MVP)
+        program.setUniformData("u_mvp", MVP);
+    if(flag & U_CAMERA_MV)
         program.setUniformData("u_modelview", MV);
-    if(with_bias)
+    if(flag & U_CAMERA_WORLD)
+        program.setUniformData("u_world", Eigen::Matrix4f::Identity());
+    if(flag & U_CAMERA_SHADOW)
         program.setUniformData("u_shadow_mvp", shadowMVP);
+    if(flag & U_CAMERA_POS)
+        program.setUniformData("u_cam_pos", pos);
 }
 
-void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const
+void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
@@ -85,16 +98,24 @@ void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool 
     Eigen::Matrix4f MV = extrinsic_ * RT;
     MVP = perspective * MV;
     
+    Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
+    glm::vec3 pos(inv_extrinsic(0,3),inv_extrinsic(1,3),inv_extrinsic(2,3));
+    
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     
-    program.setUniformData("u_mvp", MVP);
-    if(with_mv)
+    if(flag & U_CAMERA_MVP)
+        program.setUniformData("u_mvp", MVP);
+    if(flag & U_CAMERA_MV)
         program.setUniformData("u_modelview", MV);
-    if(with_bias)
+    if(flag & U_CAMERA_WORLD)
+        program.setUniformData("u_world", RT);
+    if(flag & U_CAMERA_SHADOW)
         program.setUniformData("u_shadow_mvp", shadowMVP);
+    if(flag & U_CAMERA_POS)
+        program.setUniformData("u_cam_pos", pos);
 }
 
-void Camera::updateUniforms4Sphere(GLProgram& program, bool with_mv, bool with_bias) const
+void Camera::updateUniforms4Sphere(GLProgram& program, int flag) const
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
@@ -104,16 +125,24 @@ void Camera::updateUniforms4Sphere(GLProgram& program, bool with_mv, bool with_b
     Eigen::Matrix4f MV = sp_extrinsic_;
     MVP = perspective * sp_extrinsic_;
     
+    Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
+    glm::vec3 pos(inv_extrinsic(0,3),inv_extrinsic(1,3),inv_extrinsic(2,3));
+    
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     
-    program.setUniformData("u_mvp", MVP);
-    if(with_mv)
+    if(flag & U_CAMERA_MVP)
+        program.setUniformData("u_mvp", MVP);
+    if(flag & U_CAMERA_MV)
         program.setUniformData("u_modelview", MV);
-    if(with_bias)
+    if(flag & U_CAMERA_WORLD)
+        program.setUniformData("u_world", Eigen::Matrix4f::Identity());
+    if(flag & U_CAMERA_SHADOW)
         program.setUniformData("u_shadow_mvp", shadowMVP);
+    if(flag & U_CAMERA_POS)
+        program.setUniformData("u_cam_pos", pos);
 }
 
-void Camera::updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const
+void Camera::updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
@@ -123,13 +152,21 @@ void Camera::updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT
     Eigen::Matrix4f MV = sp_extrinsic_ * RT;
     MVP = perspective * sp_extrinsic_;
     
+    Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
+    glm::vec3 pos(inv_extrinsic(0,3),inv_extrinsic(1,3),inv_extrinsic(2,3));
+    
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     
-    program.setUniformData("u_mvp", MVP);
-    if(with_mv)
+    if(flag & U_CAMERA_MVP)
+        program.setUniformData("u_mvp", MVP);
+    if(flag & U_CAMERA_MV)
         program.setUniformData("u_modelview", MV);
-    if(with_bias)
+    if(flag & U_CAMERA_WORLD)
+        program.setUniformData("u_world", RT);
+    if(flag & U_CAMERA_SHADOW)
         program.setUniformData("u_shadow_mvp", shadowMVP);
+    if(flag & U_CAMERA_POS)
+        program.setUniformData("u_cam_pos", pos);
 }
 
 Camera Camera::parseCameraParams(std::string filename)

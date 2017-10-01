@@ -17,7 +17,7 @@ void MeshRenderer::init(std::string data_dir,
     
     auto& prog = programs_["mesh"];
     
-    Camera::intializeUniforms(prog, true, false);
+    Camera::initializeUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_tri(tri);
     mesh_.init(prog, AT_POSITION | AT_NORMAL | AT_TRI);
@@ -30,7 +30,7 @@ void MeshRenderer::render(const Camera& camera,
 {
     auto& prog = programs_["mesh"];
     
-    camera.updateUniforms(prog, true, false);
+    camera.updateUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
@@ -47,7 +47,7 @@ void MeshRenderer::render(const Camera& camera,
         glfwGetFramebufferSize(window, &w, &h);
         int sp_w = (int)(0.2*(float)std::min(w,h));
         glViewport(w-sp_w, 0, sp_w, sp_w);
-        camera.updateUniforms4Sphere(prog, true, false);
+        camera.updateUniforms4Sphere(prog, U_CAMERA_MVP | U_CAMERA_MV);
         ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
         prog.draw();
         glViewport(0, 0, w, h);
@@ -62,7 +62,7 @@ void MeshRenderer::render(const Camera& camera,
 {
     auto& prog = programs_["mesh"];
     
-    camera.updateUniforms(prog, RT, true, false);
+    camera.updateUniforms(prog, RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
@@ -79,7 +79,7 @@ void MeshRenderer::render(const Camera& camera,
         glfwGetFramebufferSize(window, &w, &h);
         int sp_w = (int)(0.2*(float)std::min(w,h));
         glViewport(w-sp_w, 0, sp_w, sp_w);
-        camera.updateUniforms4Sphere(prog, true, false);
+        camera.updateUniforms4Sphere(prog, U_CAMERA_MVP | U_CAMERA_MV);
         ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
         prog.draw();
         glViewport(0, 0, w, h);
