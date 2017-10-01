@@ -296,10 +296,10 @@
 		8F1E49581F6C51000051FC8C /* module */ = {
 			isa = PBXGroup;
 			children = (
-				8F4B76F91F7EB6EE00033525 /* capture_module.cpp */,
-				8F4B76FA1F7EB6EE00033525 /* capture_module.hpp */,
 				8F4B76F61F7EB4F900033525 /* module.cpp */,
 				8F4B76F71F7EB4F900033525 /* module.hpp */,
+				8F4B76F91F7EB6EE00033525 /* capture_module.cpp */,
+				8F4B76FA1F7EB6EE00033525 /* capture_module.hpp */,
 				8F1E49041F6C507C0051FC8C /* face_module.cpp */,
 				8F1E49051F6C507C0051FC8C /* face_module.hpp */,
 				8F1E492F1F6C507C0051FC8C /* renderer.cpp */,
@@ -336,6 +336,7 @@
 		8F3454151EEC9E30007B479B /* src */ = {
 			isa = PBXGroup;
 			children = (
+				8F4B76FD1F80C29800033525 /* application */,
 				8F1E49591F6C517F0051FC8C /* source.cpp */,
 				8F4B76FC1F80434E00033525 /* shape_model */,
 				8F1E49581F6C51000051FC8C /* module */,
@@ -344,8 +345,6 @@
 				8F530E0D1F71A12D00E4380E /* regressor */,
 				8F1E49541F6C50830051FC8C /* utility */,
 				8F1E49551F6C50AC0051FC8C /* gl_utility */,
-				8F1E490E1F6C507C0051FC8C /* gui.cpp */,
-				8F1E490F1F6C507C0051FC8C /* gui.hpp */,
 				8F1E491C1F6C507C0051FC8C /* main.cpp */,
 			);
 			name = src;
@@ -359,6 +358,15 @@
 				8F1E49031F6C507C0051FC8C /* face_model.hpp */,
 			);
 			name = shape_model;
+			sourceTree = "<group>";
+		};
+		8F4B76FD1F80C29800033525 /* application */ = {
+			isa = PBXGroup;
+			children = (
+				8F1E490E1F6C507C0051FC8C /* gui.cpp */,
+				8F1E490F1F6C507C0051FC8C /* gui.hpp */,
+			);
+			name = application;
 			sourceTree = "<group>";
 		};
 		8F530E0D1F71A12D00E4380E /* regressor */ = {

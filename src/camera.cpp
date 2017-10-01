@@ -8,6 +8,12 @@
 
 #include "camera.hpp"
 
+// for sphere rendering
+static const int sp_width_ = 400, sp_height_ = 400;
+static const Eigen::Matrix4f sp_extrinsic_ = (Eigen::Matrix4f() << 1,0,0,0,0,-1,0,0,0,0,-1,50.0,0,0,0,1).finished();
+static const Eigen::Matrix4f sp_intrinsic_ = (Eigen::Matrix4f() << 800,0,200,0,0,800,200,0,0,0,1,0,0,0,0,1).finished();
+
+
 Camera::Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w)
 : intrinsic_(K), width_(w), height_(h), zNear_(zN), zFar_(zF)
 {
@@ -78,6 +84,44 @@ void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool 
     Eigen::Matrix4f perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
     Eigen::Matrix4f MV = extrinsic_ * RT;
     MVP = perspective * MV;
+    
+    Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
+    
+    program.setUniformData("u_mvp", MVP);
+    if(with_mv)
+        program.setUniformData("u_modelview", MV);
+    if(with_bias)
+        program.setUniformData("u_shadow_mvp", shadowMVP);
+}
+
+void Camera::updateUniforms4Sphere(GLProgram& program, bool with_mv, bool with_bias) const
+{
+    static const Eigen::Matrix4f biasMatrix =
+    (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
+    
+    Eigen::Matrix4f MVP;
+    Eigen::Matrix4f perspective = PerspectiveFromVision(sp_intrinsic_, sp_width_, sp_height_, zNear_, zFar_);
+    Eigen::Matrix4f MV = sp_extrinsic_;
+    MVP = perspective * sp_extrinsic_;
+    
+    Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
+    
+    program.setUniformData("u_mvp", MVP);
+    if(with_mv)
+        program.setUniformData("u_modelview", MV);
+    if(with_bias)
+        program.setUniformData("u_shadow_mvp", shadowMVP);
+}
+
+void Camera::updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const
+{
+    static const Eigen::Matrix4f biasMatrix =
+    (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
+    
+    Eigen::Matrix4f MVP;
+    Eigen::Matrix4f perspective = PerspectiveFromVision(sp_intrinsic_, sp_width_, sp_height_, zNear_, zFar_);
+    Eigen::Matrix4f MV = sp_extrinsic_ * RT;
+    MVP = perspective * sp_extrinsic_;
     
     Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
     

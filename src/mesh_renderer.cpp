@@ -21,12 +21,12 @@ void MeshRenderer::init(std::string data_dir,
     
     mesh_.update_tri(tri);
     mesh_.init(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-//    mesh_.init_with_idx(prog, pts, nml, tri_pts);
 }
 
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml)
+                          const Eigen::MatrixX3f& nml,
+                          bool draw_sphere)
 {
     auto& prog = programs_["mesh"];
     
@@ -35,18 +35,30 @@ void MeshRenderer::render(const Camera& camera,
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
     mesh_.update(prog, AT_POSITION | AT_NORMAL);
-    //mesh_.update_with_idx(prog, pts, nml);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
     prog.draw();
+    
+    if(draw_sphere){
+        int w, h;
+        GLFWwindow* window = glfwGetCurrentContext();
+        glfwGetFramebufferSize(window, &w, &h);
+        int sp_w = (int)(0.2*(float)std::min(w,h));
+        glViewport(w-sp_w, 0, sp_w, sp_w);
+        camera.updateUniforms4Sphere(prog, true, false);
+        ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
+        prog.draw();
+        glViewport(0, 0, w, h);
+    }
 }
 
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::Matrix4f& RT,
                           const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml)
+                          const Eigen::MatrixX3f& nml,
+                          bool draw_sphere)
 {
     auto& prog = programs_["mesh"];
     
@@ -54,11 +66,22 @@ void MeshRenderer::render(const Camera& camera,
     
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL);
-    //mesh_.update_with_idx(prog, pts, nml);
+    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     
     prog.draw();
+    
+    if(draw_sphere){
+        int w, h;
+        GLFWwindow* window = glfwGetCurrentContext();
+        glfwGetFramebufferSize(window, &w, &h);
+        int sp_w = (int)(0.2*(float)std::min(w,h));
+        glViewport(w-sp_w, 0, sp_w, sp_w);
+        camera.updateUniforms4Sphere(prog, true, false);
+        ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
+        prog.draw();
+        glViewport(0, 0, w, h);
+    }
 }

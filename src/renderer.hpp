@@ -102,10 +102,12 @@ struct Renderer {
     
     bool initialized_ = false;
     
-    bool show_mesh_ = false;
+    bool show_mesh_ = true;
     bool show_f2f_ = false;
     bool show_p3d_ = false;
     bool show_p2d_ = false;
+    bool show_bg_ = true;
+    bool show_sphere_ = false;
 
     std::map<WINDOW, Window> windows_;
     Window & operator[](WINDOW idx) {return windows_[idx];}

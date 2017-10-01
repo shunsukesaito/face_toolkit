@@ -128,6 +128,7 @@ public:
     void updateTexture(std::string textureName, std::string sourceFile, bool flip = false);
     void updateTexture(std::string textureName, GLuint location);
     void updateTexture(std::string textureName, const cv::Mat& img);
+    void updateElementIndex(const std::vector<unsigned int>& vals);
     
     void setAttributeData(std::string attributeName, const std::vector<float> &vals);
     void setAttributeData(std::string attributeName, const std::vector<glm::vec4> &vals);
@@ -142,6 +143,7 @@ public:
     void setUniformData(std::string uniformName, const std::vector<float>& val);
     void setUniformData(std::string uniformName, const std::vector<uint>& val);
     
+    inline void setDrawMode(DrawMode mode){ drawMode = mode;}
 private:
     
     DrawMode drawMode;

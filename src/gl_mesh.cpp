@@ -116,59 +116,58 @@ void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sec
 
 void glSphere::init(GLProgram& program, int flag)
 {
-    if(flag & AT_POSITION){
+    if(flag & AT_POSITION)
         program.createAttribute("v_position", DataType::VECTOR3, true);
-        program.setAttributeData("v_position", pts_);
-    }
-    if(flag & AT_NORMAL){
+    if(flag & AT_NORMAL)
         program.createAttribute("v_normal", DataType::VECTOR3, true);
-        program.setAttributeData("v_normal", nml_);
-    }
-    if(flag & AT_COLOR){
+    if(flag & AT_COLOR)
         program.createAttribute("v_color", DataType::VECTOR4, true);
-        program.setAttributeData("v_color", clr_);
-    }
-    if(flag & AT_UV){
+    if(flag & AT_UV)
         program.createAttribute("v_texcoord", DataType::VECTOR2, false);
+    if(flag & AT_TRI)
+        program.createElementIndex(tri_);
+}
+
+void glSphere::update(GLProgram& program, int flag)
+{
+    if(flag & AT_POSITION)
+        program.setAttributeData("v_position", pts_);
+    if(flag & AT_NORMAL)
+        program.setAttributeData("v_normal", nml_);
+    if(flag & AT_COLOR)
+        program.setAttributeData("v_color", clr_);
+    if(flag & AT_UV)
         program.setAttributeData("v_texcoord", uvs_);
-    }
-    
-    program.createElementIndex(tri_);
+    if(flag & AT_TRI)
+        program.updateElementIndex(tri_);
 }
 
 void glMesh::init(GLProgram& program, int flag)
 {
-    if(flag & AT_POSITION){
+    if(flag & AT_POSITION)
         program.createAttribute("v_position", DataType::VECTOR3, true);
-    }
-    if(flag & AT_NORMAL){
+    if(flag & AT_NORMAL)
         program.createAttribute("v_normal", DataType::VECTOR3, true);
-    }
-    if(flag & AT_COLOR){
+    if(flag & AT_COLOR)
         program.createAttribute("v_color", DataType::VECTOR4, true);
-    }
-    if(flag & AT_UV){
+    if(flag & AT_UV)
         program.createAttribute("v_texcoord", DataType::VECTOR2, false);
-    }
-    if(flag & AT_TRI){
+    if(flag & AT_TRI)
         program.createElementIndex(tri_);
-    }
 }
 
 void glMesh::update(GLProgram& program, int flag)
 {
-    if(flag & AT_POSITION){
+    if(flag & AT_POSITION)
         program.setAttributeData("v_position", pts_);
-    }
-    if(flag & AT_NORMAL){
+    if(flag & AT_NORMAL)
         program.setAttributeData("v_normal", nml_);
-    }
-    if(flag & AT_COLOR){
+    if(flag & AT_COLOR)
         program.setAttributeData("v_color", clr_);
-    }
-    if(flag & AT_UV){
+    if(flag & AT_UV)
         program.setAttributeData("v_texcoord", uvs_);
-    }
+    if(flag & AT_TRI)
+        program.updateElementIndex(tri_);
 }
 
 void glMesh::update_position(const Eigen::VectorXf& pts,

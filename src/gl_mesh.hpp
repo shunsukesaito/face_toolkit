@@ -52,6 +52,7 @@ struct glSphere
     
     void generateSphere(float radius, unsigned int rings, unsigned int sectors);
     void init(GLProgram& prog, int flag);
+    void update(GLProgram& prog, int flag);
     
     std::vector<glm::vec2> uvs_;
     std::vector<glm::vec3> nml_;

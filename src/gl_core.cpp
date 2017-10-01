@@ -225,12 +225,6 @@ void GLProgram::validateUniformSet()
     }
 }
 
-void GLProgram::createElementIndex(const std::vector<unsigned int>& vals)
-{
-    attributeMap["index"] = GLAttribute(this);
-    attributeMap["index"].setData(vals);
-}
-
 void GLProgram::createUniform(std::string uniformName, DataType type)
 {
     if(uniformMap.find(uniformName) != uniformMap.end()){
@@ -238,6 +232,12 @@ void GLProgram::createUniform(std::string uniformName, DataType type)
     }
     
     uniformMap[uniformName] = GLUniform(this, uniformName, type);
+}
+
+void GLProgram::createElementIndex(const std::vector<unsigned int>& vals)
+{
+    attributeMap["index"] = GLAttribute(this);
+    attributeMap["index"].setData(vals);
 }
 
 void GLProgram::createAttribute(std::string attributeName, DataType type, bool dynamic)
@@ -315,6 +315,15 @@ void GLProgram::updateTexture(std::string textureName, const cv::Mat& img)
     GLTexture& tex = textureMap[textureName];
     
     tex.UpdateTexture(img);
+}
+
+void GLProgram::updateElementIndex(const std::vector<unsigned int>& vals)
+{
+    if(attributeMap.find("index") == attributeMap.end()){
+        throw std::runtime_error("Attempted to set attribute which does not exist: index");
+    }
+
+    attributeMap["index"].setData(vals);
 }
 
 void GLProgram::setUniformData(std::string uniformName, const Eigen::Matrix4f &val)

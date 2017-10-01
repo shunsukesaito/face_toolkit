@@ -19,7 +19,6 @@
 #endif
 
 struct Camera;
-
 typedef std::shared_ptr<Camera> CameraPtr;
 
 struct Camera
@@ -43,6 +42,9 @@ struct Camera
     static void intializeUniforms(GLProgram& programs, bool with_mv, bool with_bias);
     void updateUniforms(GLProgram& program, bool with_mv, bool with_bias) const;
     void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
+    
+    void updateUniforms4Sphere(GLProgram& program, bool with_mv, bool with_bias) const;
+    void updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, bool with_mv, bool with_bias) const;
     
     static Camera parseCameraParams(std::string filename);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);

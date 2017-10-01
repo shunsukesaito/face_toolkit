@@ -76,10 +76,10 @@ void Renderer::draw(FaceResult& result)
     auto& camera = result.camera;
     auto& fParam = result.fParam;
     
-    bg_renderer_.render(result.img);
-
+    if(show_bg_)
+        bg_renderer_.render(result.img);
     if(show_mesh_)
-        mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_);
+        mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_, show_sphere_);
     if(show_f2f_)
         f2f_renderer_.render(camera, result.fParam);
     if(show_p3d_){
@@ -93,10 +93,12 @@ void Renderer::draw(FaceResult& result)
 #ifdef WITH_IMGUI
 void Renderer::updateIMGUI()
 {
+    ImGui::Checkbox("show bg", &show_bg_);
     ImGui::Checkbox("show mesh", &show_mesh_);
     ImGui::Checkbox("show f2f", &show_f2f_);
     ImGui::Checkbox("show p2d", &show_p2d_);
     ImGui::Checkbox("show p3d", &show_p3d_);
+    ImGui::Checkbox("show sphere", &show_sphere_);
     f2f_renderer_.updateIMGUI();
 }
 #endif
