@@ -741,6 +741,52 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
     return location;
 }
 
+GLuint GLTexture::CreateTexture(const HDRLoaderResult& img)
+{
+    GLuint location;
+    glGenTextures(1, &location);
+    
+    CHECK_GL_ERROR();
+    
+    glBindTexture(GL_TEXTURE_2D, location);
+    
+    CHECK_GL_ERROR();
+    
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, img.width, img.height, 0, GL_RGB, GL_FLOAT, &img.cols[0]);
+    
+    CHECK_GL_ERROR();
+    
+    return location;
+}
+
+GLuint GLTexture::CreateTexture(const TinyExrImage& img)
+{
+    GLuint location;
+    glGenTextures(1, &location);
+    
+    CHECK_GL_ERROR();
+    
+    glBindTexture(GL_TEXTURE_2D, location);
+    
+    CHECK_GL_ERROR();
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    
+    //[NOTE]: RGBA
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, img.width, img.height, 0, GL_RGBA, GL_FLOAT, &img.buf[0]);
+    
+    CHECK_GL_ERROR();
+    
+    return location;
+}
+
 GLTexture::GLTexture() {}
 
 GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, std::string sourceFile_)
@@ -812,11 +858,6 @@ GLTexture::GLTexture(GLProgram* parentProgram_, std::string name_, GLuint locati
     glBindTexture(GL_TEXTURE_2D, location);
     
     glUniform1i(glGetUniformLocation(parentProgram->programHandle, name.c_str()), 0);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     CHECK_GL_ERROR();
 }
 

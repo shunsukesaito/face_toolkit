@@ -62,22 +62,22 @@ void glPoint2D::update(GLProgram& program,
     program.setAttributeData("v_color", clr_);
 }
 
-void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sectors)
+void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sectors, bool with_idx)
 {
     float const R = 1./(float)(rings-1);
     float const S = 1./(float)(sectors-1);
     int r, s;
     
-    pts_.resize(rings * sectors);
-    nml_.resize(rings * sectors);
-    uvs_.resize(rings * sectors);
-    clr_.resize(rings * sectors);
-    tri_.clear();
+    std::vector<glm::vec3> pts(rings * sectors);
+    std::vector<glm::vec3> nml(rings * sectors);
+    std::vector<glm::vec2> uvs(rings * sectors);
+    std::vector<glm::vec4> clr(rings * sectors);
+    std::vector<unsigned int> tri;
     
-    std::vector<glm::vec3>::iterator v = pts_.begin();
-    std::vector<glm::vec3>::iterator n = nml_.begin();
-    std::vector<glm::vec2>::iterator t = uvs_.begin();
-    std::vector<glm::vec4>::iterator c = clr_.begin();
+    std::vector<glm::vec3>::iterator v = pts.begin();
+    std::vector<glm::vec3>::iterator n = nml.begin();
+    std::vector<glm::vec2>::iterator t = uvs.begin();
+    std::vector<glm::vec4>::iterator c = clr.begin();
     for(r = 0; r < rings; r++) for(s = 0; s < sectors; s++) {
         float const y = sin( -M_PI_2 + M_PI * r * R );
         float const x = cos(2.0*M_PI * s * S) * sin( M_PI * r * R );
@@ -104,13 +104,35 @@ void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sec
         int curRow = r * sectors;
         int nextRow = (r+1) * sectors;
         
-        tri_.push_back(curRow + s);
-        tri_.push_back(nextRow + s);
-        tri_.push_back(nextRow + (s+1));
+        tri.push_back(curRow + s);
+        tri.push_back(nextRow + s);
+        tri.push_back(nextRow + (s+1));
         
-        tri_.push_back(curRow + s);
-        tri_.push_back(nextRow + (s+1));
-        tri_.push_back(curRow + (s+1));
+        tri.push_back(curRow + s);
+        tri.push_back(nextRow + (s+1));
+        tri.push_back(curRow + (s+1));
+    }
+    
+    if(with_idx){
+        pts_ = pts;
+        nml_ = nml;
+        uvs_ = uvs;
+        clr_ = clr;
+        tri_ = tri;
+    }
+    else{
+        pts_.clear();
+        nml_.clear();
+        uvs_.clear();
+        clr_.clear();
+        tri_.clear();
+        for(int i : tri)
+        {
+            pts_.push_back(pts[i]);
+            nml_.push_back(nml[i]);
+            uvs_.push_back(uvs[i]);
+            clr_.push_back(clr[i]);
+        }
     }
 }
 
@@ -301,6 +323,7 @@ void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
                        const Eigen::MatrixX3i& tri_pts)
 {
     if(tri_pts.size() != 0){
+        assert(tri_uv.size() == tri_pts.size());
         uvs_.resize(uvs.rows());
         for(int i = 0; i < tri_pts.rows(); ++i)
         {
@@ -318,9 +341,8 @@ void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
         }
     }
     else{
-        assert(tri_uv.size() == tri_pts.size());
-        uvs_.resize(tri_pts.size());
-        for(int i = 0; i < tri_pts.rows(); ++i)
+        uvs_.resize(tri_uv.size());
+        for(int i = 0; i < tri_uv.rows(); ++i)
         {
             const int& idx0 = tri_uv(i, 0);
             const int& idx1 = tri_uv(i, 1);

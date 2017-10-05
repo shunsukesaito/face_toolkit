@@ -10,7 +10,7 @@
 using namespace cv;
 using namespace std;
 
-void TrainDetector::MyDetect(cv::Mat image, std::vector<cv::Rect>& rects)
+void TrainDetector::Detect(cv::Mat image, std::vector<cv::Rect>& rects)
 {
     Options& opt = Options::GetInstance();
     GAB Gab;
@@ -35,47 +35,6 @@ void TrainDetector::MyDetect(cv::Mat image, std::vector<cv::Rect>& rects)
             rects.push_back(new_rects[index[i]]);
     }
 }
-
-void TrainDetector::Detect(){
-  Options& opt = Options::GetInstance();
-
-  GAB Gab;
-  Gab.LoadModel(opt.outFile);
-
-  timeval start, end;
-  float time = 0;
-
-  string root_folder="/Users/harryyang/Documents/research/projects/Face/data/face_detect/positive_each/";
-  ifstream list_name(root_folder+"list0.txt");
-
-  string filename;
-  while(list_name>>filename)
-  {
-  //  string path = "2.png";
-    string path=root_folder+filename;
-    Mat img = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
-    imshow("test",img);
-    waitKey(0);
-    vector<Rect> rects;
-    vector<float> scores;
-    vector<int> index;
-    gettimeofday(&start,NULL);
-    index = Gab.DetectFace(img,rects,scores);
-    gettimeofday(&end,NULL);
-    float t = 1000 * (end.tv_sec-start.tv_sec)+ (end.tv_usec-start.tv_usec)/1000;
-    printf("use time:%f\n",t);
-    for(int i = 0;i < index.size(); i++){
-      printf("%s %d %d %d %d %lf\n", filename.c_str(), rects[index[i]].x, rects[index[i]].y, rects[index[i]].width, rects[index[i]].height, scores[index[i]]);
-      for (int i = 0; i < index.size(); i++) {
-        if(scores[index[i]]>9)
-          img = Gab.Draw(img, rects[index[i]]);
-      }
-
-  }
-    imwrite(filename,img);
- }
-}
-
 
 void TrainDetector::FddbDetect(){
   Options& opt = Options::GetInstance();
@@ -138,7 +97,6 @@ void TrainDetector::Live() {
     Mat frame;
     Mat gray;
     cap >> frame;
-    //cv::resize(frame,frame,cv::Size(),0.1,0.1);
     cvtColor(frame, gray, CV_BGR2GRAY);
     vector<Rect> rects;
     vector<float> scores;

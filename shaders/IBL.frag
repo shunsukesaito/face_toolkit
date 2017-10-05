@@ -1,4 +1,4 @@
-#version 400
+#version 330
 #define pi 3.1415926535897932384626433832795
 
 // for clearity,
@@ -6,32 +6,38 @@
 // face space = model space!!
 // so don't confuse them
 
+// from rendering params
 uniform uint u_texture_mode; // 0: none, 1: uv space, 2: image space
 uniform uint u_diffuse_mode; // 0: SH, 1: HDRI
 uniform uint u_enable_mask;
-uniform uint u_enable_seg;
 uniform uint u_cull_occlusion;
 uniform float u_cull_offset;
+uniform float u_light_rot;
 
-uniform vec3 u_camera_pos;
+// from face params
 uniform vec3 u_SHCoeffs[9];
+
+// from camera
+uniform vec3 u_camera_pos;
 
 in VertexData {
     vec4 color;
     vec4 normal_world;
     vec4 normal_camera;
+    vec4 pos_shadow_mvp;
     vec4 pos_world;
     vec4 pos_camera;
     vec2 proj_texcoord;
     vec2 texcoord;
-    vec4 barycentric;
 } VertexIn;
 
-uniform sampler2D u_sample_texture;
+uniform sampler2D u_sample_dif_albedo;
 uniform sampler2D u_sample_mask;
-uniform sampler2D u_sample_HDRI;
+uniform sampler2D u_sample_diffHDRI;
 uniform sampler2D u_sample_specHDRI;
 uniform sampler2D u_sample_depth;
+
+layout (location = 0) out vec4 frag_color;
 
 void evaluateH(vec3 n, out float H[9])
 {
@@ -62,12 +68,12 @@ vec3 evaluateLightingModel(vec3 normal)
 
 vec2 world2UV(vec3 vec)
 {
-	mat3 Rot = mat3(cos(u_light.x), 0, -sin(u_light.x),
+	mat3 Rot = mat3(cos(u_light_rot), 0, -sin(u_light_rot),
 					         0, 1, 0,
-					sin(u_light.x), 0, cos(u_light.x));
+					sin(u_light_rot), 0, cos(u_light_rot));
 	vec = Rot * vec;
 
-	vec2 uv = vec2(-0.5f / pi * atan(vec.x, - vec.z), 1.0 - 1.0 / pi * acos(vec.y));
+	vec2 uv = vec2(-0.5f / pi * atan(vec.x, -vec.z), 1.0 - 1.0 / pi * acos(vec.y));
 
     return uv;
 }
@@ -79,10 +85,10 @@ vec4 gammaCorrection(vec4 vec, float g)
 
 float fresnelGraham(float r, float cos_theta, float power)
 {
-      if(cos_theta<0.0){
+      if(cos_theta>0.0){
             return 0.0;
       }
-      return r+(1.0-r)*(pow(1.0-cos_theta, power));
+      return r+(1.0-r)*(pow(1.0+cos_theta, power));
 }
 
 //spec albedo average: 0.3753, std: 0.1655
@@ -91,57 +97,51 @@ float fresnelGraham(float r, float cos_theta, float power)
 
 void main()
 {
+    float specScale = 1.0;
+    float specAlbedo = 0.3753;
+
     vec4 diffuseColor = VertexIn.color;//material color
     vec3 Nw = normalize(VertexIn.normal_world.xyz);
     vec3 Nc = normalize(VertexIn.normal_camera.xyz);
+    vec3 vieww = normalize(VertexIn.pos_world.xyz-u_camera_pos);
+    vec3 viewc = normalize(VertexIn.pos_camera.xyz);
+    vec3 freflect = normalize(reflect(vieww, Nw));
+    vec4 diffuseReflection = gammaCorrection(texture(u_sample_diffHDRI, world2UV(Nw)),2.2);
+    
+    float F = fresnelGraham(0.05, dot(Nw, vieww), 2.0);
+    vec4 specularReflectionEM = F * gammaCorrection(texture(u_sample_specHDRI, world2UV(freflect)),2.2);
+
     vec2 texcoord = VertexIn.texcoord;
     
-    if(u_enable_texture == uint(1)){
-        diffuseColor = texture(u_sample_texture, VertexIn.texcoord);
+    if(u_texture_mode == uint(1)){
+        diffuseColor = texture(u_sample_dif_albedo, VertexIn.texcoord);
     }
-    else if(u_enable_texture == uint(2)){
-        diffuseColor = texture(u_sample_texture, VertexIn.proj_texcoord);
+    else if(u_texture_mode == uint(2)){
+        diffuseColor = texture(u_sample_dif_albedo, VertexIn.proj_texcoord);
     }
-
-    vec3 vieww = normalize(VertexIn.pos_world.xyz-u_cam_pose);
-    vec3 viewc = normalize(VertexIn.pos_camera.xyz);
-    
-    vec3 freflect = normalize(reflect(-vieww, Nw));
-	
-    // should be nc
-    vec4 diffuseReflection = gammaCorrection(texture2D(u_sample_HDRI, world2UV(Nw)),2.2);
-
-    if(u_cull_occlusion != uint(0))
-    {
-        if(dot(viewc,Nc) > u_cull_offset)
-            discard;
-
-        vec3 ShadowMapTexCoord = f_position.xyz / f_position.w;
-        
-        float bias = 0.005*tan(acos(clamp(dot(Nc, viewc),0.0,1.0)));
-        bias = clamp(bias, 0,0.01);
-        if(texture2D(u_sample_depth, ShadowMapTexCoord.xy).r <= ShadowMapTexCoord.z-bias)
-            discard;
-    }
-	
-	float F = fresnelGraham(0.05, dot(Nc, viewc), 2.0);
-	vec4 specularReflectionEM = F * gammaCorrection(texture2D(u_sample_specHDRI, world2UV(freflect)),2.2);
-
-	float specScale = 1.0;
-    if(u_show_specular == 0) specScale = 0.0;
-    float specAlbedo = max(0, spec_albedo + 0.3753);
-
-    if(u_diffuse_mode == uint(0))
-    {
-        vec3 shading = evaluateLightingModel(Nw);
-        gl_FragColor = vec4(clamp(diffuseColor.xyz*shading.xyz, vec3(0.0), vec3(1.0)), diffuseColor.a);
-    }
-    else 
-        gl_FragColor = specScale * specAlbedo * specularReflectionEM + diffuseColor * diffuseReflection;
     
     if (u_enable_mask != uint(0)){
         if (texture(u_sample_mask, texcoord)[0] < 0.5)
             discard;
     }
 
+    if(u_cull_occlusion != uint(0))
+    {
+        if(dot(viewc,Nc) > u_cull_offset)
+            discard;
+
+        vec3 ShadowMapTexCoord = VertexIn.pos_shadow_mvp.xyz / VertexIn.pos_shadow_mvp.w;
+        float bias = 0.005*tan(acos(clamp(dot(Nc, viewc),0.0,1.0)));
+        bias = clamp(bias, 0,0.01);
+        if(texture(u_sample_depth, ShadowMapTexCoord.xy).r <= ShadowMapTexCoord.z-bias)
+            discard;
+    }
+
+    if(u_diffuse_mode == uint(0))
+    {
+        vec3 shading = evaluateLightingModel(Nw);
+        frag_color = vec4(clamp(diffuseColor.xyz*shading.xyz, vec3(0.0), vec3(1.0)), diffuseColor.a);
+    }
+    else 
+        frag_color = specScale * specAlbedo * specularReflectionEM + diffuseColor * diffuseReflection;
 }

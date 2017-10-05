@@ -259,7 +259,7 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    face_model_ = FaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    face_model_ = FaceModel::LoadModel(data_dir + "data/PinModel.bin");
     renderer_.init(w, h, face_model_, data_dir);
     
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());

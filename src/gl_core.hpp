@@ -38,6 +38,8 @@
 #include <opencv2/imgproc.hpp>
 
 #include "gl_utils.h"
+#include "tinyexr.h"
+#include "hdrloader.h"
 
 enum class DataType { UINT, FLOAT, VECTOR4, VECTOR3, VECTOR2, MATRIX44, INDEX};
 enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS };
@@ -95,6 +97,8 @@ struct GLTexture {
     GLTexture(GLProgram* parentProgram_, std::string name_, GLuint location_, int w, int h);
     
     static GLuint CreateTexture(const cv::Mat& img);
+    static GLuint CreateTexture(const HDRLoaderResult& img);
+    static GLuint CreateTexture(const TinyExrImage& img);
     
     void UpdateTexture(const cv::Mat& img);
     

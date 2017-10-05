@@ -294,7 +294,7 @@ void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
     mesh_.update_color(fParam.clr_);
     mesh_.update_normal(fParam.nml_);
     
-    mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL | AT_TRI);
+    mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
     
     fb_->Bind();
     

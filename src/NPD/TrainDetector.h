@@ -6,10 +6,7 @@ class TrainDetector{
     /*
      * \breif single detect
      */
-    void Detect();
-    
-    //for pinscreen
-    void MyDetect(cv::Mat image, std::vector<cv::Rect>& rects);
+    void Detect(cv::Mat image, std::vector<cv::Rect>& rects);
     /*
      * \breif Detect For FDDB
      */

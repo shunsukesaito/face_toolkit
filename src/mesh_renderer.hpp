@@ -20,7 +20,6 @@ struct MeshRenderer
     glMesh mesh_;
     
     // sphere rendering
-    Camera sp_camera_;
     glSphere ball_;
     
     void init(std::string data_dir,

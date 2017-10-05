@@ -51,7 +51,6 @@ struct Camera
     void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const;
     
     void updateUniforms4Sphere(GLProgram& program, int flag) const;
-    void updateUniforms4Sphere(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const;
     
     static Camera parseCameraParams(std::string filename);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);

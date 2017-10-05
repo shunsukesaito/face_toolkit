@@ -48,9 +48,9 @@ struct glPoint2D
 
 struct glSphere
 {
-    glSphere(){ generateSphere(10.0,24,48);}
+    glSphere(){ generateSphere(10.0,24,48,true);}
     
-    void generateSphere(float radius, unsigned int rings, unsigned int sectors);
+    void generateSphere(float radius, unsigned int rings, unsigned int sectors, bool with_idx);
     void init(GLProgram& prog, int flag);
     void update(GLProgram& prog, int flag);
     

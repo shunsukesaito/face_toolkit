@@ -21,6 +21,7 @@
 #include "bg_renderer.hpp"
 #include "f2f_renderer.hpp"
 #include "mesh_renderer.hpp"
+#include "IBL_renderer.hpp"
 #include "p3d_renderer.hpp"
 #include "p2d_renderer.hpp"
 
@@ -88,10 +89,10 @@ struct Window {
 
 struct Renderer {
     std::string data_dir_;
-    
     FaceModelPtr face_model_;
     
     BGRenderer bg_renderer_;
+    IBLRenderer IBL_renderer_;
     F2FRenderer f2f_renderer_;
     MeshRenderer mesh_renderer_;
     P3DRenderer p3d_renderer_;
@@ -104,6 +105,7 @@ struct Renderer {
     
     bool show_mesh_ = true;
     bool show_f2f_ = false;
+    bool show_IBL_ = false;
     bool show_p3d_ = false;
     bool show_p2d_ = false;
     bool show_bg_ = true;

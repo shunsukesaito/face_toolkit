@@ -67,6 +67,7 @@ void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
     bg_renderer_.init(data_dir_, cv::Mat_<cv::Vec3b>(1,1));
     f2f_renderer_.init(data_dir_, *face_model_);
     mesh_renderer_.init(data_dir_, face_model_->tri_pts_);
+    IBL_renderer_.init(data_dir, *face_model_);
     p3d_renderer_.init(data_dir_);
     p2d_renderer_.init(data_dir_);
 }
@@ -78,6 +79,8 @@ void Renderer::draw(FaceResult& result)
     
     if(show_bg_)
         bg_renderer_.render(result.img);
+    if(show_IBL_)
+        IBL_renderer_.render(camera, result.fParam, *face_model_, show_sphere_);
     if(show_mesh_)
         mesh_renderer_.render(camera, result.fParam.RT, result.fParam.pts_, result.fParam.nml_, show_sphere_);
     if(show_f2f_)
@@ -96,10 +99,12 @@ void Renderer::updateIMGUI()
     ImGui::Checkbox("show bg", &show_bg_);
     ImGui::Checkbox("show mesh", &show_mesh_);
     ImGui::Checkbox("show f2f", &show_f2f_);
+    ImGui::Checkbox("show IBL", &show_IBL_);
     ImGui::Checkbox("show p2d", &show_p2d_);
     ImGui::Checkbox("show p3d", &show_p3d_);
     ImGui::Checkbox("show sphere", &show_sphere_);
     f2f_renderer_.updateIMGUI();
+    IBL_renderer_.updateIMGUI();
 }
 #endif
 
