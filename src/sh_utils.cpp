@@ -253,8 +253,11 @@ void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,flo
     * Eigen::AngleAxisf(y,  Eigen::Vector3f::UnitY())
     * Eigen::AngleAxisf(z, Eigen::Vector3f::UnitZ());
     
-    const float* sh = src.data();
-    float* sh_rotated = tar.data();
+    //const float* sh = src.data();
+    float sh[27], sh_rotated[27];
+    for(int i = 0; i < 3; ++i)
+        for(int j = 0; j < 9; ++j)
+            sh[i*9+j] = src(i,j);
     
     // R
     OptRotateBand0(&sh_rotated[0],&sh[0],R);
@@ -277,6 +280,10 @@ void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,flo
                    R(0,0),R(0,1),R(0,2),
                    R(1,0),R(1,1),R(1,2),
                    R(2,0),R(2,1),R(2,2));
+    
+    for(int i = 0; i < 3; ++i)
+        for(int j = 0; j < 9; ++j)
+            tar(i,j) = sh_rotated[i*9+j];
 }
 
 int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest)

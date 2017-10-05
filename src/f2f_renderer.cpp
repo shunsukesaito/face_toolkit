@@ -260,6 +260,7 @@ void F2FRenderer::init(std::string data_dir, FaceModel& model)
     mesh_.update_tri(model.tri_pts_);
     mesh_.init(prog_f2f, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TRI);
     
+    mesh_.update_position(model.mu_id_);
     mesh_.update_uv(model.uvs_, model.tri_uv_, model.tri_pts_);
     mesh_.update(prog_f2f, AT_UV);
     

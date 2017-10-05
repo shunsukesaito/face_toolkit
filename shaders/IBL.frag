@@ -8,14 +8,10 @@
 
 // from rendering params
 uniform uint u_texture_mode; // 0: none, 1: uv space, 2: image space
-uniform uint u_diffuse_mode; // 0: SH, 1: HDRI
 uniform uint u_enable_mask;
 uniform uint u_cull_occlusion;
 uniform float u_cull_offset;
 uniform float u_light_rot;
-
-// from face params
-uniform vec3 u_SHCoeffs[9];
 
 // from camera
 uniform vec3 u_camera_pos;
@@ -39,33 +35,6 @@ uniform sampler2D u_sample_depth;
 
 layout (location = 0) out vec4 frag_color;
 
-void evaluateH(vec3 n, out float H[9])
-{
-    float c1 = 0.429043, c2 = 0.511664,
-    c3 = 0.743125, c4 = 0.886227, c5 = 0.247708;
-    
-    H[0] = c4;
-    H[1] = 2.0 * c2 * n[1];
-    H[2] = 2.0 * c2 * n[2];
-    H[3] = 2.0 * c2 * n[0];
-    H[4] = 2.0 * c1 * n[0] * n[1];
-    H[5] = 2.0 * c1 * n[1] * n[2];
-    H[6] = c3 * n[2] * n[2] - c5;
-    H[7] = 2.0 * c1 * n[2] * n[0];
-    H[8] = c1 * (n[0] * n[0] - n[1] * n[1]);
-}
-
-vec3 evaluateLightingModel(vec3 normal)
-{
-    float H[9];
-    evaluateH(normal, H);
-    vec3 res = vec3(0.0);
-    for (int i = 0; i < 9; i++) {
-        res += H[i] * u_SHCoeffs[i];
-    }
-    return res;
-}
-
 vec2 world2UV(vec3 vec)
 {
 	mat3 Rot = mat3(cos(u_light_rot), 0, -sin(u_light_rot),
@@ -83,12 +52,17 @@ vec4 gammaCorrection(vec4 vec, float g)
     return vec4(pow(vec.x, 1.0/g), pow(vec.y, 1.0/g), pow(vec.z, 1.0/g), vec.w);
 }
 
+vec3 gammaCorrection(vec3 vec, float g)
+{
+    return vec3(pow(vec.x, 1.0/g), pow(vec.y, 1.0/g), pow(vec.z, 1.0/g));
+}
+
 float fresnelGraham(float r, float cos_theta, float power)
 {
-      if(cos_theta>0.0){
+      if(cos_theta<0.0){
             return 0.0;
       }
-      return r+(1.0-r)*(pow(1.0+cos_theta, power));
+      return r+(1.0-r)*(pow(1.0-cos_theta, power));
 }
 
 //spec albedo average: 0.3753, std: 0.1655
@@ -108,7 +82,7 @@ void main()
     vec3 freflect = normalize(reflect(vieww, Nw));
     vec4 diffuseReflection = gammaCorrection(texture(u_sample_diffHDRI, world2UV(Nw)),2.2);
     
-    float F = fresnelGraham(0.05, dot(Nw, vieww), 2.0);
+    float F = fresnelGraham(0.05, dot(Nw, -vieww), 2.0);
     vec4 specularReflectionEM = F * gammaCorrection(texture(u_sample_specHDRI, world2UV(freflect)),2.2);
 
     vec2 texcoord = VertexIn.texcoord;
@@ -136,12 +110,6 @@ void main()
         if(texture(u_sample_depth, ShadowMapTexCoord.xy).r <= ShadowMapTexCoord.z-bias)
             discard;
     }
-
-    if(u_diffuse_mode == uint(0))
-    {
-        vec3 shading = evaluateLightingModel(Nw);
-        frag_color = vec4(clamp(diffuseColor.xyz*shading.xyz, vec3(0.0), vec3(1.0)), diffuseColor.a);
-    }
-    else 
-        frag_color = specScale * specAlbedo * specularReflectionEM + diffuseColor * diffuseReflection;
+    
+    frag_color = specScale * specAlbedo * specularReflectionEM + diffuseColor * diffuseReflection;
 }

@@ -324,7 +324,8 @@ void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
 {
     if(tri_pts.size() != 0){
         assert(tri_uv.size() == tri_pts.size());
-        uvs_.resize(uvs.rows());
+        assert(pts_.size() != 0);
+        uvs_.resize(pts_.size());
         for(int i = 0; i < tri_pts.rows(); ++i)
         {
             const int& idx0 = tri_pts(i, 0);

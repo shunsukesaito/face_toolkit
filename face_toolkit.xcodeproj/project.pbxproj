@@ -169,6 +169,8 @@
 		8F4B77061F82184000033525 /* hdrloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hdrloader.h; path = src/hdrloader.h; sourceTree = SOURCE_ROOT; };
 		8F4B77071F82184000033525 /* tinyexr.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyexr.cc; path = src/tinyexr.cc; sourceTree = SOURCE_ROOT; };
 		8F4B77081F82184000033525 /* tinyexr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyexr.h; path = src/tinyexr.h; sourceTree = SOURCE_ROOT; };
+		8F71020B1F85E6AE0030052F /* pointLight.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = pointLight.frag; sourceTree = "<group>"; };
+		8F71020C1F85E6AE0030052F /* pointLight.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = pointLight.vert; sourceTree = "<group>"; };
 		8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.frag; sourceTree = "<group>"; };
 		8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = full_texture_bgr.vert; sourceTree = "<group>"; };
 		8FDF975D1F50ED910038065A /* point2d.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = point2d.frag; sourceTree = "<group>"; };
@@ -411,6 +413,8 @@
 		8FDF97531F50EAFD0038065A /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				8F71020B1F85E6AE0030052F /* pointLight.frag */,
+				8F71020C1F85E6AE0030052F /* pointLight.vert */,
 				8FDF97661F50F3220038065A /* mesh.frag */,
 				8FDF97671F50F3220038065A /* mesh.vert */,
 				8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */,

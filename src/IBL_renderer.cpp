@@ -6,7 +6,6 @@
 void IBLRenderParams::init(GLProgram& prog)
 {
     prog.createUniform("u_texture_mode", DataType::UINT);
-    prog.createUniform("u_diffuse_mode", DataType::UINT);
     prog.createUniform("u_enable_mask", DataType::UINT);
     prog.createUniform("u_cull_occlusion", DataType::UINT);
     
@@ -19,7 +18,6 @@ void IBLRenderParams::init(GLProgram& prog)
 void IBLRenderParams::update(GLProgram& prog)
 {
     prog.setUniformData("u_texture_mode", (uint)texture_mode);
-    prog.setUniformData("u_diffuse_mode", (uint)diffuse_mode);
     prog.setUniformData("u_enable_mask", (uint)enable_mask);
     prog.setUniformData("u_cull_occlusion", (uint)enable_cull_occlusion);
     
@@ -35,8 +33,6 @@ void IBLRenderParams::updateIMGUI()
     if (ImGui::CollapsingHeader("IBL Rendering Parameters")){
         const char* listbox_items1[] = { "None", "UV", "Image"};
         ImGui::ListBox("TextureMode", &texture_mode, listbox_items1, 3);
-        const char* listbox_items2[] = { "Ravi", "HDRI"};
-        ImGui::ListBox("DiffuseMode", &diffuse_mode, listbox_items2, 2);
         
         ImGui::Checkbox("mask", &enable_mask);
         ImGui::Checkbox("uv view", &uv_view);
@@ -65,7 +61,6 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
     auto& prog_pl = programs_["plane"];
     
     param_.init(prog_IBL);
-    prog_IBL.createUniform("u_SHCoeffs", DataType::VECTOR3);
     prog_IBL.createTexture("u_sample_mask", data_dir + "data/f2f_mask.png");
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     
@@ -126,7 +121,6 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
     
     spec_HDRI_locations_.clear();
     diff_HDRI_locations_.clear();
-    SHCoeffs_.clear();
     int specHDRI_w = 0;
     int specHDRI_h = 0;
     for(int i = 0; i < sh_list.size(); ++i)
@@ -171,8 +165,6 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
         GLuint spec_HDRI_location = GLTexture::CreateTexture(specularHDRI);
         diff_HDRI_locations_.push_back(diff_HDRI_location);
         spec_HDRI_locations_.push_back(spec_HDRI_location);
-        
-        SHCoeffs_.push_back(SHCoeff);
     }
     param_.env_size = diff_HDRI_locations_.size();
 
@@ -192,14 +184,6 @@ void IBLRenderer::render(const Camera& camera, const FaceParams& fParam, const F
     auto& prog_depth = programs_["depth"];
     
     param_.update(prog_IBL);
-    
-    // spherical harmonics update
-    std::vector<glm::vec3> sh;
-    for(int i = 0; i < 9; ++i)
-    {
-        sh.push_back(glm::vec3(SHCoeffs_[param_.env_id](0,i),SHCoeffs_[param_.env_id](1,i),SHCoeffs_[param_.env_id](2,i)));
-    }
-    prog_IBL.setUniformData("u_SHCoeffs", sh);
     
     prog_IBL.updateTexture("u_sample_diffHDRI", diff_HDRI_locations_[param_.env_id]);
     prog_IBL.updateTexture("u_sample_specHDRI", spec_HDRI_locations_[param_.env_id]);

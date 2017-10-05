@@ -16,7 +16,6 @@
 
 struct IBLRenderParams{
     int texture_mode = 0; // 0: none, 1: uv space, 2: image space
-    int diffuse_mode = 1; // 0: SH, 1: HDRI
     bool enable_mask = 0;
     bool enable_cull_occlusion = 0;
     float cull_offset = 0.0;
@@ -46,7 +45,6 @@ struct IBLRenderer
     
     std::vector<GLuint> spec_HDRI_locations_;
     std::vector<GLuint> diff_HDRI_locations_;
-    std::vector<Eigen::Matrix3Xf> SHCoeffs_;
     
     // sphere rendering
     glSphere ball_;
