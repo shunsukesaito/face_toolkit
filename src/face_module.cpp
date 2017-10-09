@@ -8,14 +8,13 @@
 
 #include "face_module.hpp"
 
-static std::vector<std::vector<Eigen::Vector3f>> convPoint(const std::vector<Eigen::Vector2f>& in)
+static std::vector<Eigen::Vector3f> convPoint(const std::vector<Eigen::Vector2f>& in)
 {
-    std::vector<std::vector<Eigen::Vector3f>> out(1);
-    out[0].resize(in.size());
+    std::vector<Eigen::Vector3f> out(in.size());
     
     for(int i = 0; i < in.size(); ++i)
     {
-        out[0][i] = Eigen::Vector3f(in[i](0),in[i](1),1.0f);
+        out[i] = Eigen::Vector3f(in[i](0),in[i](1),1.0f);
     }
     
     return out;
@@ -99,13 +98,13 @@ void FaceModule::init(std::string data_dir,
     face_model_ = face_model;
     p2d_param_ = p2d_param;
     f2f_param_ = f2f_param;
-
-    fParam_.init(*face_model_);
+    
+    fd_.setFaceModel(face_model_);
 
     P2P2DC::parseConstraints(data_dir + "data/p2p_const.txt", c_p2p_);
     P2L2DC::parseConstraints(data_dir + "data/p2l_const.txt", c_p2l_);
     
-    f2f_renderer_.init(data_dir, *face_model_);
+    f2f_renderer_.init(data_dir, face_model_);
     
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
 }
@@ -116,31 +115,29 @@ void FaceModule::update(FaceResult& result)
     
     if(p2d_param_->run_){
         fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
-        std::vector<Camera> cameras(1, result.camera);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
-        P2DGaussNewtonMultiView(fParam_, cameras, *face_model_, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param);
+        P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param);
         
         result.processed_ = true;
     }
 
     if(f2f_param_->run_){
         fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
-        std::vector<Camera> cameras(1, result.camera);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
         
-        std::vector<cv::Mat_<cv::Vec4f>> inputRGBs(1);
+        cv::Mat_<cv::Vec4f> inputRGB;
         cv::Mat tmp;
         cv::cvtColor(result.img, tmp, CV_BGR2RGBA);
-        tmp.convertTo(inputRGBs[0], CV_32F);
-        inputRGBs[0] *= 1.f / 255.f;
-        F2FHierarchicalGaussNewtonMultiView(fParam_, cameras, f2f_renderer_, *face_model_, inputRGBs, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param, logger_);
+        tmp.convertTo(inputRGB, CV_32F);
+        inputRGB *= 1.f / 255.f;
+        F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param, logger_);
         
         result.processed_ = true;
     }
     
-    result.fParam = fParam_;
+    result.fd = fd_;
     result.c_p2p = c_p2p_;
     result.c_p2l = c_p2l_;
 }

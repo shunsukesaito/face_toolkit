@@ -13,8 +13,10 @@ void P2DFitParams::updateIMGUI()
         ImGui::InputInt("maxIter", &maxIter_);
         ImGui::InputInt("DOF ID", &dof.ID);
         ImGui::InputInt("DOF EX", &dof.EX);
-        ImGui::InputInt("DOF ROT", &dof.ROT);
-        ImGui::InputInt("DOF TR", &dof.TR);
+        ImGui::InputInt("DOF fROT", &dof.fROT);
+        ImGui::InputInt("DOF fTR", &dof.fTR);
+        ImGui::InputInt("DOF cROT", &dof.cROT);
+        ImGui::InputInt("DOF cTR", &dof.cTR);
         ImGui::InputInt("DOF CAM", &dof.CAM);
         ImGui::InputFloat("w P2P", &w_p2p_);
         ImGui::InputFloat("w P2L", &w_p2l_);
@@ -110,35 +112,32 @@ bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,
     return true;
 }
 
-void P2DGaussNewtonMultiView(FaceParams& fParam,
-                             std::vector< Camera >& cameras,
-                             const FaceModel& fModel,
-                             const std::vector<P2P2DC>& C_P2P,
-                             std::vector<P2L2DC>& C_P2L,
-                             const std::vector<std::vector<Eigen::Vector3f>>& q2V,
-                             const P2DFitParams& params)
+struct ErrP2D
 {
-    MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
+    float p2p = 0.0;
+    float p2l = 0.0;
+    float pca_id = 0.0;
+    float pca_ex = 0.0;
+};
+
+static void computeP2DJacobian(Eigen::VectorXf& Jtr,
+                               Eigen::MatrixXf& JtJ,
+                               const FaceData& fd,
+                               const Camera& camera,
+                               const Eigen::Vector6f& rtf,
+                               const Eigen::Vector6f& rtc,
+                               const std::vector<Eigen::Vector3f>& q2V,
+                               const std::vector<P2P2DC>& CP2P,
+                               const std::vector<P2L2DC>& CP2L,
+                               const P2DFitParams& params,
+                               ErrP2D& err)
+{
     const DOF& dof = params.dof;
     
-    const Eigen::MatrixXf& w_id = fModel.w_id_;
-    const Eigen::MatrixXf& w_ex = fModel.w_ex_;
-    const Eigen::VectorXf& sigma_id = fModel.sigma_id_;
-    const Eigen::VectorXf& sigma_ex = fModel.sigma_ex_;
-    const Eigen::MatrixX2i& sym_list = fModel.sym_list_;
-    
-    std::vector<Eigen::Matrix4f> Is;
-    Eigen::Vector6f rt;
-    Eigen::VectorXf X(dof.all());
-    Eigen::VectorXf dX(dof.all());
-    
-    setFaceVector(X, Is, rt, fParam, cameras, dof);
-    
+    // if this part shows down, the data below can be wrapped
     std::vector<Eigen::Vector2f> p_p2p, p_p2l;
-    std::vector<Eigen::MatrixX2f> dp_p2p, dp_p2l;
+    std::vector<Eigen::Matrix2Xf> dp_p2p, dp_p2l;
     std::vector<Eigen::Vector3f> V_p2p, V_p2l;
-    Eigen::MatrixXf JtJ = Eigen::MatrixXf::Zero(dof.all(), dof.all());
-    Eigen::VectorXf Jtr = Eigen::VectorXf::Zero(dof.all());
     
     std::vector<Eigen::Vector3f> q_p2p;
     std::vector<Eigen::Vector3f> q_p2l;
@@ -146,61 +145,95 @@ void P2DGaussNewtonMultiView(FaceParams& fParam,
     std::vector<int> idx_p2p;
     std::vector<int> idx_p2l;
     
+    // TODO:
+    //faceModel.UpdateFaceContour(cameras[j]);
+    
+    // TODO:
+    //if ((land[61] - land[67]).norm() < params.mc_thresh_ &&
+    //    (land[62] - land[66]).norm() < params.mc_thresh_ &&
+    //    (land[63] - land[65]).norm() < params.mc_thresh_)
+    //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
+    P2P2DC::getIndexList(CP2P, idx_p2p);
+    P2L2DC::getIndexList(CP2L, idx_p2l);
+    
+    computeV(fd, idx_p2p, V_p2p);
+    computeV(fd, idx_p2l, V_p2l);
+    
+    computeVertexWiseGradPosition2D(p_p2p, dp_p2p, V_p2p, fd, rtc, rtf, camera.intrinsic_, dof, idx_p2p);
+    computeVertexWiseGradPosition2D(p_p2l, dp_p2l, V_p2l, fd, rtc, rtf, camera.intrinsic_, dof, idx_p2l);
+    
+    P2P2DC::updateConstraints(CP2P, q2V, q_p2p);
+    P2L2DC::updateConstraints(CP2L, q2V, p_p2l, q_p2l, n_p2l);
+    
+    // compute landmark jacobian
+    err.p2p += computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2p, q_p2p, params.w_p2p_, params.robust_);
+    err.p2l += computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
+    
+}
+
+static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
+                                       Eigen::MatrixXf& JtJ,
+                                       const Eigen::VectorXf& X,
+                                       const FaceData& fd,
+                                       const P2DFitParams& params,
+                                       ErrP2D& err)
+{
+    const DOF& dof = params.dof;
+    
+    int cur_pos = 0;
+    const Eigen::VectorXf& sigma_id = fd.model_->sigmaID();
+    const Eigen::VectorXf& sigma_ex = fd.model_->sigmaEX();
+    
+    err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, 0, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
+    err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
+    
+    for(int j = 0; j < Jtr.size(); ++j)
+    {
+        JtJ(j,j) += 1.e-5;
+    }
+    
+}
+
+void P2DGaussNewton(FaceData& fd,
+                    Camera& camera,
+                    const std::vector<P2P2DC>& CP2P,
+                    std::vector<P2L2DC>& CP2L,
+                    const std::vector<Eigen::Vector3f>& q2V,
+                    const P2DFitParams& params)
+{
+    MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
+    const DOF& dof = params.dof;
+    
+    Eigen::Vector6f rtf, rtc;
+    Eigen::VectorXf X(dof.all());
+    Eigen::VectorXf dX(dof.all());
+    
+    Eigen::Ref<Eigen::VectorXf> Xf = X.segment(0,dof.face());
+    Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.face(),dof.camera());
+    setFaceVector(Xf, rtf, fd, dof);
+    setCameraVector(Xc, rtc, camera, dof);
+
+    Eigen::MatrixXf JtJ = Eigen::MatrixXf::Zero(dof.all(), dof.all());
+    Eigen::VectorXf Jtr = Eigen::VectorXf::Zero(dof.all());
+
     for (int i = 0; i < params.maxIter_; ++i)
     {
         JtJ.setZero();
         Jtr.setZero();
         
-        float err_p2p = 0.0, err_p2l = 0.0;
-        for (int j = 0; j < cameras.size(); ++j)
-        {
-            const Eigen::Matrix4f& RTc = cameras[j].extrinsic_;
-            Eigen::Matrix4f RTall = RTc * fParam.RT;
-            //Eigen::Vector6f rtall = Eigen::ConvertToEulerAnglesPose(RTall);
-            
-            if (q2V[j].size() != 0){
-                //faceModel.UpdateFaceContour(cameras[j]);
-                //std::vector<int> indices = faceModel.get_feature_indices();
-                //std::vector<Eigen::Vector3f> q = q2V[j];
-                
-                // TODO:
-                //if ((land[61] - land[67]).norm() < params.mc_thresh_ &&
-                //    (land[62] - land[66]).norm() < params.mc_thresh_ &&
-                //    (land[63] - land[65]).norm() < params.mc_thresh_)
-                //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
-                P2P2DC::getIndexList(C_P2P, idx_p2p);
-                P2L2DC::getIndexList(C_P2L, idx_p2l);
-                
-                computeV(fParam, fModel, idx_p2p, V_p2p);
-                computeV(fParam, fModel, idx_p2l, V_p2l);
-                
-                computeVertexWisePositionGradient2D(p_p2p, dp_p2p, V_p2p, w_id, w_ex, RTc, rt, Is[j], dof, idx_p2p);
-                computeVertexWisePositionGradient2D(p_p2l, dp_p2l, V_p2l, w_id, w_ex, RTc, rt, Is[j], dof, idx_p2l);
-
-                P2P2DC::updateConstraints(C_P2P, q2V[j], q_p2p);
-                P2L2DC::updateConstraints(C_P2L, q2V[j], p_p2l, q_p2l, n_p2l);
-
-                // compute landmark jacobian
-                err_p2p += computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2p, q_p2p, params.w_p2p_, params.robust_);
-                err_p2l += computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
-            }
-        }
+        ErrP2D err;
         
-        int cur_pos = 0;
-        computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, 0, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
-        computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
-        
-        for(int j = 0; j < Jtr.size(); ++j)
-        {
-            JtJ(j,j) += 1.e-4;
-        }
+        computeP2DJacobian(Jtr, JtJ, fd, camera, rtf, rtc, q2V, CP2P, CP2L, params, err);
+        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, err);
         
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "iter " << i << " errP2P = " << err_p2p << " errP2L = " << err_p2l << "|dX| = " << dX.norm() << std::endl;
-        loadFaceVector(X, Is, rt, fParam, cameras, dof);
+        std::cout << "iter " << i << " errP2P = " << err.p2p << " errP2L = " << err.p2l << "|dX| = " << dX.norm() << std::endl;
         
+        loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
+        loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
+                         
         if (dX.norm() < params.gn_thresh_) break;
     }
 }

@@ -16,7 +16,7 @@ struct F2FParams
 {
     bool run_ = false;
     
-    DOF dof = DOF( 40, 40, 40, 3, 3, 0, 27);
+    DOF dof = DOF( 40, 40, 40, 3, 3, 0, 0, 0, 27);
 
     std::vector<int> maxIter_ = {0, 3, 5, 5};
     
@@ -51,25 +51,23 @@ typedef std::shared_ptr<F2FParams> F2FParamsPtr;
 
 // renderTarget contains 
 // positions,normals,colors,vIndices,vBarycentric,texCoords
-void F2FGaussNewtonMultiView(FaceParams& fParam,
-                             std::vector<Camera>& cameras,
-                             F2FRenderer& renderer,
-                             const FaceModel& faceModel,
-                             const std::vector< cv::Mat_<cv::Vec4f> >& inputRGBs,
-                             const std::vector<P2P2DC>& C_P2P,
-                             std::vector<P2L2DC>& C_P2L,
-                             const std::vector< std::vector<Eigen::Vector3f> >& q2d,
-                             unsigned int level,
-                             const F2FParams& params = F2FParams(),
-                             std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
+void F2FGaussNewton(FaceData& fd,
+                    Camera& camera,
+                    F2FRenderer& renderer,
+                    const cv::Mat_<cv::Vec4f>& inputRGB,
+                    const std::vector<P2P2DC>& C_P2P,
+                    std::vector<P2L2DC>& C_P2L,
+                    const std::vector<Eigen::Vector3f>& q2V,
+                    unsigned int level,
+                    const F2FParams& params,
+                    std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
 
-void F2FHierarchicalGaussNewtonMultiView(FaceParams& fParam,
-                                         std::vector< Camera >& cameras,
-                                         F2FRenderer& renderer,
-                                         const FaceModel& faceModel,
-                                         const std::vector< cv::Mat_<cv::Vec4f> >& inputRGBs,
-                                         const std::vector<P2P2DC>& C_P2P,
-                                         std::vector<P2L2DC>& C_P2L,
-                                         const std::vector<std::vector<Eigen::Vector3f>>& q2d,
-                                         const F2FParams& params = F2FParams(),
-                                         std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
+void F2FHierarchicalGaussNewton(FaceData& fd,
+                                Camera& camera,
+                                F2FRenderer& renderer,
+                                const cv::Mat_<cv::Vec4f>& inputRGB,
+                                const std::vector<P2P2DC>& C_P2P,
+                                std::vector<P2L2DC>& C_P2L,
+                                const std::vector<Eigen::Vector3f>& q2V,
+                                const F2FParams& params,
+                                std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));

@@ -49,10 +49,9 @@ struct IBLRenderer
     // sphere rendering
     glSphere ball_;
     
-    void init(std::string data_dir, const FaceModel& model);
+    void init(std::string data_dir, FaceModelPtr model);
     void render(const Camera& camera,
-                const FaceParams& fParam,
-                const FaceModel& model,
+                const FaceData& fd,
                 bool draw_sphere = false);
     
 #ifdef WITH_IMGUI

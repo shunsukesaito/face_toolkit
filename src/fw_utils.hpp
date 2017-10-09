@@ -26,6 +26,7 @@ void writeCoreTensor(const std::string& out_model,
 void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
                        std::vector<Eigen::MatrixXf>& out,
                        Eigen::VectorXf& mean,
+                       Eigen::MatrixXf& w_exp,
                        Eigen::VectorXf& stddev,
                        int tar_id);
 

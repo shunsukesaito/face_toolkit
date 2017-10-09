@@ -15,21 +15,25 @@
 
 void FaceData::updateIdentity()
 {
+    assert(model_ != NULL);
     model_->updateIdentity(*this);
 }
 
 void FaceData::updateExpression()
 {
+    assert(model_ != NULL);
     model_->updateExpression(*this);
 }
 
 void FaceData::updateColor()
 {
+    assert(model_ != NULL);
     model_->updateColor(*this);
 }
 
 void FaceData::updateAll()
 {
+    assert(model_ != NULL);
     model_->updateColor(*this);
     model_->updateIdentity(*this);
     model_->updateExpression(*this);
@@ -37,47 +41,56 @@ void FaceData::updateAll()
 
 void FaceData::updateShape()
 {
+    assert(model_ != NULL);
     model_->updateIdentity(*this);
     model_->updateExpression(*this);
 }
 
-Eigen::Vector3f FaceData::computeV(int i) const
+Eigen::Vector3f FaceData::computeV(int vidx) const
 {
-    return model_->computeV(i, *this);
+    assert(model_ != NULL);
+    return model_->computeV(vidx, *this);
 }
 
 Eigen::Ref<const Eigen::MatrixXf> FaceData::dID(int vidx, int size) const
 {
+    assert(model_ != NULL);
     return model_->dID(vidx, size, *this);
 }
 
 Eigen::Ref<const Eigen::MatrixXf> FaceData::dEX(int vidx, int size) const
 {
+    assert(model_ != NULL);
     return model_->dEX(vidx, size, *this);
 }
 
 Eigen::Ref<const Eigen::MatrixXf> FaceData::dCL(int vidx, int size) const
 {
+    assert(model_ != NULL);
     return model_->dCL(vidx, size, *this);
 }
 
 const Eigen::Matrix3Xf& FaceData::dIDEdge(int fidx, int eidx) const
 {
+    assert(model_ != NULL);
     return model_->dIDEdge(fidx, eidx, *this);
 }
 
 const Eigen::Matrix3Xf& FaceData::dEXEdge(int fidx, int eidx) const
 {
+    assert(model_ != NULL);
     return model_->dEXEdge(fidx, eidx, *this);
 }
 
 void FaceData::dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv) const
 {
+    assert(model_ != NULL);
     model_->dSym(symidx, axis, nid, nex, v, dv, *this);
 }
 
 void FaceData::init()
 {
+    assert(model_ != NULL);
     idCoeff = Eigen::VectorXf::Zero(model_->n_id());
     exCoeff = Eigen::VectorXf::Zero(model_->n_exp());
     alCoeff = Eigen::VectorXf::Zero(model_->n_clr());
@@ -91,6 +104,7 @@ void FaceData::init()
 
 void FaceData::saveObj(const std::string& filename)
 {
+    assert(model_ != NULL);
     std::ofstream fout(filename);
     if(fout.is_open()){
         for(int i = 0; i < pts_.size()/3; ++i)

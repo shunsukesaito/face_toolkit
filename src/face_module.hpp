@@ -33,7 +33,7 @@ struct FaceResult
     cv::Mat img;
     Camera camera;
     
-    FaceParams fParam;
+    FaceData fd;
     
     std::vector<P2P2DC> c_p2p;
     std::vector<P2L2DC> c_p2l;
@@ -68,7 +68,7 @@ public:
     // Default implementation does nothing.
     virtual void Stop();
     
-    inline void reset(){ fParam_.init(*face_model_); }
+    inline void reset(){ fd_.init(); }
     
     // Set input queue. The input queue is automatically set in Create().
     // Not thread safe.
@@ -102,7 +102,7 @@ private:
     F2FRenderer f2f_renderer_;
     
     FaceModelPtr face_model_;
-    FaceParams fParam_;
+    FaceData fd_;
 
     std::vector<Eigen::Vector2f> p2d_;
     

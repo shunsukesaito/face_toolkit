@@ -110,16 +110,16 @@ void GUI::keyboard(int key, int s, int a, int m)
     
     if(key == GLFW_KEY_F1 && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(result_mutex_);
-        result_.fParam.saveObj("cur_mesh.obj", *face_model_);
+        result_.fd.saveObj("cur_mesh.obj");
     }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(result_mutex_);
-        lookat = getCenter(result_.fParam.pts_);
+        lookat = Eigen::ApplyTransform(result_.fd.RT, getCenter(result_.fd.pts_));
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
-        result_.fParam.init(*face_model_);
+        result_.fd.init();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
         //renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
@@ -259,7 +259,9 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    face_model_ = FaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
+    
     renderer_.init(w, h, face_model_, data_dir);
     
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
@@ -298,7 +300,7 @@ void GUI::loop()
         ;
     result_ = *session.result_queue_->front();
     session.result_queue_->pop();
-    lookat = getCenter(result_.fParam.pts_);
+    lookat = Eigen::ApplyTransform(result_.fd.RT,getCenter(result_.fd.pts_));
 
     while(!glfwWindowShouldClose(renderer_.windows_[MAIN]))
     {
@@ -309,14 +311,14 @@ void GUI::loop()
             result_.img = result.img;
             if(result.processed_){
                 result_.camera = result.camera;
-                result_.fParam = result.fParam;
+                result_.fd = result.fd;
                 result_.c_p2l = result.c_p2l;
                 result_.c_p2p = result.c_p2p;
                 result_.p2d = result.p2d;
             }
             
             session.result_queue_->pop();
-            result_.fParam.updateAll(*face_model_);
+            result_.fd.updateAll();
         }
         
         char title[256];
@@ -336,7 +338,7 @@ void GUI::loop()
         
         renderer_.updateIMGUI();
         result_.camera.updateIMGUI();
-        result_.fParam.updateIMGUI();
+        result_.fd.updateIMGUI();
         p2d_param_->updateIMGUI();
         f2f_param_->updateIMGUI();
         

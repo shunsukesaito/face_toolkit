@@ -507,7 +507,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "254"
             endingLineNumber = "254"
-            landmarkName = "F2FRenderer::init(std::string data_dir, FaceModel&amp; model)"
+            landmarkName = "F2FRenderer::render(const Camera&amp; camera, const FaceData&amp; fd)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -523,7 +523,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "49"
             endingLineNumber = "49"
-            landmarkName = "IBLRenderer::init(std::string data_dir, const FaceModel&amp; model)"
+            landmarkName = "IBLRenderer::init(std::string data_dir, FaceModelPtr model)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -539,7 +539,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "104"
             endingLineNumber = "104"
-            landmarkName = "IBLRenderer::init(std::string data_dir, const FaceModel&amp; model)"
+            landmarkName = "IBLRenderer::init(std::string data_dir, FaceModelPtr model)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

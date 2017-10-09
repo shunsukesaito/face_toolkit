@@ -40,6 +40,7 @@ void loadBlendshapeFW( const std::string& filename, Eigen::MatrixXf& shape, floa
 void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
                        std::vector<Eigen::MatrixXf>& out,
                        Eigen::VectorXf& mean,
+                       Eigen::MatrixXf& w_exp,
                        Eigen::VectorXf& stddev,
                        int tar_id)
 {
@@ -48,15 +49,27 @@ void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
     const int n_v = in[0].rows();
     std::vector<Eigen::MatrixXf> shapes = in;
     mean = Eigen::VectorXf::Zero(shapes[0].rows());
+    w_exp = Eigen::MatrixXf::Zero(n_v, n_exp-1);
     for(const Eigen::MatrixXf& sp : shapes)
     {
         mean += sp.col(0);
+        
+        for(int i = 1; i < n_exp; ++i)
+        {
+            w_exp.col(i-1) += sp.col(i);
+        }
     }
     mean /= (float)shapes.size();
+    w_exp /= (float)shapes.size();
     
     for(Eigen::MatrixXf& sp : shapes)
     {
         sp.col(0) -= mean;
+        
+        for(int i = 1; i < n_exp; ++i)
+        {
+            sp.col(i) -= w_exp.col(i-1);
+        }
     }
     
     Eigen::MatrixXf A(n_id,n_exp*n_v);
@@ -114,10 +127,11 @@ void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
         {
             for(int k = 0; k < n_v; ++k)
             {
-                out[i](k,j) = B(j, n_v*i+k);
+                out[i](k,j) = std_dev(j)*B(j, n_v*i+k);
             }
         }
     }
+    std_dev.setOnes();
     
     stddev = std_dev.transpose();
 }

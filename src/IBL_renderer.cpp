@@ -44,7 +44,7 @@ void IBLRenderParams::updateIMGUI()
 }
 #endif
 
-void IBLRenderer::init(std::string data_dir, const FaceModel& model)
+void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
 {
     programs_["IBL"] = GLProgram(data_dir + "shaders/IBL.vert",
                                  data_dir + "shaders/IBL.frag",
@@ -72,7 +72,7 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
     mesh_.init(prog_IBL, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV);
     mesh_.init(prog_depth, AT_POSITION);
     
-    mesh_.update_uv(model.uvs_, model.tri_uv_);
+    mesh_.update_uv(model->uvs_, model->tri_uv_);
     mesh_.update(prog_IBL, AT_UV);
     
     //plane_.init(prog_pl,0.5);
@@ -173,7 +173,7 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
     prog_IBL.createTexture("u_sample_specHDRI", spec_HDRI_locations_[0], specHDRI_w, specHDRI_h);
 }
 
-void IBLRenderer::render(const Camera& camera, const FaceParams& fParam, const FaceModel& model, bool draw_sphere)
+void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sphere)
 {
     if((param_.sub_samp*camera.width_ != fb_depth_->width()) || (param_.sub_samp*camera.height_ != fb_depth_->height()))
         fb_depth_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, 0);
@@ -189,13 +189,13 @@ void IBLRenderer::render(const Camera& camera, const FaceParams& fParam, const F
     prog_IBL.updateTexture("u_sample_specHDRI", spec_HDRI_locations_[param_.env_id]);
     
     // camera parameters update
-    camera.updateUniforms(prog_IBL, fParam.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
-    camera.updateUniforms(prog_depth, fParam.RT, U_CAMERA_MVP);
+    camera.updateUniforms(prog_IBL, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
+    camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
     
     // update mesh attributes
-    mesh_.update_position(fParam.pts_, model.tri_pts_);
-    mesh_.update_color(fParam.clr_, model.tri_pts_);
-    mesh_.update_normal(fParam.nml_, model.tri_pts_);
+    mesh_.update_position(fd.pts_, fd.model_->tri_pts_);
+    mesh_.update_color(fd.clr_, fd.model_->tri_pts_);
+    mesh_.update_normal(fd.nml_, fd.model_->tri_pts_);
     
     mesh_.update(prog_IBL, AT_POSITION | AT_COLOR | AT_NORMAL | AT_UV);
     mesh_.update(prog_depth, AT_POSITION);

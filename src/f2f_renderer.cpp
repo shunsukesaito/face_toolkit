@@ -1,14 +1,60 @@
 #include "f2f_renderer.hpp"
 
+static const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
 
+static Eigen::MatrixXf computedIdn(int ch,
+                                   const Eigen::Matrix3Xf& sh,
+                                   const Eigen::Vector3f& n,
+                                   const Eigen::Matrix3Xf& dn)
+{
+    return 2.0f * (c2 * sh(ch,3) + c1 * (sh(ch,8) * n[0] + sh(ch,4) * n[1] + sh(ch,7) * n[2])) * dn.row(0)
+    + 2.0f * (c2 * sh(ch,1) + c1 * (sh(ch,4) * n[0] - sh(ch,8) * n[1] + sh(ch,5) * n[2])) * dn.row(1)
+    + 2.0f * (c2 * sh(ch,2) + c1 * (sh(ch,7) * n[0] + sh(ch,5) * n[1]) + c3 * sh(ch,6) * n[2]) * dn.row(2);
+}
+
+static void computedIdsh(Eigen::Ref<Eigen::MatrixXf> dout,
+                         const Eigen::Vector3f& n,
+                         const cv::Vec4f& al,
+                         int dof)
+{
+    if (dof == 27){
+        for (int x = 0; x < 3; ++x)
+        {
+            dout(x, 9 * x + 0) = c4 * al[x];
+            dout(x, 9 * x + 1) = 2.0f * c2 * n[1] * al[x];
+            dout(x, 9 * x + 2) = 2.0f * c2 * n[2] * al[x];
+            dout(x, 9 * x + 3) = 2.0f * c2 * n[0] * al[x];
+            dout(x, 9 * x + 4) = 2.0f * c1 * n[0] * n[1] * al[x];
+            dout(x, 9 * x + 5) = 2.0f * c1 * n[1] * n[2] * al[x];
+            dout(x, 9 * x + 6) = (c3 * n[2] * n[2] - c5)* al[x];
+            dout(x, 9 * x + 7) = 2.0f * c1 * n[2] * n[0] * al[x];
+            dout(x, 9 * x + 8) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
+        }
+    }
+    else if (dof == 9)
+    {
+        for (int x = 0; x < 3; ++x)
+        {
+            dout(x, 0) = c4 * al[x];
+            dout(x, 1) = 2.0f * c2 * n[1] * al[x];
+            dout(x, 2) = 2.0f * c2 * n[2] * al[x];
+            dout(x, 3) = 2.0f * c2 * n[0] * al[x];
+            dout(x, 4) = 2.0f * c1 * n[0] * n[1] * al[x];
+            dout(x, 5) = 2.0f * c1 * n[1] * n[2] * al[x];
+            dout(x, 6) = (c3 * n[2] * n[2] - c5)* al[x];
+            dout(x, 7) = 2.0f * c1 * n[2] * n[0] * al[x];
+            dout(x, 8) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
+        }
+    }
+}
 
 float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                                         Eigen::MatrixXf& JtJ,
-                                        const Eigen::MatrixXf& w_al,
+                                        const FaceData& fd,
                                         const std::vector<Eigen::Vector2f>& pV,
-                                        const std::vector<Eigen::MatrixX2f>& dpV,
+                                        const std::vector<Eigen::Matrix2Xf>& dpV,
                                         const std::vector<Eigen::Vector3f>& nV,
-                                        const std::vector<Eigen::MatrixXf>& dnV,
+                                        const std::vector<Eigen::Matrix3Xf>& dnV,
                                         const Eigen::Matrix3Xf& sh,
                                         const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
                                         const cv::Mat_<cv::Vec4f>& inputRGB,
@@ -22,87 +68,65 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
     
     Eigen::MatrixXf JtJc = Eigen::MatrixXf::Zero(dof.all(), dof.all());
-    
     Eigen::MatrixXf Jtrc = Eigen::MatrixXf::Zero(dof.all(), 1);
     Eigen::Vector3f n;
     Eigen::Vector3f CI;
-    Eigen::MatrixXf dn = Eigen::MatrixXf::Zero(dof.ID + dof.EX, 3);
-    Eigen::MatrixXf dcdi = Eigen::MatrixXf::Zero(dof.all(), 3);
-    Eigen::MatrixXf dp = Eigen::MatrixXf::Zero(dof.all(), 2);
-    Eigen::MatrixXf di = Eigen::MatrixXf::Zero(dof.all(), 3);
+    Eigen::MatrixXf dn = Eigen::MatrixXf::Zero(3, dof.ID + dof.EX);
+    Eigen::MatrixXf dcdi = Eigen::MatrixXf::Zero(3, dof.all());
+    Eigen::MatrixXf dp = Eigen::MatrixXf::Zero(2, dof.all());
     Eigen::MatrixXf a = Eigen::MatrixXf::Zero(3, dof.AL);
-    Eigen::Matrix<float, 2, 3> dIxy;
+    Eigen::Matrix<float, 3, 2> dIxy;
     
     int idx0, idx1, idx2;
     int count = 0;
-    
-    std::vector<Eigen::MatrixX3f> dcdis;
-    std::vector<Eigen::Vector3f> CIs;
-    std::vector<Eigen::Vector2f> renderPixelPos;
-    std::vector<Eigen::VectorXf> Jtrcs;
     
     //#pragma omp parallel for
     const unsigned int width = renderTarget[RT_NAMES::positions].cols;
     const unsigned int height = renderTarget[RT_NAMES::positions].rows;
     float error = 0.0;
-    int cur_pos;
     for (unsigned int j = 1; j < height - 1; ++j)
     {
         for (unsigned int i = 1; i < width - 1; ++i)
         {
             const auto& c = renderTarget[RT_NAMES::diffuse](j, i);
             const auto& al = renderTarget[RT_NAMES::colors](j, i);
-            // if it's face region
-            // NOTE: we probably wanna consider facial segmentation later on.
+            const auto& b = renderTarget[RT_NAMES::vBarycentric](j, i);
+            const auto& tri_indf = renderTarget[RT_NAMES::vIndices](j, i);
+  
             if (renderTarget[RT_NAMES::diffuse](j, i)[3] != 0.0){
-                
                 dcdi.setZero();
+                Eigen::Ref<Eigen::MatrixXf> sh_block   = dcdi.block(0, dof.AL + dof.ID + dof.EX + dof.fROT + dof.fTR + dof.cROT + dof.cTR + dof.CAM, 3, dof.SH);
+                Eigen::Ref<Eigen::MatrixXf> idex_block = dcdi.block(0, dof.AL, 3, dof.ID + dof.EX);
+                Eigen::Ref<Eigen::MatrixXf> di_block   = dcdi.block(0, dof.AL, 3, dof.ID + dof.EX + dof.fROT + dof.fTR + dof.cROT + dof.cTR + dof.CAM);
+                Eigen::Ref<Eigen::MatrixXf> al_block   = dcdi.block(0, 0, 3, dof.AL);
                 
-                // render target
-                const auto& b = renderTarget[RT_NAMES::vBarycentric](j, i);
-                const auto& tri_indf = renderTarget[RT_NAMES::vIndices](j, i);
-                int tri_ind[3];
-                tri_ind[0] = static_cast<int>(tri_indf[0] + 0.5f);
-                tri_ind[1] = static_cast<int>(tri_indf[1] + 0.5f);
-                tri_ind[2] = static_cast<int>(tri_indf[2] + 0.5f);
+                idx0 = static_cast<int>(tri_indf[0] + 0.5f);
+                idx1 = static_cast<int>(tri_indf[1] + 0.5f);
+                idx2 = static_cast<int>(tri_indf[2] + 0.5f);
                 
-                idx0 = tri_ind[0];
-                idx1 = tri_ind[1];
-                idx2 = tri_ind[2];
-                
-                const Eigen::Vector3f& n0 = nV[idx0];
-                const Eigen::Vector3f& n1 = nV[idx1];
-                const Eigen::Vector3f& n2 = nV[idx2];
-                
-                const Eigen::MatrixXf& dn0 = dnV[idx0];
-                const Eigen::MatrixXf& dn1 = dnV[idx1];
-                const Eigen::MatrixXf& dn2 = dnV[idx2];
-                
-                n  = b[0]*n0 + b[1]*n1 + b[2]*n2;
-                dn = b[0]*dn0 + b[1]*dn1 + b[2]*dn2;
+                n  = b[0]*nV[idx0] + b[1]*nV[idx1] + b[2]*nV[idx2];
+                dn = b[0]*dnV[idx0] + b[1]*dnV[idx1] + b[2]*dnV[idx2];
                 
                 // normalized version of normal derivative
                 float n_norm = n.norm();
                 if (n_norm < EPSILON) n_norm = EPSILON;
-                dn = (n_norm*dn + (1.0f / n_norm * (dn * n)) * n.transpose()) / (n_norm * n_norm);
+                dn = (n_norm*dn + 1.0f / n_norm * n * n.transpose() * dn) / (n_norm * n_norm);
                 n /= n_norm;
                 
-                // for R, G, B
-                if (dof.ID + dof.EX != 0){
-                    for(int k = 0; k < 3; ++k){
-                        dcdi.block(0, k, dof.ID + dof.EX, 1) =
-                        2.0f * al[k] * (c2 * sh(k,3) + c1 * (sh(k,8) * n[0] + sh(k,4) * n[1] + sh(k,7) * n[2])) * dn.col(0)
-                        + 2.0f * al[k] * (c2 * sh(k,1) + c1 * (sh(k,4) * n[0] - sh(k,8) * n[1] + sh(k,5) * n[2])) * dn.col(1)
-                        + 2.0f * al[k] * (c2 * sh(k,2) + c1 * (sh(k,7) * n[0] + sh(k,5) * n[1]) + c3 * sh(k,6) * n[2]) * dn.col(2);
-                    }
-                }
+                const auto& shade = renderTarget[RT_NAMES::shading](j, i);
                 
-                // TODO: it can be pre-computed
+                const Eigen::MatrixXf& a0 = fd.dCL(idx0, dof.AL);
+                const Eigen::MatrixXf& a1 = fd.dCL(idx1, dof.AL);
+                const Eigen::MatrixXf& a2 = fd.dCL(idx2, dof.AL);
+                
+                a = b[0] * a0 + b[1] * a1 + b[2] * a2;
+                
                 const cv::Vec3f& dIxij = dIx(j, i);
                 const cv::Vec3f& dIyij = dIy(j, i);
                 
-                dIxy << dIxij(0), dIxij(1), dIxij(2),
-                dIyij(0), dIyij(1), dIyij(2);
+                dIxy << dIxij(0), dIyij(0),
+                dIxij(1), dIyij(1),
+                dIxij(2), dIyij(2);
                 
                 // NOTE: need to divide by 32 to normalize image gradient
                 dIxy *= 1.0f / 32.0f;
@@ -113,67 +137,26 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 
                 dp = b[0] * dp0 + b[1] * dp1 + b[2] * dp2;
                 
-                di = dp * dIxy;
-                dcdi.block(0, 0, dof.ID + dof.EX, 3) -= di.block(0, 0, dof.ID + dof.EX, 3);
+                al_block.row(0) = shade[0] * a.block(0,0,1,dof.AL);
+                al_block.row(1) = shade[1] * a.block(0,1,1,dof.AL);
+                al_block.row(2) = shade[2] * a.block(0,2,1,dof.AL);
                 
-                const auto& shade = renderTarget[RT_NAMES::shading](j, i);
+                di_block = - dIxy * dp;
 
-                const Eigen::MatrixXf& a0 = w_al.block(tri_ind[0] * 3, 0, 3, dof.AL);
-                const Eigen::MatrixXf& a1 = w_al.block(tri_ind[1] * 3, 0, 3, dof.AL);
-                const Eigen::MatrixXf& a2 = w_al.block(tri_ind[2] * 3, 0, 3, dof.AL);
+                idex_block.row(0) += al[0] * computedIdn(0, sh, n, dn);
+                idex_block.row(1) += al[1] * computedIdn(1, sh, n, dn);
+                idex_block.row(2) += al[2] * computedIdn(2, sh, n, dn);
                 
-                a = b[0] * a0 + b[1] * a1 + b[2] * a2;
-                
-                for (int x = 0; x < dof.AL; ++x)
-                {
-                    dcdi(dof.ID + dof.EX + x, 0) = a(0, x) * shade[0];
-                    dcdi(dof.ID + dof.EX + x, 1) = a(1, x) * shade[1];
-                    dcdi(dof.ID + dof.EX + x, 2) = a(2, x) * shade[2];
-                }
-                
-                // TODO: treat camera derivative properly (for now, no need to optimize camera intrinsics though)
-                cur_pos = dof.ID + dof.EX + dof.AL;
-                dcdi.block(cur_pos, 0, dof.ROT + dof.TR + dof.CAM, 3) = -di.block(cur_pos, 0, dof.ROT + dof.TR + dof.CAM, 3);
-                if (dof.SH == 27){
-                    cur_pos = dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + dof.CAM;
-                    for (int x = 0; x < 3; ++x)
-                    {
-                        dcdi(cur_pos + 9 * x + 0, x) = c4 * al[x];
-                        dcdi(cur_pos + 9 * x + 1, x) = 2.0f * c2 * n[1] * al[x];
-                        dcdi(cur_pos + 9 * x + 2, x) = 2.0f * c2 * n[2] * al[x];
-                        dcdi(cur_pos + 9 * x + 3, x) = 2.0f * c2 * n[0] * al[x];
-                        dcdi(cur_pos + 9 * x + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
-                        dcdi(cur_pos + 9 * x + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
-                        dcdi(cur_pos + 9 * x + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
-                        dcdi(cur_pos + 9 * x + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
-                        dcdi(cur_pos + 9 * x + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
-                    }
-                }
-                else if (dof.SH == 9)
-                {
-                    for (int x = 0; x < 3; ++x)
-                    {
-                        dcdi(cur_pos + 0, x) = c4 * al[x];
-                        dcdi(cur_pos + 1, x) = 2.0f * c2 * n[1] * al[x];
-                        dcdi(cur_pos + 2, x) = 2.0f * c2 * n[2] * al[x];
-                        dcdi(cur_pos + 3, x) = 2.0f * c2 * n[0] * al[x];
-                        dcdi(cur_pos + 4, x) = 2.0f * c1 * n[0] * n[1] * al[x];
-                        dcdi(cur_pos + 5, x) = 2.0f * c1 * n[1] * n[2] * al[x];
-                        dcdi(cur_pos + 6, x) = (c3 * n[2] * n[2] - c5)* al[x];
-                        dcdi(cur_pos + 7, x) = 2.0f * c1 * n[2] * n[0] * al[x];
-                        dcdi(cur_pos + 8, x) = c1 * (n[0] * n[0] - n[1] * n[1]) * al[x];
-                    }
-                }
+                computedIdsh(sh_block, n, al, dof.SH);
                 
                 auto CminI = c - inputRGB(j, i);
                 CI << CminI[0], CminI[1], CminI[2];
                 float CI_norm = CI.norm();
                 if (CI_norm < EPSILON) CI_norm = EPSILON;	
                 
-                Jtrc.noalias() += w / CI_norm * (dcdi * CI);
-                
                 const Eigen::MatrixXf& dcdi_transpose = dcdi.transpose();
-                JtJc.noalias() += w / CI_norm * (dcdi * dcdi_transpose);
+                Jtrc.noalias() += w / CI_norm * (dcdi_transpose * CI);
+                JtJc.noalias() += w / CI_norm * (dcdi_transpose * dcdi);
                 
                 error += w * CI_norm;
                 
@@ -237,7 +220,7 @@ void F2FRenderParams::updateIMGUI()
 }
 #endif
 
-void F2FRenderer::init(std::string data_dir, FaceModel& model)
+void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
 {
     programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
                                  data_dir + "shaders/face2face.geom",
@@ -257,18 +240,18 @@ void F2FRenderer::init(std::string data_dir, FaceModel& model)
     
     Camera::initializeUniforms(prog_f2f, U_CAMERA_MVP | U_CAMERA_MV);
     
-    mesh_.update_tri(model.tri_pts_);
+    mesh_.update_tri(model->tri_pts_);
     mesh_.init(prog_f2f, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TRI);
     
-    mesh_.update_position(model.mu_id_);
-    mesh_.update_uv(model.uvs_, model.tri_uv_, model.tri_pts_);
+    mesh_.update_position(model->meanShape());
+    mesh_.update_uv(model->uvs_, model->tri_uv_, model->tri_pts_);
     mesh_.update(prog_f2f, AT_UV);
     
     plane_.init(prog_pl,0.5);
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
 }
 
-void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
+void F2FRenderer::render(const Camera& camera, const FaceData& fd)
 {
     if(camera.width_ != fb_->width() || camera.height_ != fb_->height())
         fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
@@ -283,17 +266,17 @@ void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
     std::vector<glm::vec3> sh;
     for(int i = 0; i < 9; ++i)
     {
-        sh.push_back(glm::vec3(fParam.SH(0,i),fParam.SH(1,i),fParam.SH(2,i)));
+        sh.push_back(glm::vec3(fd.SH(0,i),fd.SH(1,i),fd.SH(2,i)));
     }
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fParam.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     // update mesh attributes
-    mesh_.update_position(fParam.pts_);
-    mesh_.update_color(fParam.clr_);
-    mesh_.update_normal(fParam.nml_);
+    mesh_.update_position(fd.pts_);
+    mesh_.update_color(fd.clr_);
+    mesh_.update_normal(fd.nml_);
     
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
     
@@ -320,7 +303,7 @@ void F2FRenderer::render(const Camera& camera, const FaceParams& fParam)
     prog_pl.draw();
 }
 
-void F2FRenderer::render(int w, int h, const Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out)
+void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
     auto& prog_f2f = programs_["f2f"];
     
@@ -331,17 +314,17 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceParams& f
     std::vector<glm::vec3> sh;
     for(int i = 0; i < 9; ++i)
     {
-        sh.push_back(glm::vec3(fParam.SH(0,i),fParam.SH(1,i),fParam.SH(2,i)));
+        sh.push_back(glm::vec3(fd.SH(0,i),fd.SH(1,i),fd.SH(2,i)));
     }
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fParam.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     // update mesh attributes
-    mesh_.update_position(fParam.pts_);
-    mesh_.update_color(fParam.clr_);
-    mesh_.update_normal(fParam.nml_);
+    mesh_.update_position(fd.pts_);
+    mesh_.update_color(fd.clr_);
+    mesh_.update_normal(fd.nml_);
     
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
     

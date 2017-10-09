@@ -57,9 +57,9 @@ struct F2FRenderer
     FramebufferPtr fb_;
     F2FRenderParams param_;
     
-    void init(std::string data_dir, FaceModel& model);
-    void render(const Camera& camera, const FaceParams& fParam);
-    void render(int w, int h, const Camera& camera, const FaceParams& fParam, std::vector<cv::Mat_<cv::Vec4f>>& out);
+    void init(std::string data_dir, FaceModelPtr model);
+    void render(const Camera& camera, const FaceData& fd);
+    void render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
 #ifdef WITH_IMGUI
     inline void updateIMGUI(){ param_.updateIMGUI();}
@@ -67,11 +67,11 @@ struct F2FRenderer
     
     static float computeJacobianColor(Eigen::VectorXf& Jtr,
                                       Eigen::MatrixXf& JtJ,
-                                      const Eigen::MatrixXf& w_al,
+                                      const FaceData& fd,
                                       const std::vector<Eigen::Vector2f>& pV,
-                                      const std::vector<Eigen::MatrixX2f>& dpV,
+                                      const std::vector<Eigen::Matrix2Xf>& dpV,
                                       const std::vector<Eigen::Vector3f>& nV,
-                                      const std::vector<Eigen::MatrixXf>& dnV,
+                                      const std::vector<Eigen::Matrix3Xf>& dnV,
                                       const Eigen::Matrix3Xf& sh,
                                       const std::vector< cv::Mat_<cv::Vec4f> >& renderTarget,
                                       const cv::Mat_<cv::Vec4f>& inputRGB,

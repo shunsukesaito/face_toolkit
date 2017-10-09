@@ -8,43 +8,6 @@
 
 #include "EigenHelper.h"
 
-struct DOF
-{
-    int ID = 0;
-    int EX = 0;
-    int AL = 0;
-    int fROT = 0;
-    int fTR = 0;
-    int cROT = 0;
-    int cTR = 0;
-    int CAM = 0;
-    int SH = 0;
-    
-    DOF() : ID(0), EX(0), AL(0), fROT(0), fTR(0), cROT(0), cTR(0), CAM(0), SH(0){};
-    
-    DOF(int _ID,
-        int _EX,
-        int _AL,
-        int _fROT,
-        int _fTR,
-        int _cROT,
-        int _cTR,
-        int _CAM,
-        int _SH,
-        int _N_CAM = 1) :
-    ID(_ID), EX(_EX), AL(_AL), fROT(_fROT), fTR(_fTR), cROT(_cROT), cTR(_cTR), CAM(_CAM), SH(_SH){};
-    
-    inline int all() const {
-        return ID + EX + AL + fROT + fTR + cROT + cTR + CAM + SH;
-    }
-    inline int face() const {
-        return ID + EX + AL + fROT + fTR + SH;
-    }
-    inline int camera() const {
-        return cROT + cTR + CAM;
-    }
-};
-
 // point-to-point 2d constraint
 struct P2P2DC
 {
