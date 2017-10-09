@@ -591,109 +591,6 @@ float computeJacobianTikhonovReg(Eigen::VectorXf& Jtr,
     return error;
 }
 
-// NOTE: it assume 68 landmarks (0-17 are on the contour)
-// the current contour optimization is to be removed
-void computeCorresContourLand2D(std::vector<TriPoint>& pBary,
-                                const std::vector<Eigen::Vector3f>& lands,
-                                const cv::Mat_<cv::Vec4f>& normal,
-                                const cv::Mat_<cv::Vec4f>& baryc,
-                                const cv::Mat_<cv::Vec4f>& triIdx,
-                                unsigned int level)
-{
-	pBary.clear();
-	//debug_pos.clear();
-	const int maxIter = 100;
-	// for 0 and 16 we need special care
-	auto color = normal.clone();
-	Eigen::Vector2f pN;
-	Eigen::Vector2f p;
-	int failure_count = 0;
-	float scale = 1.0f / pow(2.0f, level);
-	for (int i = 0; i < 17; ++i)
-	{
-		if (i == 0){
-			p = (lands[i + 1].segment<2>(0) - lands[i].segment<2>(0)).normalized();
-			pN(0) = p(1); pN(1) = -p(0);
-		}
-		else if (i == 16){
-			p = (lands[i].segment<2>(0) - lands[i - 1].segment<2>(0)).normalized();
-			pN(0) = p(1); pN(1) = -p(0);
-		}
-		else{
-			Eigen::Vector2f p1 = lands[i].segment<2>(0) - lands[i - 1].segment<2>(0);
-			Eigen::Vector2f p2 = lands[i + 1].segment<2>(0) - lands[i].segment<2>(0);
-			float p1norm = p1.norm(); float p2norm = p2.norm();
-			pN(0) = p2norm*p1(1) + p1norm*p2(1); pN(1) = -(p2norm*p1(0) + p1norm*p2(0));
-			pN.normalize();
-		}
-
-		p = scale * lands[i].segment<2>(0);
-		// if the point is out of face area, face should exist towards inside
-		int iter = 0;
-		if (p(0) < 0.f || p(1) < 0.f || p(0) >= normal.cols || p(1) >= normal.rows){
-			pBary.push_back(TriPoint(Eigen::Vector3i(0, 0, 0), Eigen::Vector3f(0.f, 0.f, 0.f), 0.f));
-			//debug_pos.push_back(Eigen::Vector2f(-1, -1));
-			failure_count++;
-			continue;
-		}
-
-		if (normal((int)p(1), (int)p(0))[3] != 0.0f){
-			pN = -pN;
-
-			for (iter = 0; iter < maxIter; ++iter)
-			{
-				p += pN;
-				if (p(0) < 0.f || p(1) < 0.f || p(0) >= normal.cols || p(1) >= normal.rows) break;
-				color((int)p[1], (int)p[0]) = cv::Vec4f(1.0f, 0.0f, 0.0f, 1.0f);
-				if (normal((int)p(1), (int)p(0))[3] == 0.0f){
-					p -= pN;
-					assert(normal((int)p(1), (int)p(0))[3]);
-					const auto& t = triIdx((int)p(1), (int)p(0));
-					const auto& b = baryc((int)p(1), (int)p(0));
-					const auto& n = normal((int)p(1), (int)p(0));
-					pBary.push_back(TriPoint(Eigen::Vector3i(t[0] + 0.5f, t[1] + 0.5f, t[2] + 0.5f), Eigen::Vector3f(b[0], b[1], b[2]), std::min(std::max(0.2f, 1.0f - n.dot(cv::Vec4f(0.f, 0.f, -1.f, 0.f))), 1.0f)));
-					//debug_pos.push_back(Eigen::Vector2f(p(0), p(1)));
-					break;
-				}
-			}
-			if (pBary.size() != i + 1){
-				pBary.push_back(TriPoint(Eigen::Vector3i(0, 0, 0), Eigen::Vector3f(0.f, 0.f, 0.f), 0.f));
-				//debug_pos.push_back(Eigen::Vector2f(-1, -1));
-				failure_count++;
-			}
-		}
-		else{
-			for (iter = 0; iter < maxIter; ++iter)
-			{
-				p += pN;
-				if (p(0) < 0.f || p(1) < 0.f || p(0) >= normal.cols || p(1) >= normal.rows) break;
-				color((int)p[1], (int)p[0]) = cv::Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
-				if (normal((int)p(1), (int)p(0))[3] != 0.0f){
-					const auto& t = triIdx((int)p(1), (int)p(0));
-					const auto& b = baryc((int)p(1), (int)p(0));
-					const auto& n = normal((int)p(1), (int)p(0));
-					pBary.push_back(TriPoint(Eigen::Vector3i(t[0] + 0.5f, t[1] + 0.5f, t[2] + 0.5f), Eigen::Vector3f(b[0], b[1], b[2]), std::min(std::max(0.2f, 1.0f - n.dot(cv::Vec4f(0, 0, -1.f, 0))), 1.0f)));
-					//debug_pos.push_back(Eigen::Vector2f(p(0), p(1)));
-					break;
-				}
-			}
-			if (pBary.size() != i + 1){
-				pBary.push_back(TriPoint(Eigen::Vector3i(0, 0, 0), Eigen::Vector3f(0.f, 0.f, 0.f), 0.f));
-				//debug_pos.push_back(Eigen::Vector2f(-1, -1));
-				failure_count++;
-			}
-		}
-	}
-
-	assert(pBary.size() == 17);
-
-	cv::imwrite("test.png", 255.0f*color);
-
-	if (failure_count > 2){
-		std::cout << "Error: it couldn't find " << failure_count << " correspondenses." << std::endl;
-	}
-}
-
 // the current contour optimization is to be removed
 void computeJacobianContour(Eigen::VectorXf& Jtr,
                             Eigen::MatrixXf& JtJ,
@@ -1465,8 +1362,8 @@ void setFaceVector(Eigen::VectorXf& X,
 		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 1] = scale*Is[0](1, 1);
 	case 3:
 		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 0] = scale*Is[0](0, 0);
-		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 1] = scale*Is[0](1, 1);
-		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 2] = scale*Is[0](0, 2);
+		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 1] = scale*Is[0](0, 2);
+		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 2] = scale*Is[0](1, 2);
 		break;
 	case 4:
 		X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 0] = scale*Is[0](0, 0);
@@ -1563,8 +1460,9 @@ void loadFaceVector(const Eigen::VectorXf& X,
 		break;
 	case 3:
 		Is[0](0, 0) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 0];
-		Is[0](1, 1) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 1];
-		Is[0](0, 2) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 2];
+		Is[0](1, 1) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 0];
+        Is[0](0, 2) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 1];
+		Is[0](1, 2) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 2];
 		break;
 	case 4:
 		Is[0](0, 0) = scale*X[dof.ID + dof.EX + dof.AL + dof.ROT + dof.TR + 0];

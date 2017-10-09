@@ -119,7 +119,7 @@ void GUI::keyboard(int key, int s, int a, int m)
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
-        //renderer_.face_module_.reset();
+        result_.fParam.init(*face_model_);
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
         //renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
@@ -259,7 +259,7 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    face_model_ = FaceModel::LoadModel(data_dir + "data/PinModel.bin");
+    face_model_ = FaceModel::LoadModel(data_dir + "data/BVModel.bin");
     renderer_.init(w, h, face_model_, data_dir);
     
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());

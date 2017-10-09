@@ -139,7 +139,7 @@ void IBLRenderer::init(std::string data_dir, const FaceModel& model)
         
         std::cout << " diffuse done...";
 
-        std::string input = data_dir + "data/specHDRI/ward0.15_" + sh_list[i] + ".exr";
+        std::string input = data_dir + "data/specHDRI/ward0.37_" + sh_list[i] + ".exr";
         const char* err;
         //printf("Loading: %s...", input.c_str());
         TinyExrImage specularHDRI;

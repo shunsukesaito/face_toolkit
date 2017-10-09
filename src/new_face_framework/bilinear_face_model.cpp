@@ -1,0 +1,191 @@
+//
+//  face_model.cpp
+//  RenderingTemplate
+//
+//  Created by Shunsuke Saito on 9/5/17.
+//  Copyright © 2017 Shunsuke Saito. All rights reserved.
+//
+
+#include <fstream>
+#include <iostream>
+#include <vector>
+
+#include "face_model.hpp"
+#include "obj_loader.hpp"
+#include "fw_utils.hpp"
+
+void BiLinearFaceModel::updateIdentity(FaceData& data)
+{
+    if(sigma_id_.size() == 0) return;
+    
+    assert(Cshape_[0].cols() == data.idCoeff.size());
+    
+    if(data.w_ex_.rows() != mu_id_.size() || data.w_ex_.cols() != n_exp())
+        data.w_ex_.resize(mu_id_.size(), n_exp());
+    
+    data.neu_ = mu_id_ + Cshape_[0] * data.idCoeff;
+    for(int i = 0; i < n_exp(); ++i)
+    {
+        data.w_ex_.col(i) = Cshape_[i+1] * data.idCoeff;
+    }
+}
+
+void BiLinearFaceModel::updateExpression(FaceData& data)
+{
+    if(sigma_ex_.size() == 0) return;
+    assert(data.w_ex_.cols() == data.exCoeff.size());
+    
+    data.d_ex_ = data.w_ex_ * data.exCoeff;
+    data.pts_ = data.neu_ + data.d_ex_;
+    
+    if(data.id_opt_){
+        if(data.w_id_.rows() != mu_id_.size() || data.w_id_.cols() != n_id())
+            data.w_id_.resize(mu_id_.size(), n_id());
+     
+        data.w_id_.setZero();
+        for(int i = 0; i < n_exp(); ++i)
+            data.w_id_ += data.exCoeff[i]*Cshape_[i];
+    }
+    
+    calcNormal(data.nml_, data.pts_, tri_pts_);
+}
+
+Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dID(int vidx, int size, const FaceData& data) const
+{
+    assert(vidx < mu_id_.size()/3 && vidx >= 0);
+    
+    return data.w_id_.block(vidx*3, 0, 3, size);
+}
+
+Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dEX(int vidx, int size, const FaceData& data) const
+{
+    assert(vidx < mu_id_.size()/3 && vidx >= 0);
+    
+    return data.w_ex_.block(vidx*3, 0, 3, size);
+}
+
+Eigen::Vector3f BiLinearFaceModel::computeV(int vidx, const FaceData& data) const
+{
+    Eigen::Vector3f p = mu_id_.b3(vidx);
+    
+    if(data.id_opt_){
+        p += Cshape_[0].block(vidx*3,0,3,n_id())*data.idCoeff;
+        for(int i = 0; i < n_exp(); ++i)
+        {
+            p += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,n_id())*data.idCoeff;
+        }
+    }
+    else{
+        p += data.w_ex_.block(vidx*3,0,3,n_exp()) * data.idCoeff;
+    }
+
+    return p;
+}
+
+void BiLinearFaceModel::saveBinaryModel(const std::string& file)
+{
+    FILE* fp;
+    fp = fopen(file.c_str(), "wb");
+    
+    const int n_exp = Cshape_.size();
+    const int n_id = Cshape_[0].cols();
+    const int n_v = Cshape_[0].rows();
+    
+    fwrite(&n_exp, sizeof(int), 1, fp);
+    fwrite(&n_v, sizeof(int), 1, fp);
+    fwrite(&n_id, sizeof(int), 1, fp);
+    for(int i = 0; i < Cshape_.size(); ++i)
+    {
+        fwrite(&Cshape_[i].data()[0], sizeof(float), Cshape_[i].size(), fp);
+    }
+    
+    int tmp = sigma_id_.size();
+    fwrite(&tmp, sizeof(int), 1, fp);
+    fwrite(&mu_id_.data()[0], sizeof(float), mu_id_.size(), fp);
+    if(tmp != 0) fwrite(&sigma_id_.data()[0], sizeof(float), sigma_id_.size(), fp);
+
+    tmp = sigma_ex_.size();
+    fwrite(&tmp, sizeof(int), 1, fp);
+    if(tmp != 0) fwrite(&sigma_ex_.data()[0], sizeof(float), sigma_id_.size(), fp);
+    
+    tmp = uvs_.rows();
+    fwrite(&tmp, sizeof(long), 1, fp);
+    fwrite(&uvs_.data()[0], sizeof(float), uvs_.size(), fp);
+    
+    assert(tri_pts_.size() == tri_uv_.size());
+    tmp = tri_pts_.rows();
+    fwrite(&tmp, sizeof(long), 1, fp);
+    fwrite(&tri_pts_.data()[0], sizeof(int), tri_pts_.size(), fp);
+    fwrite(&tri_uv_.data()[0], sizeof(int), tri_uv_.size(), fp);
+    
+    fclose(fp);
+}
+
+void BiLinearFaceModel::loadBinaryModel(const std::string& file)
+{
+    FILE* fp;
+    fp = fopen(file.c_str(), "rb");
+    
+    int n_exp, n_id, n_v;
+    fread(&n_exp, sizeof(int), 1, fp);
+    fread(&n_v, sizeof(int), 1, fp);
+    fread(&n_id, sizeof(int), 1, fp);
+    Cshape_.resize(n_exp);
+    for(int i = 0; i < Cshape_.size(); ++i)
+    {
+        Cshape_[i].resize(n_v, n_id);
+        fread(&Cshape_[i].data()[0], sizeof(float), Cshape_[i].size(), fp);
+    }
+    
+    int tmp;
+    fread(&tmp, sizeof(int), 1, fp); mu_id_.resize(n_v);
+    fread(&mu_id_.data()[0], sizeof(float), mu_id_.size(), fp);
+    if(tmp != 0){
+        sigma_id_.resize(tmp);
+        fread(&sigma_id_.data()[0], sizeof(float), sigma_id_.size(), fp);
+    }
+    
+    fread(&tmp, sizeof(int), 1, fp);
+    if(tmp != 0){
+        sigma_ex_.resize(tmp);
+        fread(&sigma_ex_.data()[0], sizeof(float), sigma_id_.size(), fp);
+    }
+    
+    fread(&tmp, sizeof(long), 1, fp); uvs_.resize(tmp,2);
+    fread(&uvs_.data()[0], sizeof(float), uvs_.size(), fp);
+    
+    fread(&tmp, sizeof(long), 1, fp); tri_pts_.resize(tmp,3); tri_uv_.resize(tmp,3);
+    fread(&tri_pts_.data()[0], sizeof(int), tri_pts_.size(), fp);
+    fread(&tri_uv_.data()[0], sizeof(int), tri_uv_.size(), fp);
+    
+    fclose(fp);
+}
+
+void BiLinearFaceModel::computeModelFW(const std::string& mesh_dir,
+                                       const std::string& topo_mesh,
+                                       float scale)
+{
+    // load all meshes
+    std::vector<Eigen::MatrixXf> shapes(150);
+    for(int i = 1; i <= 150; ++i)
+    {
+        char filename[256];
+        snprintf(filename, 256, "%s/FaceWarehouse/Tester_%d/Blendshape/shape.bs", mesh_dir.c_str(), i);
+        loadBlendshapeFW(filename, shapes[i], scale);
+    }
+    
+    computeCoreTensor(shapes, Cshape_, mu_id_, sigma_id_, 80);
+    
+    Eigen::VectorXf pts;
+    Eigen::MatrixX3f nml;
+    loadObjFile(topo_mesh, pts, nml, uvs_, tri_pts_, tri_uv_);    
+}
+
+FaceModelPtr BiLinearFaceModel::LoadModel(const std::string& file)
+{
+    auto model = new BiLinearFaceModel();
+    
+    model->loadBinaryModel(file);
+    
+    return FaceModelPtr(model);
+}
