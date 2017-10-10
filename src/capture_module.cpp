@@ -27,9 +27,11 @@ void CaptureModule::Process()
     
     std::string command = "";
     cv::Mat frame;
+    bool pause = false;
     while(command != "stop")
     {
-        video_capture_ >> frame;
+        if(!pause)
+            video_capture_ >> frame;
         CaptureResult cap;
         cv::flip(frame, cap.img, 1);
         cap.camera = camera_;
@@ -37,6 +39,8 @@ void CaptureModule::Process()
         
         if(command_queue_->front()){
             command = *command_queue_->front();
+            if(command == "pause")
+                pause = !pause;
             command_queue_->pop();
         }
     }

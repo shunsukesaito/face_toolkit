@@ -229,7 +229,7 @@ void P2DGaussNewton(FaceData& fd,
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "iter " << i << " errP2P = " << err.p2p << " errP2L = " << err.p2l << "|dX| = " << dX.norm() << std::endl;
+        std::cout << "iter " << i << " errTot: " << err.p2p + err.p2l << " errP2P:" << err.p2p << " errP2L:" << err.p2l << "|dX|:" << dX.norm() << std::endl;
         
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);

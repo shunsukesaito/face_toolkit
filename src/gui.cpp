@@ -122,6 +122,7 @@ void GUI::keyboard(int key, int s, int a, int m)
         result_.fd.init();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
+        session.capture_control_queue_->push("pause");
         //renderer_.face_module_.enable_f2f_ = !renderer_.face_module_.enable_f2f_;
     }
 }
@@ -259,8 +260,8 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
-    face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
+    face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
     
     renderer_.init(w, h, face_model_, data_dir);
     

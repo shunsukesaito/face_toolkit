@@ -202,7 +202,7 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
         return 0.0;
     
     assert(pV.size() == dpV.size() && pV.size() == qV.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;
@@ -258,7 +258,7 @@ float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
         return 0.0;
     
     assert(pV.size() == dpV.size() && pV.size() == qV.size() && pV.size() == nV.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;
@@ -315,7 +315,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         return 0.0;
     
     assert(pV.size() == dpV.size() && pV.size() == qV.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;
@@ -373,7 +373,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     
     assert(pV.size() == dpV.size());
     assert(qV.size() == idx.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;
@@ -430,7 +430,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         return 0.0;
     
     assert(pV.size() == dpV.size() && pV.size() == qV.size() && pV.size() == nV.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;
@@ -493,7 +493,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     assert(pV.size() == dpV.size());
     assert(qV.size() == idx.size());
     assert(nV.size() == qV.size());
-    assert(dpV[0].rows() == JtJ.rows());
+    assert(dpV[0].cols() == JtJ.rows());
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     
     float error = 0;

@@ -101,8 +101,8 @@ void FaceModule::init(std::string data_dir,
     
     fd_.setFaceModel(face_model_);
 
-    P2P2DC::parseConstraints(data_dir + "data/p2p_const.txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "data/p2l_const.txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "data/p2p_const_bv.txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "data/p2l_const_bv.txt", c_p2l_);
     
     f2f_renderer_.init(data_dir, face_model_);
     
@@ -117,9 +117,10 @@ void FaceModule::update(FaceResult& result)
         fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
-        P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param);
-        
-        result.processed_ = true;
+        if(result.p2d.size() != 0){
+            P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param);
+            result.processed_ = true;
+        }
     }
 
     if(f2f_param_->run_){
@@ -127,14 +128,15 @@ void FaceModule::update(FaceResult& result)
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
         
-        cv::Mat_<cv::Vec4f> inputRGB;
-        cv::Mat tmp;
-        cv::cvtColor(result.img, tmp, CV_BGR2RGBA);
-        tmp.convertTo(inputRGB, CV_32F);
-        inputRGB *= 1.f / 255.f;
-        F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param, logger_);
-        
-        result.processed_ = true;
+        if(result.p2d.size() != 0){
+            cv::Mat_<cv::Vec4f> inputRGB;
+            cv::Mat tmp;
+            cv::cvtColor(result.img, tmp, CV_BGR2RGBA);
+            tmp.convertTo(inputRGB, CV_32F);
+            inputRGB *= 1.f / 255.f;
+            F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param, logger_);
+            result.processed_ = true;
+        }
     }
     
     result.fd = fd_;

@@ -72,13 +72,13 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
             pV[i](0) = IRTRTv(0)/IRTRTv(2);
             pV[i](1) = IRTRTv(1)/IRTRTv(2);
             
-            gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
-            gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
-            gradROT(dpdrf, dIRc, dRf, v);
-            gradTR(dpdtrf, dIRc);
-            gradROT(dpdrc, dI, dRc, RTv);
-            gradTR(dpdtrc, dI);
-            gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
+            if(dof.ID != 0)   gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
+            if(dof.EX != 0)   gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
+            if(dof.fROT != 0) gradROT(dpdrf, dIRc, dRf, v);
+            if(dof.fTR != 0)  gradTR(dpdtrf, dIRc);
+            if(dof.cROT != 0) gradROT(dpdrc, dI, dRc, RTv);
+            if(dof.cTR != 0)  gradTR(dpdtrc, dI);
+            if(dof.CAM != 0)  gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
         }
     else
         for (int i = 0; i < V.size()/3; ++i)
@@ -106,13 +106,13 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
             pV[i](0) = IRTRTv(0)/IRTRTv(2);
             pV[i](1) = IRTRTv(1)/IRTRTv(2);
             
-            gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
-            gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
-            gradROT(dpdrf, dIRc, dRf, v);
-            gradTR(dpdtrf, dIRc);
-            gradROT(dpdrc, dI, dRc, RTv);
-            gradTR(dpdtrc, dI);
-            gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
+            if(dof.ID != 0)   gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
+            if(dof.EX != 0)   gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
+            if(dof.fROT != 0) gradROT(dpdrf, dIRc, dRf, v);
+            if(dof.fTR != 0)  gradTR(dpdtrf, dIRc);
+            if(dof.cROT != 0) gradROT(dpdrc, dI, dRc, RTv);
+            if(dof.cTR != 0)  gradTR(dpdtrc, dI);
+            if(dof.CAM != 0)  gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
         }
 }
 
@@ -173,13 +173,13 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
         pV[i](0) = IRTRTv(0)/IRTRTv(2);
         pV[i](1) = IRTRTv(1)/IRTRTv(2);
         
-        gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
-        gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
-        gradROT(dpdrf, dIRc, dRf, V[i]);
-        gradTR(dpdtrf, dIRc);
-        gradROT(dpdrc, dI, dRc, RTv);
-        gradTR(dpdtrc, dI);
-        gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
+        if(dof.ID != 0)   gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
+        if(dof.EX != 0)   gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
+        if(dof.fROT != 0) gradROT(dpdrf, dIRc, dRf, V[i]);
+        if(dof.fTR != 0)  gradTR(dpdtrf, dIRc);
+        if(dof.cROT != 0) gradROT(dpdrc, dI, dRc, RTv);
+        if(dof.cTR != 0)  gradTR(dpdtrc, dI);
+        if(dof.CAM != 0)  gradCAM(dpdcam, dPi, RTRTv, dof.CAM);
     }
 }
 
@@ -227,10 +227,10 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
             pV[i] = ApplyTransform(RTf, v);
             pV[i](2) = (pV[i](2) > EPSILON) ? pV[i](2) : EPSILON;
             
-            gradV(dpdid, R, fd.dID(vert_list[i], dof.ID));
-            gradV(dpdex, R, fd.dEX(vert_list[i], dof.EX));
-            gradROT(dpdrf, Eigen::MatrixXf(), dR, v);
-            gradTR(dpdtrf, Eigen::MatrixXf());
+            if(dof.ID != 0)   gradV(dpdid, R, fd.dID(vert_list[i], dof.ID));
+            if(dof.EX != 0)   gradV(dpdex, R, fd.dEX(vert_list[i], dof.EX));
+            if(dof.fROT != 0) gradROT(dpdrf, Eigen::MatrixXf(), dR, v);
+            if(dof.fTR != 0)  gradTR(dpdtrf, Eigen::MatrixXf());
         }
     else
         for (int i = 0; i < V.size()/3; ++i)
@@ -245,10 +245,10 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
             pV[i] = ApplyTransform(RTf, v);
             pV[i](2) = (pV[i](2) > EPSILON) ? pV[i](2) : EPSILON;
 
-            gradV(dpdid, R, fd.dID(i, dof.ID));
-            gradV(dpdex, R, fd.dEX(i, dof.EX));            
-            gradROT(dpdrf, Eigen::MatrixXf(), dR, v);
-            gradTR(dpdtrf, Eigen::MatrixXf());
+            if(dof.ID != 0)   gradV(dpdid, R, fd.dID(i, dof.ID));
+            if(dof.EX != 0)   gradV(dpdex, R, fd.dEX(i, dof.EX));
+            if(dof.fROT != 0) gradROT(dpdrf, Eigen::MatrixXf(), dR, v);
+            if(dof.fTR != 0)  gradTR(dpdtrf, Eigen::MatrixXf());
         }
 }
 
