@@ -32,8 +32,8 @@ struct P2DFitParams
     
     float w_p2p_ = 1.e-3f;
     float w_p2l_ = 1.e-3f;
-    float w_reg_pca_id_ = 5.e-5f;
-    float w_reg_pca_ex_ = 5.e-4f;
+    float w_reg_pca_id_ = 1.e-1f;
+    float w_reg_pca_ex_ = 1.e-1f;
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

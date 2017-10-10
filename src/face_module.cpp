@@ -57,10 +57,22 @@ FaceModule::~FaceModule()
     // nothing to do
 }
 
+#include "renderer.hpp"
+
 // stub
 void FaceModule::Process()
 {
     std::string command = "";
+    
+    // OpenGL cannot share context across different threads...
+    glfwWindowHint(GLFW_VISIBLE, false);
+    glfwWindowHint(GLFW_FOCUSED, false);
+    auto window = Window(1, 1, 1, "F2F Window");
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+    
+    f2f_renderer_.init(data_dir_, face_model_);
+    
     while(command != "stop")
     {
         if(input_frame_queue_->front()){
@@ -76,7 +88,6 @@ void FaceModule::Process()
             output_result_queue_->push(result);
             input_frame_queue_->pop();
         }
-        
         if(command_queue_->front()){
             command = *command_queue_->front();
             command_queue_->pop();
@@ -95,18 +106,26 @@ void FaceModule::init(std::string data_dir,
                       P2DFitParamsPtr p2d_param,
                       F2FParamsPtr f2f_param)
 {
+    data_dir_ = data_dir;
+    
     face_model_ = face_model;
     p2d_param_ = p2d_param;
     f2f_param_ = f2f_param;
     
+    p2d_param_->dof.ID = std::min(p2d_param_->dof.ID, face_model->n_id());
+    p2d_param_->dof.EX = std::min(p2d_param_->dof.EX, face_model->n_exp());
+    
+    f2f_param_->dof.ID = std::min(f2f_param_->dof.ID, face_model->n_id());
+    f2f_param_->dof.EX = std::min(f2f_param_->dof.EX, face_model->n_exp());
+    f2f_param_->dof.AL = std::min(f2f_param_->dof.AL, face_model->n_clr());
+    
     fd_.setFaceModel(face_model_);
 
-    P2P2DC::parseConstraints(data_dir + "data/p2p_const_bv.txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "data/p2l_const_bv.txt", c_p2l_);
-    
-    f2f_renderer_.init(data_dir, face_model_);
+    P2P2DC::parseConstraints(data_dir + "data/p2p_const_pin.txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "data/p2l_const_pin.txt", c_p2l_);
     
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
+    CHECK_GL_ERROR();
 }
 
 void FaceModule::update(FaceResult& result)
@@ -122,7 +141,6 @@ void FaceModule::update(FaceResult& result)
             result.processed_ = true;
         }
     }
-
     if(f2f_param_->run_){
         fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter

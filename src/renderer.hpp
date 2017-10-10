@@ -127,7 +127,7 @@ struct Renderer {
     void resize(int supsample_scale, int width, int height) {
         windows_[WINDOW::MAIN].resize(supsample_scale, width, height);
     }
-    void draw(FaceResult& result);
+    void draw(const FaceResult& result);
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

@@ -260,8 +260,8 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
-    //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
+    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/PinModel.bin");
+    face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
     
     renderer_.init(w, h, face_model_, data_dir);
     
@@ -346,7 +346,6 @@ void GUI::loop()
         ImGui::End();
         ImGui::Render();
 #endif
-        
         renderer_.flush();
         
         //glDeleteSync(tsync);

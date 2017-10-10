@@ -93,6 +93,8 @@ public:
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue);
 private:
+    std::string data_dir_;
+    
     CapQueueHandle input_frame_queue_;
     FaceQueueHandle output_result_queue_;
     CmdQueueHandle command_queue_;

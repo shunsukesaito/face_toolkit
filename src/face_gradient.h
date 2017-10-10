@@ -40,6 +40,12 @@ struct DOF
     inline int all() const {
         return ID + EX + AL + fROT + fTR + cROT + cTR + CAM + SH;
     }
+    inline int pos() const {
+        return ID + EX + fROT + fTR + cROT + cTR + CAM;
+    }
+    inline int shape() const {
+        return ID + EX;
+    }
     inline int face() const {
         return ID + EX + AL + fROT + fTR + SH;
     }

@@ -32,6 +32,7 @@ void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
     
+    glfwWindowHint(GLFW_FOCUSED, true);
     windows_.insert(std::make_pair(MAIN, Window(1, w, h, "Main Window")));
     glfwMakeContextCurrent(windows_[MAIN]);
     
@@ -72,7 +73,7 @@ void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
     p2d_renderer_.init(data_dir_);
 }
 
-void Renderer::draw(FaceResult& result)
+void Renderer::draw(const FaceResult& result)
 {
     auto& camera = result.camera;
     
@@ -88,8 +89,9 @@ void Renderer::draw(FaceResult& result)
         p3d_renderer_.render(camera, result.fd.RT, getP3DFromP2PC(result.fd.pts_, result.c_p2p));
         p3d_renderer_.render(camera, result.fd.RT, getP3DFromP2LC(result.fd.pts_, result.c_p2l));
     }
-    if(show_p2d_)
+    if(show_p2d_){
         p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
+    }
 }
 
 #ifdef WITH_IMGUI

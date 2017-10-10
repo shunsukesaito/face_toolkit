@@ -138,8 +138,8 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
                 dp = b[0] * dp0 + b[1] * dp1 + b[2] * dp2;
                 
                 al_block.row(0) = shade[0] * a.block(0,0,1,dof.AL);
-                al_block.row(1) = shade[1] * a.block(0,1,1,dof.AL);
-                al_block.row(2) = shade[2] * a.block(0,2,1,dof.AL);
+                al_block.row(1) = shade[1] * a.block(1,0,1,dof.AL);
+                al_block.row(2) = shade[2] * a.block(2,0,1,dof.AL);
                 
                 di_block = - dIxy * dp;
 
@@ -305,6 +305,9 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
 
 void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
+    if(camera.width_ != fb_->width() || camera.height_ != fb_->height())
+        fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
+    
     auto& prog_f2f = programs_["f2f"];
     
     // render parameters update

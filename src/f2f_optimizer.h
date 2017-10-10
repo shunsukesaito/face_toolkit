@@ -28,9 +28,9 @@ struct F2FParams
     float mclose_thresh_ = 4.0f; // mouth close threshold
     float w_pix_ = 1.0f;
 //    float w_mc_ = 1000.0f; // mouth close
-    float w_reg_pca_id_ = 5.e-5f;
-    float w_reg_pca_ex_ = 5.e-4f;
-    float w_reg_pca_cl_ = 5.e-5f;
+    float w_reg_pca_id_ = 1.e-1f;
+    float w_reg_pca_ex_ = 1.e-1f;
+    float w_reg_pca_cl_ = 1.e-3f;
     float w_p2p_ = 8.e-3f;
     float w_p2l_ = 8.e-3f;
     float w_p3d_ = 100.f;

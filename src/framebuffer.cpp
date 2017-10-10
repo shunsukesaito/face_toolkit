@@ -157,8 +157,8 @@ void Framebuffer::RetrieveFBO(int w, int h, cv::Mat& mat, int attachID)
     }
     
     glReadPixels(0, 0, w, h, rgbmode, type, mat.data );
-    cv::flip(mat, mat, 0);
     CHECK_GL_ERROR();
+    cv::flip(mat, mat, 0);
     
     Unbind();
 }

@@ -72,7 +72,7 @@ Eigen::Vector3f LinearFaceModel::computeV(int vidx, const FaceData& data) const
     assert(w_ex_.cols() == data.exCoeff.size());
     
     Eigen::Vector3f p = mu_id_.b3(vidx) + w_id_.block(vidx*3, 0, 3, data.idCoeff.size()) * data.idCoeff;
-    p += mu_ex_.b3(vidx) + w_ex_.block(vidx*3, 0, 3, data.exCoeff.size()) * data.exCoeff;
+    p += w_ex_.block(vidx*3, 0, 3, data.exCoeff.size()) * data.exCoeff;
     return p;
 }
 
@@ -131,18 +131,18 @@ void LinearFaceModel::dSym(int symidx, int axis, int nid, int nex, Eigen::Vector
     {
         if(i == axis){
             v[i] = p1id[i] + p2id[i];
-            dv.block(i,0,1,nid) = w_id_.block(idx1*3+0, 0, 1, nid) + w_id_.block(idx2*3+0, 0, 1, nid);
+            dv.block(i,0,1,nid) = w_id_.block(idx1*3+i, 0, 1, nid) + w_id_.block(idx2*3+i, 0, 1, nid);
             if(nex != 0){
                 v[i] += p1ex[i] + p2ex[i];
-                dv.block(i,nid,1,nex) += w_ex_.block(idx1 * 3 + 0, 0, 1, nex) + w_ex_.block(idx2 * 3 + 0, 0, 1, nex);
+                dv.block(i,nid,1,nex) += w_ex_.block(idx1*3+i, 0, 1, nex) + w_ex_.block(idx2*3+i, 0, 1, nex);
             }
         }
         else{
             v[i] = p1id[i] - p2id[i];
-            dv.block(i,0,1,nid) = w_id_.block(idx1*3+0, 0, 1, nid) - w_id_.block(idx2*3+0, 0, 1, nid);
+            dv.block(i,0,1,nid) = w_id_.block(idx1*3+i, 0, 1, nid) - w_id_.block(idx2*3+i, 0, 1, nid);
             if(nex != 0){
                 v[i] += p1ex[i] - p2ex[i];
-                dv.block(i,nid,1,nex) += w_ex_.block(idx1 * 3 + 0, 0, 1, nex) - w_ex_.block(idx2 * 3 + 0, 0, 1, nex);
+                dv.block(i,nid,1,nex) += w_ex_.block(idx1*3+i, 0, 1, nex) - w_ex_.block(idx2*3+i, 0, 1, nex);
             }
         }
     }

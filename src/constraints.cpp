@@ -333,7 +333,6 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         float sigmasq = 1.43 * z_sorted[z.size()/2];
         sigmasq = sigmasq * sigmasq;
         
-        
         for(int i = 0; i < pV.size(); ++i)
         {
             pq = pV[i]-qV[i].segment<2>(0);
@@ -351,7 +350,6 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
             w_all = w * qV[i][2];
             Jtr += w_all * dpV[i].transpose() * pq;
             JtJ += w_all * dpV[i].transpose() * dpV[i];
-            
             error += w_all * pq.squaredNorm();
         }
     }

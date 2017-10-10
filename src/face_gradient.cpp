@@ -24,12 +24,18 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
 {
     const Eigen::VectorXf& V = fd.pts_;
     
-    if(vert_list.size() == 0) return;
-    
-    if (pV.size() != vert_list.size())
-        pV.assign(vert_list.size(), Eigen::Vector2f::Zero());
-    if (dpV.size() != vert_list.size())
-        dpV.assign(vert_list.size(), Eigen::Matrix2Xf::Zero(2,dof.all()));
+    if (vert_list.size() == 0){
+        if (pV.size() != V.size()/3)
+            pV.assign(V.size()/3, Eigen::Vector2f::Zero());
+        if (dpV.size() != V.size()/3)
+            dpV.assign(V.size()/3, Eigen::Matrix2Xf::Zero(2, dof.pos()));
+    }
+    else{
+        if (pV.size() != vert_list.size())
+            pV.assign(vert_list.size(), Eigen::Vector2f::Zero());
+        if (dpV.size() != vert_list.size())
+            dpV.assign(vert_list.size(), Eigen::Matrix2Xf::Zero(2, dof.pos()));
+    }
     
     // compute position term per vertex
     Eigen::Matrix4f RTc = Eigen::EulerAnglesPoseToMatrix(rtc);
@@ -106,8 +112,8 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
             pV[i](0) = IRTRTv(0)/IRTRTv(2);
             pV[i](1) = IRTRTv(1)/IRTRTv(2);
             
-            if(dof.ID != 0)   gradV(dpdid, dIRcf, fd.dID(vert_list[i], dof.ID));
-            if(dof.EX != 0)   gradV(dpdex, dIRcf, fd.dEX(vert_list[i], dof.EX));
+            if(dof.ID != 0)   gradV(dpdid, dIRcf, fd.dID(i, dof.ID));
+            if(dof.EX != 0)   gradV(dpdex, dIRcf, fd.dEX(i, dof.EX));
             if(dof.fROT != 0) gradROT(dpdrf, dIRc, dRf, v);
             if(dof.fTR != 0)  gradTR(dpdtrf, dIRc);
             if(dof.cROT != 0) gradROT(dpdrc, dI, dRc, RTv);
@@ -132,7 +138,7 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
     if (pV.size() != vert_list.size())
         pV.assign(vert_list.size(), Eigen::Vector2f::Zero());
     if (dpV.size() != vert_list.size())
-        dpV.assign(vert_list.size(), Eigen::Matrix2Xf::Zero(2,dof.all()));
+        dpV.assign(vert_list.size(), Eigen::Matrix2Xf::Zero(2,dof.pos()));
     
     // compute position term per vertex
     Eigen::Matrix4f RTc = Eigen::EulerAnglesPoseToMatrix(rtc);
@@ -196,13 +202,13 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
         if (pV.size() != V.size()/3)
             pV.assign(V.size()/3, Eigen::Vector3f::Zero());
         if (dpV.size() != V.size()/3)
-            dpV.assign(V.size()/3, Eigen::Matrix3Xf::Zero(3, dof.all()));
+            dpV.assign(V.size()/3, Eigen::Matrix3Xf::Zero(3, dof.pos()));
     }
     else{
         if (pV.size() != vert_list.size())
             pV.assign(vert_list.size(), Eigen::Vector3f::Zero());
         if (dpV.size() != vert_list.size())
-            dpV.assign(vert_list.size(), Eigen::Matrix3Xf::Zero(3, dof.all()));
+            dpV.assign(vert_list.size(), Eigen::Matrix3Xf::Zero(3, dof.pos()));
     }
     
     // compute position term per vertex
@@ -221,7 +227,7 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
             Eigen::Ref<Eigen::MatrixXf> dpdid  = dpV[i].block(0,0,3,dof.ID);         cur_dof += dof.ID;
             Eigen::Ref<Eigen::MatrixXf> dpdex  = dpV[i].block(0,cur_dof,3,dof.EX);   cur_dof += dof.EX;
             Eigen::Ref<Eigen::MatrixXf> dpdrf  = dpV[i].block(0,cur_dof,3,dof.fROT); cur_dof += dof.fROT;
-            Eigen::Ref<Eigen::MatrixXf> dpdtrf = dpV[i].block(0,cur_dof,3,dof.fTR);  cur_dof += dof.fTR;
+            Eigen::Ref<Eigen::MatrixXf> dpdtrf = dpV[i].block(0,cur_dof,3,dof.fTR);
             
             const Eigen::Vector3f& v = V.b3(vert_list[i]);
             pV[i] = ApplyTransform(RTf, v);
@@ -239,7 +245,7 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
             Eigen::Ref<Eigen::MatrixXf> dpdid  = dpV[i].block(0,0,3,dof.ID);         cur_dof += dof.ID;
             Eigen::Ref<Eigen::MatrixXf> dpdex  = dpV[i].block(0,cur_dof,3,dof.EX);   cur_dof += dof.EX;
             Eigen::Ref<Eigen::MatrixXf> dpdrf  = dpV[i].block(0,cur_dof,3,dof.fROT); cur_dof += dof.fROT;
-            Eigen::Ref<Eigen::MatrixXf> dpdtrf = dpV[i].block(0,cur_dof,3,dof.fTR);  cur_dof += dof.fTR;
+            Eigen::Ref<Eigen::MatrixXf> dpdtrf = dpV[i].block(0,cur_dof,3,dof.fTR);
             
             const Eigen::Vector3f& v = V.b3(i);
             pV[i] = ApplyTransform(RTf, v);
@@ -380,6 +386,9 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
                    const DOF& dof)
 {
     assert(X.size() == dof.face());
+    assert(dof.AL <= fd.alCoeff.size());
+    assert(dof.ID <= fd.idCoeff.size());
+    assert(dof.EX <= fd.exCoeff.size());
     
     int cur_dof = 0;
     for (int i = 0; i < dof.AL; ++i)
@@ -387,7 +396,6 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
         X[cur_dof + i] = fd.alCoeff[i];
     }
     cur_dof += dof.AL;
-    
     for (int i = 0; i < dof.ID; ++i)
     {
         X[cur_dof + i] = fd.idCoeff[i];
@@ -494,6 +502,9 @@ void loadFaceVector(const Eigen::VectorXf& X,
                     const DOF& dof)
 {
     assert(X.size() == dof.face());
+    assert(dof.AL <= fd.alCoeff.size());
+    assert(dof.ID <= fd.idCoeff.size());
+    assert(dof.EX <= fd.exCoeff.size());
     
     int cur_dof = 0;
     for (int j = 0; j < dof.AL; ++j)

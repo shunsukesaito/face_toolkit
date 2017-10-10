@@ -45,7 +45,7 @@ struct F2FData
     std::vector<Eigen::Matrix3Xf> dnV;
     
     F2FData(int nv, const DOF& dof) :
-    pV(nv), dpV(nv, Eigen::Matrix2Xf::Zero(2, dof.all())),
+    pV(nv), dpV(nv, Eigen::Matrix2Xf::Zero(2, dof.pos())),
     nV(nv), dnV(nv, Eigen::Matrix3Xf::Zero(3, dof.ID + dof.EX)) {}
 };
 
@@ -78,7 +78,7 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
         logger->info("	Computing Vert-wise Position and its Gradient...");
     
     computeVertexWiseGradPosition2D(data.pV, data.dpV, fd, rtc, rtf, camera.intrinsic_, dof);
-    
+   
     std::vector<Eigen::Vector2f> p_p2l;
     std::vector<Eigen::Vector3f> q_p2p;
     std::vector<Eigen::Vector3f> q_p2l;
@@ -95,6 +95,9 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
     // P2P remains same for the whole iterations. no need to execute here...
     P2P2DC::updateConstraints(CP2P, q2V, q_p2p);
     P2L2DC::updateConstraints(CP2L, q2V, p_p2l, q_p2l, n_p2l);
+    
+    Eigen::Ref<Eigen::VectorXf> Jtr_pos = Jtr.segment(dof.AL, dof.pos());
+    Eigen::Ref<Eigen::MatrixXf> JtJ_pos = JtJ.block(dof.AL, dof.AL, dof.pos(), dof.pos());
     
     if (params.verbose_)
         logger->info("	Rendering Multi-pass for Jacobian Computation...");
@@ -116,8 +119,8 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
             logger->info("	Computing Landmark Jacobian...");
         
         // compute landmark jacobian
-        computeJacobianPoint2Point2D(Jtr, JtJ, data.pV, data.dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
-        computeJacobianPoint2Line2D(Jtr, JtJ, data.pV, data.dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
+        computeJacobianPoint2Point2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
+        computeJacobianPoint2Line2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
     }
 }
 
@@ -136,16 +139,21 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
     if (dof.ID)
     {
         // TODO: head constraints
-        computeJacobianSymmetry(Jtr, JtJ, fd, dof, params.w_sym_, params.sym_with_exp_);
+        
+        const int sym_dof = (params.sym_with_exp_ ? dof.ID + dof.EX : dof.ID);
+        Eigen::Ref<Eigen::VectorXf> Jtr_shape = Jtr.segment(dof.AL, sym_dof);
+        Eigen::Ref<Eigen::MatrixXf> JtJ_shape = JtJ.block(dof.AL, dof.AL, sym_dof, sym_dof);
+        
+        computeJacobianSymmetry(Jtr_shape, JtJ_shape, fd, dof, params.w_sym_, params.sym_with_exp_);
     }
     
     int cur_pos = 0;
     const Eigen::VectorXf& sigma_id = fd.model_->sigmaID();
     const Eigen::VectorXf& sigma_ex = fd.model_->sigmaEX();
     const Eigen::VectorXf& sigma_cl = fd.model_->sigmaCL();
-    computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, 0, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
+    computeJacobianPCAReg(Jtr, JtJ, X, sigma_cl, cur_pos, dof.AL, params.w_reg_pca_cl_); cur_pos += dof.AL;
+    computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, cur_pos, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
     computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
-    computeJacobianPCAReg(Jtr, JtJ, X, sigma_cl, cur_pos, dof.AL, params.w_reg_pca_cl_);
     
     for(int j = 0; j < Jtr.size(); ++j)
     {
@@ -242,6 +250,8 @@ void F2FGaussNewton(FaceData& fd,
         fd.updateAll();
         
         if (params.verbose_) logger->info("	Error Evaluation...");
+        
+        std::cout << "iter " << i << " |dX|:" << dX.norm() << std::endl;
         
         //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());
         
