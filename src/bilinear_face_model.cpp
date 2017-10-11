@@ -156,6 +156,10 @@ void BiLinearFaceModel::loadBinaryModel(const std::string& file)
     fread(&tri_pts_.data()[0], sizeof(int), tri_pts_.size(), fp);
     fread(&tri_uv_.data()[0], sizeof(int), tri_uv_.size(), fp);
     
+    std::ofstream fout("tri.txt");
+    fout << tri_pts_;
+    fout.close();
+    
     fclose(fp);
 }
 

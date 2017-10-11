@@ -242,7 +242,7 @@ void LinearFaceModel::loadBinaryModel(const std::string& file)
     fread(&r, sizeof(long), 1, fp);
     sym_list_.resize(r, 2);
     fread(&sym_list_.data()[0], sizeof(int), sym_list_.size(), fp);
-    
+
     fclose(fp);
     
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
@@ -279,6 +279,7 @@ void LinearFaceModel::loadOldBinaryModel(const std::string& modelfile, const std
     if (property[4] != 0){
         fread(&sym_list[0], sizeof(int), property[4] * 2, fp);
     }
+    
     sym_list_.resize(property[4],2);
     for(int i = 0; i < property[4]; ++i)
     {

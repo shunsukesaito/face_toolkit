@@ -91,7 +91,7 @@ void Renderer::draw(const FaceResult& result)
     }
     if(show_p2d_){
         p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
-    }
+    }    
 }
 
 #ifdef WITH_IMGUI

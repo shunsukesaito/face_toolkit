@@ -26,7 +26,8 @@ struct P3DRenderer
     
     void render(const Camera& camera,
                 const Eigen::Matrix4f& RT,
-                const std::vector<Eigen::Vector3f>& pts);
+                const std::vector<Eigen::Vector3f>& pts,
+                const Eigen::Vector4f& color = Eigen::Vector4f(0,0,1,1));
 };
 
 #endif /* p3d_renderer_hpp */

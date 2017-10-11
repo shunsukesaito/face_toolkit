@@ -502,7 +502,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/f2f_renderer.cpp"
-            timestampString = "528418486.116734"
+            timestampString = "529312552.493881"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "254"
@@ -556,6 +556,182 @@
             startingLineNumber = "281"
             endingLineNumber = "281"
             landmarkName = "Framebuffer::init(unsigned int width, unsigned int height, int color_size)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/constraints.cpp"
+            timestampString = "529292963.837234"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "335"
+            endingLineNumber = "335"
+            landmarkName = "computeJacobianPoint2Point2D(Eigen::Ref&lt;Eigen::VectorXf&gt; Jtr, Eigen::Ref&lt;Eigen::MatrixXf&gt; JtJ, const std::vector&lt;Eigen::Vector2f&gt;&amp; pV, const std::vector&lt;Eigen::Matrix2Xf&gt;&amp; dpV, const std::vector&lt;Eigen::Vector3f&gt;&amp; qV, const float&amp; w, bool robust)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/constraints.cpp"
+            timestampString = "529296210.922016"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "350"
+            endingLineNumber = "350"
+            landmarkName = "computeJacobianPoint2Point2D(Eigen::Ref&lt;Eigen::VectorXf&gt; Jtr, Eigen::Ref&lt;Eigen::MatrixXf&gt; JtJ, const std::vector&lt;Eigen::Vector2f&gt;&amp; pV, const std::vector&lt;Eigen::Matrix2Xf&gt;&amp; dpV, const std::vector&lt;Eigen::Vector3f&gt;&amp; qV, const float&amp; w, bool robust)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "398"
+            endingLineNumber = "398"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "399"
+            endingLineNumber = "399"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "404"
+            endingLineNumber = "404"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "425"
+            endingLineNumber = "425"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "413"
+            endingLineNumber = "413"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/face_gradient.cpp"
+            timestampString = "529308202.508244"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "411"
+            endingLineNumber = "411"
+            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/f2f_optimizer.cpp"
+            timestampString = "529309178.384453"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "105"
+            endingLineNumber = "105"
+            landmarkName = "computeF2FJacobian(Eigen::VectorXf&amp; Jtr, Eigen::MatrixXf&amp; JtJ, F2FData data, F2FRenderer&amp; renderer, const FaceData&amp; fd, const Camera&amp; camera, const Eigen::Vector6f&amp; rtf, const Eigen::Vector6f&amp; rtc, const cv::Mat_&lt;cv::Vec4f&gt;&amp; inputRGB, const cv::Mat&amp; dIx, const cv::Mat&amp; dIy, const std::vector&lt;Eigen::Vector3f&gt;&amp; q2V, const std::vector&lt;P2P2DC&gt;&amp; CP2P, std::vector&lt;P2L2DC&gt;&amp; CP2L, const F2FParams&amp; params, std::shared_ptr&lt;spdlog::logger&gt; logger)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/f2f_renderer.cpp"
+            timestampString = "529312552.493881"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "182"
+            endingLineNumber = "182"
+            landmarkName = "F2FRenderParams::init(GLProgram&amp; prog, bool _preview)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/linear_face_model.cpp"
+            timestampString = "529373752.409386"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "249"
+            endingLineNumber = "249"
+            landmarkName = "LinearFaceModel::loadBinaryModel(const std::string&amp; file)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

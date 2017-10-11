@@ -260,8 +260,9 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/PinModel.bin");
-    face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
+    face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    
+    //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
     
     renderer_.init(w, h, face_model_, data_dir);
     
@@ -271,8 +272,6 @@ void GUI::init(int w, int h)
     session.capture_module_ = CaptureModule::Create("capture", data_dir, session.capture_queue_, session.capture_control_queue_);
     session.face_module_ = FaceModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
                                               session.capture_queue_, session.result_queue_, session.face_control_queue_);
-    
-    //lookat = getCenter(renderer_.face_module_.fParam_.pts_);
     
     GLFWwindow* window = renderer_.windows_[MAIN];
 
