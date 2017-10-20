@@ -77,12 +77,12 @@ void main()
     vec4 diffuseColor = VertexIn.color;//material color
     vec3 Nw = normalize(VertexIn.normal_world.xyz);
     vec3 Nc = normalize(VertexIn.normal_camera.xyz);
-    vec3 vieww = normalize(VertexIn.pos_world.xyz-u_camera_pos);
+    vec3 vieww = normalize(u_camera_pos-VertexIn.pos_world.xyz);
     vec3 viewc = normalize(VertexIn.pos_camera.xyz);
-    vec3 freflect = normalize(reflect(vieww, Nw));
+    vec3 freflect = normalize(reflect(-vieww, Nw));
     vec4 diffuseReflection = gammaCorrection(texture(u_sample_diffHDRI, world2UV(Nw)),2.2);
     
-    float F = fresnelGraham(0.05, dot(Nw, -vieww), 2.0);
+    float F = fresnelGraham(0.05, dot(Nw, vieww), 2.0);
     vec4 specularReflectionEM = F * gammaCorrection(texture(u_sample_specHDRI, world2UV(freflect)),2.2);
 
     vec2 texcoord = VertexIn.texcoord;

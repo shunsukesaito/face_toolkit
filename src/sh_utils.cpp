@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "sh_utils.hpp"
+#include "sh_utils.h"
 
 float fact_table[] =
 {

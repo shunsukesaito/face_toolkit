@@ -6,11 +6,10 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "fw_utils.hpp"
-
 #include <Eigen/Dense>
 
-#include "obj_loader.hpp"
+#include "fw_utils.h"
+#include "obj_loader.h"
 
 void loadBlendshapeFW( const std::string& filename, Eigen::MatrixXf& shape, float scale)
 {

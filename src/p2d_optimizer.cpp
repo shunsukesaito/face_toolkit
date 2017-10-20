@@ -119,6 +119,13 @@ struct ErrP2D
     float p2l = 0.0;
     float pca_id = 0.0;
     float pca_ex = 0.0;
+    
+    friend std::ostream& operator<<(std::ostream& os, const ErrP2D& err)
+    {
+        os << "errTot: " << err.p2p + err.p2l + err.pca_id + err.pca_ex << " errP2P: " << err.p2p << " errP2L: " << err.p2l;
+        os << " errPCAID: " << err.pca_id << " errPCAEX: " << err.pca_ex;
+        return os;
+    }
 };
 
 static void computeP2DJacobian(Eigen::VectorXf& Jtr,
@@ -177,22 +184,17 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
                                        const Eigen::VectorXf& X,
                                        const FaceData& fd,
                                        const P2DFitParams& params,
+                                       int start_id,
+                                       int start_ex,
                                        ErrP2D& err)
 {
     const DOF& dof = params.dof;
     
-    int cur_pos = 0;
     const Eigen::VectorXf& sigma_id = fd.model_->sigmaID();
     const Eigen::VectorXf& sigma_ex = fd.model_->sigmaEX();
     
-    err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, 0, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
-    err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
-    
-    for(int j = 0; j < Jtr.size(); ++j)
-    {
-        JtJ(j,j) += 1.e-5;
-    }
-    
+    err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, start_id, dof.ID, params.w_reg_pca_id_);
+    err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, start_ex, dof.EX, params.w_reg_pca_ex_);
 }
 
 void P2DGaussNewton(FaceData& fd,
@@ -225,7 +227,12 @@ void P2DGaussNewton(FaceData& fd,
         ErrP2D err;
         
         computeP2DJacobian(Jtr, JtJ, fd, camera, rtf, rtc, q2V, CP2P, CP2L, params, err);
-        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, err);
+        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, 0, dof.ID, err);
+        
+        for(int j = 0; j < Jtr.size(); ++j)
+        {
+            JtJ(j,j) += 1.e-5;
+        }
         
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
@@ -235,6 +242,102 @@ void P2DGaussNewton(FaceData& fd,
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
                          
+        if (dX.norm() < params.gn_thresh_) break;
+    }
+}
+
+void P2DGaussNewton(std::vector<FaceData>& fd,
+                    Camera& camera,
+                    const std::vector<P2P2DC>& CP2P,
+                    std::vector<P2L2DC>& CP2L,
+                    const std::vector<std::vector<Eigen::Vector3f>>& q2V,
+                    const P2DFitParams& params)
+{
+    MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
+    assert(fd.size() == q2V.size());
+    const DOF& dof = params.dof;
+    const int n_frame = q2V.size();
+    const int dof_all = dof.tvar()*n_frame+dof.tinvar();
+    
+    std::vector<Eigen::Vector6f> rtf(n_frame);
+    Eigen::Vector6f rtc;
+    Eigen::VectorXf X(dof_all);
+    Eigen::VectorXf dX(dof_all);
+   
+    {
+        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinvar());
+        setFaceVector(Xfinvar, rtf[0], fd[0], dof);
+        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinvar(),dof.camera());
+        setCameraVector(Xc, rtc, camera, dof);
+        for(int i = 0; i < n_frame; ++i)
+        {
+            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinvar()+i*dof.tvar(),dof.tvar());
+            setFaceVector(Xf, rtf[i], fd[i], dof);
+        }
+    }
+    
+    // ID, camera parameters, (EX, RT) * #frames
+    Eigen::MatrixXf JtJ = Eigen::MatrixXf::Zero(dof_all, dof_all);
+    Eigen::VectorXf Jtr = Eigen::VectorXf::Zero(dof_all);
+    
+    Eigen::MatrixXf JtJe = Eigen::MatrixXf::Zero(dof.all(), dof.all());
+    Eigen::VectorXf Jtre = Eigen::VectorXf::Zero(dof.all());
+    
+    for (int i = 0; i < params.maxIter_; ++i)
+    {
+        JtJ.setZero();
+        Jtr.setZero();
+        
+        ErrP2D err;
+        for(int j = 0; j < n_frame; ++j)
+        {
+            JtJe.setZero();
+            Jtre.setZero();
+            
+            computeP2DJacobian(Jtre, JtJe, fd[j], camera, rtf[j], rtc, q2V[j], CP2P, CP2L, params, err);
+            computeRegularizerJacobian(Jtre, JtJe, X, fd[j], params, 0, dof.tinvar()+j*dof.tvar(), err);
+
+            // block diagonal part
+            JtJ.block(0,0,dof.ID,dof.ID) += JtJe.block(0,0,dof.ID,dof.ID);
+            JtJ.block(dof.ID,dof.ID,dof.camera(),dof.camera()) += JtJe.block(dof.face(),dof.face(),dof.camera(),dof.camera());
+            JtJ.block(dof.tinvar(),dof.tinvar(),dof.tvar(),dof.tvar()) += JtJe.block(dof.ID,dof.ID,dof.tvar(),dof.tvar());
+            
+            // off diagonal part
+            JtJ.block(0,dof.ID,dof.ID,dof.camera()) += JtJe.block(0,dof.face(),dof.ID,dof.camera());
+            JtJ.block(dof.ID,0,dof.camera(),dof.ID) += JtJe.block(dof.face(),0,dof.camera(),dof.ID);
+            JtJ.block(0,dof.tinvar()+j*dof.tvar(),dof.ID,dof.tvar()) += JtJe.block(0,dof.ID,dof.ID,dof.tvar());
+            JtJ.block(dof.tinvar()+j*dof.tvar(),0,dof.tvar(),dof.ID) += JtJe.block(dof.ID,0,dof.tvar(),dof.ID);
+            JtJ.block(dof.ID,dof.tinvar()+j*dof.tvar(),dof.camera(),dof.tvar()) += JtJe.block(dof.face(),dof.ID,dof.camera(),dof.tvar());
+            JtJ.block(dof.tinvar()+j*dof.tvar(),dof.ID,dof.tvar(),dof.camera()) += JtJe.block(dof.ID,dof.face(),dof.tvar(),dof.camera());
+            
+            Jtr.segment(0, dof.ID) += Jtre.segment(0, dof.ID);
+            Jtr.segment(dof.ID, dof.camera()) += Jtre.segment(dof.face(), dof.camera());
+            Jtr.segment(dof.tinvar()+j*dof.tvar(), dof.tvar()) += Jtre.segment(dof.ID, dof.tvar());
+        }
+        
+        for(int j = 0; j < Jtr.size(); ++j)
+        {
+            JtJ(j,j) += 1.e-5;
+        }
+        
+        Eigen::SparseMatrix<float> JtJsp = JtJ.sparseView();
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> ldlt;
+        factorizeLDLTSolver(JtJsp, ldlt);
+        dX = ldlt.solve(Jtr);
+        X -= dX;
+        
+        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinvar());
+        loadFaceVector(Xfinvar, rtf[0], fd[0], dof);
+        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinvar(),dof.camera());
+        setCameraVector(Xc, rtc, camera, dof);
+        for(int j = 0; j < n_frame; ++j)
+        {
+            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinvar()+j*dof.tvar(),dof.tvar());
+            setFaceVector(Xf, rtf[j], fd[j], dof);
+        }
+        
+        std::cout << "iter " << i << " " << err << std::endl;
+
         if (dX.norm() < params.gn_thresh_) break;
     }
 }

@@ -8,8 +8,8 @@
 #include "base_gradient.h"
 #include "regularizer.h"
 #include "constraints.h"
-#include "face_model.hpp"
-#include "camera.hpp"
+#include "face_model.h"
+#include "camera.h"
 
 struct DOF
 {
@@ -51,6 +51,15 @@ struct DOF
     }
     inline int camera() const {
         return cROT + cTR + CAM;
+    }
+    inline int tinvar() const {
+        return ID + AL + cROT + cTR + CAM;
+    }
+    inline int ftinvar() const {
+        return ID + AL;
+    }
+    inline int tvar() const {
+        return EX + fROT + fTR + SH;
     }
 };
 

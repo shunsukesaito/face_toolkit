@@ -6,7 +6,8 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "face_module.hpp"
+#include "face_module.h"
+#include "renderer.h"
 
 static std::vector<Eigen::Vector3f> convPoint(const std::vector<Eigen::Vector2f>& in)
 {
@@ -56,8 +57,6 @@ FaceModule::~FaceModule()
 {
     // nothing to do
 }
-
-#include "renderer.hpp"
 
 // stub
 void FaceModule::Process()
@@ -121,8 +120,8 @@ void FaceModule::init(std::string data_dir,
     
     fd_.setFaceModel(face_model_);
 
-    P2P2DC::parseConstraints(data_dir + "data/p2p_const_bv.txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "data/p2l_const_bv.txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "data/p2p_const_fw.txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "data/p2l_const_fw.txt", c_p2l_);
     
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
     CHECK_GL_ERROR();

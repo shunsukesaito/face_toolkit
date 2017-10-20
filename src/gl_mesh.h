@@ -14,7 +14,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "gl_core.hpp"
+#include "gl_core.h"
 #include "gl_utils.h"
 
 // flags for attributes
@@ -22,7 +22,9 @@ static const int AT_POSITION = 0x0001;
 static const int AT_NORMAL   = 0x0002;
 static const int AT_COLOR    = 0x0004;
 static const int AT_UV       = 0x0008;
-static const int AT_TRI      = 0x0010;
+static const int AT_TAN      = 0x0010;
+static const int AT_TRI      = 0x0020;
+
 
 struct glPlane
 {
@@ -68,6 +70,8 @@ struct glMesh
     std::vector<glm::vec3> pts_;
     std::vector<glm::vec3> nml_;
     std::vector<glm::vec4> clr_;
+    std::vector<glm::vec3> tan_;
+    std::vector<glm::vec3> btan_;
     
     std::vector<unsigned int> tri_;
     
@@ -89,6 +93,10 @@ struct glMesh
     void update_color(const Eigen::Vector4f& clr,
                       const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
     
+    void update_tangent(const Eigen::MatrixX3f& tan,
+                        const Eigen::MatrixX3f& btan,
+                        const Eigen::MatrixX3i& tri = Eigen::MatrixX3i());
+
     void update_uv(const Eigen::MatrixX2f& uvs,
                    const Eigen::MatrixX3i& tri_uv,
                    const Eigen::MatrixX3i& tri_pts = Eigen::MatrixX3i());

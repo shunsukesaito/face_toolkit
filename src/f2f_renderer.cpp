@@ -1,4 +1,4 @@
-#include "f2f_renderer.hpp"
+#include "f2f_renderer.h"
 
 static const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
 

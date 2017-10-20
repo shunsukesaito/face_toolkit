@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "p2d_renderer.hpp"
+#include "p2d_renderer.h"
 
 void P2DRenderer::init(std::string data_dir)
 {

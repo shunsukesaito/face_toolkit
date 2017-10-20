@@ -6,10 +6,10 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gui.hpp"
+#include "gui.h"
 
-#include "obj_loader.hpp"
-#include "trackball.hpp"
+#include "obj_loader.h"
+#include "trackball.h"
 
 struct Session{
     ModuleHandle capture_module_;
@@ -255,16 +255,18 @@ void GUI::init(int w, int h)
     
     std::string data_dir = "./";
     
+    renderer_.initGL(w, h);
+    
     session.capture_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
     session.result_queue_ = FaceQueueHandle(new SPSCQueue<FaceResult>(4));
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
-    
+    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/BVModel.bin");
+    face_model_ = LinearFaceModel::LoadLSData(data_dir + "data/LS/01/");
     //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
     
-    renderer_.init(w, h, face_model_, data_dir);
+    renderer_.init(face_model_, data_dir);
     
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
     f2f_param_ = F2FParamsPtr(new F2FParams());
@@ -290,7 +292,7 @@ void GUI::init(int w, int h)
 
 void GUI::loop()
 {
-    //GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
@@ -347,8 +349,8 @@ void GUI::loop()
 #endif
         renderer_.flush();
         
-        //glDeleteSync(tsync);
-        //tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        glDeleteSync(tsync);
+        tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
         glfwPollEvents();
     }

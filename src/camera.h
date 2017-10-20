@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "EigenHelper.h"
-#include "gl_core.hpp"
+#include "gl_core.h"
 
 #ifdef WITH_IMGUI
 #include "imgui.h"

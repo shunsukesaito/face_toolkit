@@ -9,21 +9,17 @@
 #ifndef face_module_hpp
 #define face_module_hpp
 
-#include "camera.hpp"
-#include "face_model.hpp"
+#include "camera.h"
+#include "face_model.h"
 
 #include "face_2dtracker.h"
-
-#include "f2f_renderer.hpp"
-#include "mesh_renderer.hpp"
-#include "p3d_renderer.hpp"
-#include "p2d_renderer.hpp"
+#include "f2f_renderer.h"
 
 #include "p2d_optimizer.h"
 #include "f2f_optimizer.h"
 
-#include "module.hpp"
-#include "capture_module.hpp"
+#include "module.h"
+#include "capture_module.h"
 
 struct FaceResult
 {
@@ -100,7 +96,6 @@ private:
     CmdQueueHandle command_queue_;
     
     Face2DDetectorPtr fdetector_;
-    
     F2FRenderer f2f_renderer_;
     
     FaceModelPtr face_model_;

@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "camera.hpp"
+#include "camera.h"
 
 // for sphere rendering
 static const int sp_width_ = 400, sp_height_ = 400;

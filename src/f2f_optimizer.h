@@ -3,10 +3,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include "camera.hpp"
-#include "face_model.hpp"
+#include "camera.h"
+#include "face_model.h"
 #include "face_gradient.h"
-#include "f2f_renderer.hpp"
+#include "f2f_renderer.h"
 
 #ifdef WITH_IMGUI
 #include "imgui.h"

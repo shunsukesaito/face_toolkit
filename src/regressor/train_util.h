@@ -13,7 +13,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <Eigen/Core>
-#include "face_model.hpp"
+#include "face_model.h"
 
 namespace cao{
     

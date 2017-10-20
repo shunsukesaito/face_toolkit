@@ -5,7 +5,7 @@
 #include <vector>
 
 // internal includes
-#include "module.hpp"
+#include "module.h"
 
 namespace
 {

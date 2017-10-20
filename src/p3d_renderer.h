@@ -10,9 +10,9 @@
 #define p3d_renderer_hpp
 
 #include "EigenHelper.h"
-#include "camera.hpp"
-#include "gl_core.hpp"
-#include "gl_mesh.hpp"
+#include "camera.h"
+#include "gl_core.h"
+#include "gl_mesh.h"
 
 struct P3DRenderer
 {

@@ -12,10 +12,10 @@
 #include <stdio.h>
 #include <thread>
 
-#include "capture_module.hpp"
-#include "face_module.hpp"
-#include "renderer.hpp"
-#include "fps.hpp"
+#include "capture_module.h"
+#include "face_module.h"
+#include "renderer.h"
+#include "fps.h"
 
 #ifdef WITH_IMGUI
 #include "imgui.h"
@@ -52,6 +52,7 @@ public:
     virtual void mouseUp(MouseButton mb, int m);
     virtual void mouseScroll(double x, double y);
 
+    void initGL();
     void init(int w, int h);
     void loop();
     

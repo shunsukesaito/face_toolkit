@@ -4,8 +4,8 @@
 
 #include "EigenHelper.h"
 
-#include "camera.hpp"
-#include "face_model.hpp"
+#include "camera.h"
+#include "face_model.h"
 #include "face_gradient.h"
 
 #include <spdlog/spdlog.h>
@@ -56,6 +56,13 @@ void P2DGaussNewton(FaceData& fd,
                     const std::vector<P2P2DC>& CP2P,
                     std::vector<P2L2DC>& CP2L,
                     const std::vector<Eigen::Vector3f>& q2V,
+                    const P2DFitParams& params = P2DFitParams());
+
+void P2DGaussNewton(std::vector<FaceData>& fd,
+                    Camera& camera,
+                    const std::vector<P2P2DC>& CP2P,
+                    std::vector<P2L2DC>& CP2L,
+                    const std::vector<std::vector<Eigen::Vector3f>>& q2V,
                     const P2DFitParams& params = P2DFitParams());
 
 #endif /* defined(LANDMARKFITTER_H) */

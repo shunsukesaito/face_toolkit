@@ -10,8 +10,18 @@
 #include <iostream>
 #include <vector>
 
-#include "face_model.hpp"
-#include "obj_loader.hpp"
+#include "face_model.h"
+#include "obj_loader.h"
+
+void FaceData::updateParams(const FaceParams& fp)
+{
+    this->idCoeff = fp.idCoeff;
+    this->exCoeff = fp.exCoeff;
+    this->alCoeff = fp.alCoeff;
+
+    this->RT = fp.RT;
+    this->SH = fp.SH;
+}
 
 void FaceData::updateIdentity()
 {
@@ -88,6 +98,26 @@ void FaceData::dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, 
     model_->dSym(symidx, axis, nid, nex, v, dv, *this);
 }
 
+const std::vector<unsigned int>& FaceData::maps() const
+{
+    return model_->maps_;
+}
+
+const Eigen::MatrixX2f& FaceData::uvs() const
+{
+    return model_->uvs_;
+}
+
+const Eigen::MatrixX3i& FaceData::tripts() const
+{
+    return model_->tri_pts_;
+}
+
+const Eigen::MatrixX3i& FaceData::triuv() const
+{
+    return model_->tri_uv_;
+}
+
 void FaceData::init()
 {
     assert(model_ != NULL);
@@ -139,16 +169,19 @@ void FaceData::updateIMGUI()
 {
     Eigen::Vector3f euler = Eigen::matToEulerAngle(RT.block<3,3>(0,0));
     if (ImGui::CollapsingHeader("Face Parameters")){
+        if(idCoeff.size() != 0)
         if (ImGui::TreeNode("ID")){
             for(int i = 0; i < idCoeff.size(); ++i)
                 ImGui::SliderFloat(("id" + std::to_string(i)).c_str(), &idCoeff[i], -2.0, 2.0);
             ImGui::TreePop();
         }
+        if(exCoeff.size() != 0)
         if (ImGui::TreeNode("EX")){
             for(int i = 0; i < exCoeff.size(); ++i)
                 ImGui::SliderFloat(("ex" + std::to_string(i)).c_str(), &exCoeff[i], -2.0, 2.0);
             ImGui::TreePop();
         }
+        if(alCoeff.size() != 0)
         if (ImGui::TreeNode("CL")){
             for(int i = 0; i < alCoeff.size(); ++i)
                 ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &alCoeff[i], -2.0, 2.0);

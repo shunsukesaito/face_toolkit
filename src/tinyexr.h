@@ -67,6 +67,7 @@ extern "C" {
 //[NOTE]: maybe move the TinyExrImage in a separate file.
 typedef struct _TinyExrImage
 {
+    ~_TinyExrImage(){free(buf);}
 	int width=0;
 	int height=0;
 	float * buf = NULL;//width * height * RGBA
@@ -87,6 +88,11 @@ typedef struct _TinyExrImage
         memcpy(buf, other.buf, sizeof(float)*width*height*4);
         
         return *this;
+    }
+    
+    void Clear()
+    {
+        free(buf);
     }
 
 	float CorrectExposure(const float val)

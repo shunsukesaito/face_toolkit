@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gl_core.hpp"
+#include "gl_core.h"
 
 using std::cerr;
 using std::cout;
@@ -696,32 +696,49 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
     CHECK_GL_ERROR();
     
     GLint mode1, mode2;
-    switch (img.channels()) {
-        case 4:
-            mode1 = GL_RGBA;
-            mode2 = GL_BGRA;
-            break;
-        case 3:
-            mode1 = GL_RGB;
-            mode2 = GL_BGR;
-            break;
-        case 1:
-            mode1 = GL_RED;
-            mode1 = GL_RED;
-            break;
-        default:
-            cerr << "ERROR: Unsupported channels" << endl;
-            break;
-    }
-    
     GLint type;
     if ((img.type() & CV_MAT_DEPTH_MASK) == CV_8U)
     {
         type = GL_UNSIGNED_BYTE;
+        switch (img.channels()) {
+            case 4:
+                mode1 = GL_RGBA;
+                mode2 = GL_BGRA;
+                break;
+            case 3:
+                mode1 = GL_RGB;
+                mode2 = GL_BGR;
+                break;
+            case 1:
+                mode1 = GL_RED;
+                mode1 = GL_RED;
+                break;
+            default:
+                cerr << "ERROR: Unsupported channels" << endl;
+                break;
+        }
     }
     else if ((img.type() & CV_MAT_DEPTH_MASK) == CV_32F)
     {
         type = GL_FLOAT;
+        
+        switch (img.channels()) {
+            case 4:
+                mode1 = GL_RGBA32F_ARB;
+                mode2 = GL_BGRA;
+                break;
+            case 3:
+                mode1 = GL_RGB32F_ARB;
+                mode2 = GL_BGR;
+                break;
+            case 1:
+                mode1 = GL_RED;
+                mode1 = GL_RED;
+                break;
+            default:
+                cerr << "ERROR: Unsupported channels" << endl;
+                break;
+        }
     }
     else
     {
@@ -755,7 +772,7 @@ GLuint GLTexture::CreateTexture(const HDRLoaderResult& img)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, img.width, img.height, 0, GL_RGB, GL_FLOAT, &img.cols[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, img.width, img.height, 0, GL_RGB, GL_FLOAT, &img.cols[0]);
     
     CHECK_GL_ERROR();
     
@@ -780,7 +797,7 @@ GLuint GLTexture::CreateTexture(const TinyExrImage& img)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     
     //[NOTE]: RGBA
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F_ARB, img.width, img.height, 0, GL_RGBA, GL_FLOAT, &img.buf[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F_ARB, img.width, img.height, 0, GL_RGBA, GL_FLOAT, &img.buf[0]);
     
     CHECK_GL_ERROR();
     

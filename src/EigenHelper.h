@@ -1,8 +1,11 @@
 
 #pragma once
 
+#include <iostream>
 #include <math.h>
 
+#include <Eigen/Sparse>
+#include <Eigen/SparseCholesky>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
@@ -14,26 +17,76 @@
 
 inline void calcNormal(Eigen::MatrixX3f& nml,
                        const Eigen::VectorXf& pts,
-                       const Eigen::MatrixX3i& tri_pts)
+                       const Eigen::MatrixX3i& tri)
 {
     nml = Eigen::MatrixX3f::Zero(pts.size()/3,3);
-    for(int i = 0; i < tri_pts.rows(); ++i)
+    for(int i = 0; i < tri.rows(); ++i)
     {
-        const Eigen::Vector3f& p0 = pts.b3(tri_pts(i,0));
-        const Eigen::Vector3f& p1 = pts.b3(tri_pts(i,1));
-        const Eigen::Vector3f& p2 = pts.b3(tri_pts(i,2));
+        const Eigen::Vector3f& p0 = pts.b3(tri(i,0));
+        const Eigen::Vector3f& p1 = pts.b3(tri(i,1));
+        const Eigen::Vector3f& p2 = pts.b3(tri(i,2));
         
         Eigen::Vector3f n = (p1-p0).cross(p2-p0);
         
-        nml.row(tri_pts(i,0)) += n;
-        nml.row(tri_pts(i,1)) += n;
-        nml.row(tri_pts(i,2)) += n;
+        nml.row(tri(i,0)) += n;
+        nml.row(tri(i,1)) += n;
+        nml.row(tri(i,2)) += n;
     }
     
     for(int i = 0; i < nml.rows(); ++i)
     {
         nml.row(i).normalize();
     }
+}
+
+inline void calcTangent(Eigen::MatrixX3f& tan,
+                        Eigen::MatrixX3f& btan,
+                        const Eigen::VectorXf& pts,
+                        const Eigen::MatrixX2f& uvs,
+                        const Eigen::MatrixX3i& tripts,
+                        const Eigen::MatrixX3i& triuv)
+{
+    assert(tripts.size() == triuv.size());
+    
+    tan = Eigen::MatrixX3f::Zero(pts.size()/3,3);
+    btan = Eigen::MatrixX3f::Zero(pts.size()/3,3);
+    
+    Eigen::VectorXf count = Eigen::VectorXf::Zero(pts.size()/3);
+    for (int i = 0; i < tripts.rows(); i++)
+    {
+        const Eigen::Vector3f& p0 = pts.b3(tripts(i,0));
+        const Eigen::Vector3f& p1 = pts.b3(tripts(i,1));
+        const Eigen::Vector3f& p2 = pts.b3(tripts(i,2));
+        
+        const Eigen::RowVector2f& uv0 = uvs.row(triuv(i,0));
+        const Eigen::RowVector2f& uv1 = uvs.row(triuv(i,1));
+        const Eigen::RowVector2f& uv2 = uvs.row(triuv(i,2));
+        
+        Eigen::Matrix<float,3,2> W(3, 2);
+        Eigen::Matrix2f UV(2, 2);
+        
+        W.col(0) = p1-p0;
+        W.col(1) = p2-p0;
+        
+        UV.col(0) = (uv1-uv0).transpose();
+        UV.col(1) = (uv2-uv0).transpose();
+        
+        W = W * UV.inverse();
+        
+        tan.row(tripts(i,0)) += W.col(0).transpose();
+        tan.row(tripts(i,1)) += W.col(0).transpose();
+        tan.row(tripts(i,2)) += W.col(0).transpose();
+        
+        btan.row(tripts(i,0)) += W.col(1).transpose();
+        btan.row(tripts(i,1)) += W.col(1).transpose();
+        btan.row(tripts(i,2)) += W.col(1).transpose();
+        
+        count(tripts(i,0)) += 1.f;
+        count(tripts(i,1)) += 1.f;
+        count(tripts(i,2)) += 1.f;
+    }
+    tan = tan.array().colwise() / count.array();
+    btan = btan.array().colwise() / count.array();
 }
 
 
@@ -190,4 +243,29 @@ namespace Eigen{
 
 		return rt;
 	}
+    
+    template<class T>
+    inline void factorizeLLTSolver(const T& A, Eigen::SimplicialLLT<T>& lltSolver)
+    {
+        lltSolver.analyzePattern(A);
+        lltSolver.factorize(A);
+        
+        if(lltSolver.info() != Eigen::Success)
+        {
+            std::cout << "Warning: " << "LLT decomposition is failed." << std::endl;
+        }
+    }
+    
+    template<class T>
+    inline void factorizeLDLTSolver(const T& A, Eigen::SimplicialLDLT<T>& ldltSolver)
+    {
+        ldltSolver.analyzePattern(A);
+        ldltSolver.factorize(A);
+        
+        if(ldltSolver.info() != Eigen::Success)
+        {
+            std::cout << "Warning: " << "LDLT decomposition is failed." << std::endl;
+        }
+    }
+    
 }

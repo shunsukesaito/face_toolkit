@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "train_util.hpp"
+#include "train_util.h"
 
 namespace cao{
     

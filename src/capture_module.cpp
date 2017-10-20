@@ -5,7 +5,7 @@
 #include <vector>
 
 // internal includes
-#include "capture_module.hpp"
+#include "capture_module.h"
 
 // initializes this module and the basic module
 CaptureModule::CaptureModule(const std::string &name)

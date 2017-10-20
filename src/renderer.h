@@ -13,19 +13,20 @@
 #include <chrono>
 #include <unordered_map>
 
-#include "gl_core.hpp"
-#include "framebuffer.hpp"
-#include "gl_mesh.hpp"
-#include "camera.hpp"
+#include "gl_core.h"
+#include "framebuffer.h"
+#include "gl_mesh.h"
+#include "camera.h"
 
-#include "bg_renderer.hpp"
-#include "f2f_renderer.hpp"
-#include "mesh_renderer.hpp"
-#include "IBL_renderer.hpp"
-#include "p3d_renderer.hpp"
-#include "p2d_renderer.hpp"
+#include "bg_renderer.h"
+#include "f2f_renderer.h"
+#include "mesh_renderer.h"
+#include "IBL_renderer.h"
+#include "LS_renderer.h"
+#include "p3d_renderer.h"
+#include "p2d_renderer.h"
 
-#include "face_module.hpp"
+#include "face_module.h"
 
 #include "gl_utils.h"
 
@@ -93,6 +94,7 @@ struct Renderer {
     
     BGRenderer bg_renderer_;
     IBLRenderer IBL_renderer_;
+    LSRenderer LS_renderer_;
     F2FRenderer f2f_renderer_;
     MeshRenderer mesh_renderer_;
     P3DRenderer p3d_renderer_;
@@ -106,6 +108,7 @@ struct Renderer {
     bool show_mesh_ = true;
     bool show_f2f_ = false;
     bool show_IBL_ = false;
+    bool show_LS_ = false;
     bool show_p3d_ = false;
     bool show_p2d_ = false;
     bool show_bg_ = true;
@@ -116,10 +119,11 @@ struct Renderer {
     Window& get_window(WINDOW idx) { return windows_[idx]; }
     
     Renderer() {}
-    Renderer(int w, int h, FaceModelPtr fm, std::string data_dir){ init(w, h, fm, data_dir); }
+    Renderer(int w, int h, FaceModelPtr fm, std::string data_dir){ initGL(w,h); init(fm, data_dir); }
     ~Renderer() {}
     
-    void init(int w, int h, FaceModelPtr fm, std::string data_dir = "./");
+    void initGL(int w, int h);
+    void init(FaceModelPtr fm, std::string data_dir = "./");
     
     void flush() {
         glfwSwapBuffers(windows_[WINDOW::MAIN]);

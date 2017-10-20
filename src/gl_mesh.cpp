@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gl_mesh.hpp"
+#include "gl_mesh.h"
 
 void glPlane::init(GLProgram &program, float z)
 {
@@ -174,6 +174,10 @@ void glMesh::init(GLProgram& program, int flag)
         program.createAttribute("v_color", DataType::VECTOR4, true);
     if(flag & AT_UV)
         program.createAttribute("v_texcoord", DataType::VECTOR2, false);
+    if(flag & AT_TAN){
+        program.createAttribute("v_tangent", DataType::VECTOR3, true);
+        program.createAttribute("v_bitangent", DataType::VECTOR3, true);
+    }
     if(flag & AT_TRI)
         program.createElementIndex(tri_);
 }
@@ -188,6 +192,10 @@ void glMesh::update(GLProgram& program, int flag)
         program.setAttributeData("v_color", clr_);
     if(flag & AT_UV)
         program.setAttributeData("v_texcoord", uvs_);
+    if(flag & AT_TAN){
+        program.setAttributeData("v_tangent", tan_);
+        program.setAttributeData("v_bitangent", btan_);
+    }
     if(flag & AT_TRI)
         program.updateElementIndex(tri_);
 }
@@ -317,6 +325,40 @@ void glMesh::update_color(const Eigen::Vector4f& clr,
     }
 }
 
+void glMesh::update_tangent(const Eigen::MatrixX3f& tan,
+                            const Eigen::MatrixX3f& btan,
+                            const Eigen::MatrixX3i& tri)
+{
+    assert(tan.size() == btan.size());
+    
+    if(tri.size() != 0){
+        tan_.resize(tri.size());
+        btan_.resize(tri.size());
+        for(int i = 0; i < tri.rows(); ++i)
+        {
+            const int& idx0 = tri(i, 0);
+            const int& idx1 = tri(i, 1);
+            const int& idx2 = tri(i, 2);
+            
+            tan_[i * 3 + 0] = glm::vec3(tan(idx0,0), tan(idx0,1), tan(idx0,2));
+            tan_[i * 3 + 1] = glm::vec3(tan(idx1,0), tan(idx1,1), tan(idx1,2));
+            tan_[i * 3 + 2] = glm::vec3(tan(idx2,0), tan(idx2,1), tan(idx2,2));
+
+            btan_[i * 3 + 0] = glm::vec3(btan(idx0,0), btan(idx0,1), btan(idx0,2));
+            btan_[i * 3 + 1] = glm::vec3(btan(idx1,0), btan(idx1,1), btan(idx1,2));
+            btan_[i * 3 + 2] = glm::vec3(btan(idx2,0), btan(idx2,1), btan(idx2,2));
+        }
+    }
+    else{
+        tan_.resize(tan.rows());
+        btan_.resize(btan.rows());
+        for(int i = 0; i < tan_.size(); ++i)
+        {
+            tan_[i] = glm::vec3(tan(i,0), tan(i,1), tan(i,2));
+            btan_[i] = glm::vec3(btan(i,0), btan(i,1), btan(i,2));
+        }
+    }
+}
 
 void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
                        const Eigen::MatrixX3i& tri_uv,

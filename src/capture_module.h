@@ -7,8 +7,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "camera.hpp"
-#include "module.hpp"
+#include "camera.h"
+#include "module.h"
 
 struct CaptureResult
 {

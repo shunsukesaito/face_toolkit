@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "framebuffer.hpp"
+#include "framebuffer.h"
 
 // Constructor requires at least one of the textures (color or depth) to be valid.
 Framebuffer::Framebuffer(unsigned int width, unsigned int height, int color_size)

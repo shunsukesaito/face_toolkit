@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "bg_renderer.hpp"
+#include "bg_renderer.h"
 
 void BGRenderer::init(std::string data_dir,
                       std::string img_path)

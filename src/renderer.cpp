@@ -6,19 +6,16 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "renderer.hpp"
-#include "obj_loader.hpp"
+#include "renderer.h"
+#include "obj_loader.h"
 
 void error_callback(int error, const char* description)
 {
     fputs(description, stderr);
 }
 
-void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
+void Renderer::initGL(int w, int h)
 {
-    data_dir_ = data_dir;
-    face_model_ = fm;
-    
     glfwSetErrorCallback(error_callback);
     
     if (!glfwInit())
@@ -64,11 +61,18 @@ void Renderer::init(int w, int h, FaceModelPtr fm, std::string data_dir)
     printf("Supported GLSL is %s\n", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
     
     glfwSetInputMode(windows_[MAIN],GLFW_CURSOR,GLFW_CURSOR_NORMAL);
+}
+
+void Renderer::init(FaceModelPtr fm, std::string data_dir)
+{
+    data_dir_ = data_dir;
+    face_model_ = fm;
     
     bg_renderer_.init(data_dir_, cv::Mat_<cv::Vec3b>(1,1));
     f2f_renderer_.init(data_dir_, face_model_);
     mesh_renderer_.init(data_dir_, face_model_->tri_pts_);
-    IBL_renderer_.init(data_dir, face_model_);
+    LS_renderer_.init(data_dir_, face_model_);
+    IBL_renderer_.init(data_dir_, face_model_);
     p3d_renderer_.init(data_dir_);
     p2d_renderer_.init(data_dir_);
 }
@@ -81,6 +85,8 @@ void Renderer::draw(const FaceResult& result)
         bg_renderer_.render(result.img);
     if(show_IBL_)
         IBL_renderer_.render(camera, result.fd, show_sphere_);
+    if(show_LS_)
+        LS_renderer_.render(camera, result.fd);
     if(show_mesh_)
         mesh_renderer_.render(camera, result.fd.RT, result.fd.pts_, result.fd.nml_, show_sphere_);
     if(show_f2f_)
@@ -100,12 +106,14 @@ void Renderer::updateIMGUI()
     ImGui::Checkbox("show bg", &show_bg_);
     ImGui::Checkbox("show mesh", &show_mesh_);
     ImGui::Checkbox("show f2f", &show_f2f_);
+    ImGui::Checkbox("show LS", &show_LS_);
     ImGui::Checkbox("show IBL", &show_IBL_);
     ImGui::Checkbox("show p2d", &show_p2d_);
     ImGui::Checkbox("show p3d", &show_p3d_);
     ImGui::Checkbox("show sphere", &show_sphere_);
     f2f_renderer_.updateIMGUI();
     IBL_renderer_.updateIMGUI();
+    LS_renderer_.updateIMGUI();
 }
 #endif
 

@@ -12,6 +12,7 @@
 #include <mutex>
 
 #include "EigenHelper.h"
+#include "tinyexr.h"
 
 #ifdef WITH_IMGUI
 #include "imgui.h"
@@ -19,6 +20,19 @@
 
 struct BaseFaceModel;
 typedef std::shared_ptr<BaseFaceModel> FaceModelPtr;
+
+struct FaceData;
+typedef std::shared_ptr<FaceData> FaceDataPtr;
+
+struct FaceParams
+{
+    Eigen::VectorXf idCoeff;
+    Eigen::VectorXf exCoeff;
+    Eigen::VectorXf alCoeff;
+    
+    Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
+    Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);
+};
 
 // all temporary data is stored in FaceData
 struct FaceData
@@ -44,8 +58,10 @@ struct FaceData
     
     Eigen::MatrixXf w_ex_; // blendshape basis for bilinear model
     Eigen::MatrixXf w_id_; // identity basis for bilinear model
-    
+        
     bool id_opt_ = false; // for bilinear identity optimization
+    
+    void updateParams(const FaceParams& fp);
     
     void updateIdentity();
     void updateExpression();
@@ -64,6 +80,11 @@ struct FaceData
     
     void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv) const;
     
+    const std::vector<unsigned int>& maps() const;
+    const Eigen::MatrixX2f& uvs() const;
+    const Eigen::MatrixX3i& tripts() const;
+    const Eigen::MatrixX3i& triuv() const;
+    
     void init();
     void saveObj(const std::string& filename);
     
@@ -80,6 +101,9 @@ struct BaseFaceModel
     // triangle list
     Eigen::MatrixX3i tri_pts_;
     Eigen::MatrixX3i tri_uv_;
+    
+    // for rendering 
+    std::vector<unsigned int> maps_;
     
     virtual void updateExpression(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
     virtual void updateIdentity(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
@@ -131,6 +155,8 @@ struct LinearFaceModel : public BaseFaceModel
     std::vector<std::array<Eigen::Matrix3Xf, 2>> id_edge_;
     std::vector<std::array<Eigen::Matrix3Xf, 2>> ex_edge_;
     
+    void loadLightStageData(const std::string& data_dir);
+    
     void saveBinaryModel(const std::string& file);
     void loadBinaryModel(const std::string& file);
     
@@ -164,6 +190,7 @@ struct LinearFaceModel : public BaseFaceModel
     virtual void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv, const FaceData& data) const;
     
     static FaceModelPtr LoadModel(const std::string& file);
+    static FaceModelPtr LoadLSData(const std::string& data_dir);
 };
 
 struct BiLinearFaceModel : public BaseFaceModel

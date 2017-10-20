@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "sh_optimizer.hpp"
+#include "sh_optimizer.h"
 #include "minitrace.h"
 
 void evaluateSHLeastSquare(Eigen::VectorXf& Crgb, Eigen::MatrixXf& CCrgb, const cv::Mat_<cv::Vec4f>& input, const cv::Mat_<cv::Vec4f>& albedo, const cv::Mat_<cv::Vec4f>& normal, unsigned int sampling_rate)

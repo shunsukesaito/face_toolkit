@@ -10,8 +10,9 @@
 #include <iostream>
 #include <vector>
 
-#include "face_model.hpp"
-#include "obj_loader.hpp"
+#include "face_model.h"
+#include "obj_loader.h"
+#include "gl_core.h"
 
 static void computeEdgeBasis(std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_edge,
                              std::vector<std::array<Eigen::Matrix3Xf, 2>>& ex_edge,
@@ -40,7 +41,10 @@ static void computeEdgeBasis(std::vector<std::array<Eigen::Matrix3Xf, 2>>& id_ed
 
 void LinearFaceModel::updateIdentity(FaceData& data)
 {
-    if(sigma_id_.size() == 0) return;
+    if(sigma_id_.size() == 0){
+        data.neu_ = mu_id_;
+        return;
+    }
 
     assert(w_id_.cols() == data.idCoeff.size());
     data.d_id_ = w_id_ * data.idCoeff;
@@ -49,7 +53,11 @@ void LinearFaceModel::updateIdentity(FaceData& data)
 
 void LinearFaceModel::updateExpression(FaceData& data)
 {
-    if(sigma_ex_.size() == 0) return;
+    if(sigma_ex_.size() == 0){
+        data.pts_ = data.neu_;
+        calcNormal(data.nml_, data.pts_, tri_pts_);
+        return;
+    }
     assert(w_ex_.cols() == data.exCoeff.size());
 
     data.d_ex_ = w_ex_ * data.exCoeff;
@@ -60,7 +68,10 @@ void LinearFaceModel::updateExpression(FaceData& data)
 
 void LinearFaceModel::updateColor(FaceData& data)
 {
-    if(sigma_cl_.size() == 0) return;
+    if(sigma_cl_.size() == 0){
+        data.clr_ = Eigen::VectorXf::Ones(mu_id_.size());
+        return;
+    }
     assert(w_cl_.cols() == data.alCoeff.size());
 
     data.clr_ = mu_cl_ + w_cl_ * data.alCoeff;
@@ -145,6 +156,37 @@ void LinearFaceModel::dSym(int symidx, int axis, int nid, int nex, Eigen::Vector
                 dv.block(i,nid,1,nex) += w_ex_.block(idx1*3+i, 0, 1, nex) - w_ex_.block(idx2*3+i, 0, 1, nex);
             }
         }
+    }
+}
+
+void LinearFaceModel::loadLightStageData(const std::string& data_dir)
+{
+    // 0: obj, 1: diff_albedo, 2: diff_normal, 3: spec_albedo, 4: spec_normal, 5: displacement
+    std::string files[6];
+    std::ifstream fin(data_dir + "list.txt");
+    if(fin.is_open()){
+        for(int i = 0; i < 6; ++i)
+        {
+            fin >> files[i];
+            files[i] = data_dir + files[i];
+        }
+    }
+    
+    Eigen::MatrixX3f nml;
+    loadObjFile(files[0], mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    maps_.resize(5);
+    const char * err;
+    for(int i = 0; i < 5; ++i)
+    {
+        cv::Mat tmp = cv::imread(files[i+1], cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH);
+        if (tmp.empty())
+        {
+            std::cout << "Error: diffEnv file isn't loaded correctly... " << files[i+1] << std::endl;
+            throw std::runtime_error("Error: diffEnv file isn't loaded correctly...");
+        }
+        cv::flip(tmp, tmp, 0);
+        cv::resize(tmp,tmp,cv::Size(3000,3000));
+        maps_[i] = GLTexture::CreateTexture(tmp);
     }
 }
 
@@ -512,6 +554,15 @@ FaceModelPtr LinearFaceModel::LoadModel(const std::string& file)
     auto model = new LinearFaceModel();
     
     model->loadBinaryModel(file);
+    
+    return FaceModelPtr(model);
+}
+
+FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir)
+{
+    auto model = new LinearFaceModel();
+    
+    model->loadLightStageData(data_dir);
     
     return FaceModelPtr(model);
 }

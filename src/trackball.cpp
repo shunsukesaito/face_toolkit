@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "trackball.hpp"
+#include "trackball.h"
 
 static double QuatD(double w, double h)
 {

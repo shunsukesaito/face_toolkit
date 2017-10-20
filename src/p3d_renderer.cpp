@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "p3d_renderer.hpp"
+#include "p3d_renderer.h"
 
 void P3DRenderer::init(std::string data_dir)
 {

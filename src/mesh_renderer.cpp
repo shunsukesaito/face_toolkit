@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "mesh_renderer.hpp"
+#include "mesh_renderer.h"
 
 void MeshRenderer::init(std::string data_dir,
                         const Eigen::MatrixX3i& tri)

@@ -1,7 +1,7 @@
-#include "IBL_renderer.hpp"
+#include "IBL_renderer.h"
 
 #include "tinyexr.h"
-#include "sh_utils.hpp"
+#include "sh_utils.h"
 
 void IBLRenderParams::init(GLProgram& prog)
 {
@@ -139,30 +139,31 @@ void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
         
         std::cout << " diffuse done...";
 
-        std::string input = data_dir + "data/specHDRI/ward0.37_" + sh_list[i] + ".exr";
+        std::string filename = data_dir + "data/specHDRI/ward0.37_" + sh_list[i] + ".exr";
         const char* err;
-        //printf("Loading: %s...", input.c_str());
-        TinyExrImage specularHDRI;
-        int ret = LoadEXR(&specularHDRI.buf, &specularHDRI.width, &specularHDRI.height, input.c_str(), &err);
+        printf("Loading: %s...", filename.c_str());
+        TinyExrImage specularEnv;
+        int ret = LoadEXR(&specularEnv.buf, &specularEnv.width, &specularEnv.height, filename.c_str(), &err);
         if (ret != 0)
         {
-            std::cout << "Error: HDR file isn't loaded correctly... " << sh_list[i] << " " << err << std::endl;
-            exit(1);
+            std::cout << "Error: diffEnv file isn't loaded correctly... " << filename << " " << err << std::endl;
+            throw std::runtime_error("Error: diffEnv file isn't loaded correctly...");
         }
+        specularEnv.FlipVertical();
+
         if(specHDRI_w == 0 || specHDRI_h == 0){
-            specHDRI_w = specularHDRI.width;
-            specHDRI_h = specularHDRI.height;
+            specHDRI_w = specularEnv.width;
+            specHDRI_h = specularEnv.height;
         }
-        specularHDRI.FlipVertical();
+        
         std::cout << " specular done..." << std::endl;
         
         //correct the exposure so it will be avarage 0.5
-        float scale = sourceHDRImage.CorrectExposure(0.5);
+        //float scale = sourceHDRImage.CorrectExposure(0.5);
         //apply the same scale to the spec HDRI
-        specularHDRI.Scale(scale, scale, scale, 1.0);
-        
+        //specularHDRI.Scale(scale, scale, scale, 1.0);
         GLuint diff_HDRI_location = GLTexture::CreateTexture(diffuseHDRI);
-        GLuint spec_HDRI_location = GLTexture::CreateTexture(specularHDRI);
+        GLuint spec_HDRI_location = GLTexture::CreateTexture(specularEnv);
         diff_HDRI_locations_.push_back(diff_HDRI_location);
         spec_HDRI_locations_.push_back(spec_HDRI_location);
     }
@@ -193,9 +194,9 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
     
     // update mesh attributes
-    mesh_.update_position(fd.pts_, fd.model_->tri_pts_);
-    mesh_.update_color(fd.clr_, fd.model_->tri_pts_);
-    mesh_.update_normal(fd.nml_, fd.model_->tri_pts_);
+    mesh_.update_position(fd.pts_, fd.tripts());
+    mesh_.update_color(fd.clr_, fd.tripts());
+    mesh_.update_normal(fd.nml_, fd.tripts());
     
     mesh_.update(prog_IBL, AT_POSITION | AT_COLOR | AT_NORMAL | AT_UV);
     mesh_.update(prog_depth, AT_POSITION);

@@ -385,64 +385,79 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
                    const FaceData& fd,
                    const DOF& dof)
 {
-    assert(X.size() == dof.face());
+    bool tinvar = false, tvar = false;
+    if(X.size() == dof.face()){
+        tinvar = true; tvar = true;
+    }
+    else if(X.size() == dof.ftinvar()){
+        tinvar = true;
+    }
+    else if(X.size() == dof.tvar()){
+        tvar = true;
+    }
+    else{
+        throw std::runtime_error("Error: face vector dimention does not match");
+    }
     assert(dof.AL <= fd.alCoeff.size());
     assert(dof.ID <= fd.idCoeff.size());
     assert(dof.EX <= fd.exCoeff.size());
     
     int cur_dof = 0;
-    for (int i = 0; i < dof.AL; ++i)
-    {
-        X[cur_dof + i] = fd.alCoeff[i];
-    }
-    cur_dof += dof.AL;
-    for (int i = 0; i < dof.ID; ++i)
-    {
-        X[cur_dof + i] = fd.idCoeff[i];
-    }
-    cur_dof += dof.ID;
-    
-    for (int i = 0; i < dof.EX; ++i)
-    {
-        X[cur_dof + i] = fd.exCoeff[i];
-    }
-    cur_dof += dof.EX;
-    
-    Eigen::ConvertToEulerAnglesPose(fd.RT, rt);
-    if (dof.fROT == 3 || dof.fTR == 3){
-        for (int i = 0; i < dof.fROT; ++i)
+    if(tinvar){
+        for (int i = 0; i < dof.AL; ++i)
         {
-            X[cur_dof + i] = rt[i];
+            X[cur_dof + i] = fd.alCoeff[i];
         }
-        cur_dof += dof.fROT;
+        cur_dof += dof.AL;
+        for (int i = 0; i < dof.ID; ++i)
+        {
+            X[cur_dof + i] = fd.idCoeff[i];
+        }
+        cur_dof += dof.ID;
+    }
+    if(tvar){
+        for (int i = 0; i < dof.EX; ++i)
+        {
+            X[cur_dof + i] = fd.exCoeff[i];
+        }
+        cur_dof += dof.EX;
         
-        for (int i = 0; i < dof.fTR; ++i)
-        {
-            X[cur_dof + i] = rt[3 + i];
-        }
-        cur_dof += dof.fTR;
-    }
-    
-    assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
-    switch(dof.SH)
-    {
-        case 27:
-            for (int i = 0; i < 3; ++i)
+        Eigen::ConvertToEulerAnglesPose(fd.RT, rt);
+        if (dof.fROT == 3 || dof.fTR == 3){
+            for (int i = 0; i < dof.fROT; ++i)
             {
+                X[cur_dof + i] = rt[i];
+            }
+            cur_dof += dof.fROT;
+            
+            for (int i = 0; i < dof.fTR; ++i)
+            {
+                X[cur_dof + i] = rt[3 + i];
+            }
+            cur_dof += dof.fTR;
+        }
+        
+        assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
+        switch(dof.SH)
+        {
+            case 27:
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 9; ++j)
+                    {
+                        X[cur_dof + i * 9 + j] = fd.SH(i,j);
+                    }
+                }
+                break;
+            case 9:
                 for (int j = 0; j < 9; ++j)
                 {
-                    X[cur_dof + i * 9 + j] = fd.SH(i,j);
+                    X[cur_dof + j] = fd.SH(0,j);
                 }
-            }
-            break;
-        case 9:
-            for (int j = 0; j < 9; ++j)
-            {
-                X[cur_dof + j] = fd.SH(0,j);
-            }
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -501,70 +516,86 @@ void loadFaceVector(const Eigen::VectorXf& X,
                     FaceData& fd,
                     const DOF& dof)
 {
-    assert(X.size() == dof.face());
+    bool tinvar = false, tvar = false;
+    if(X.size() == dof.face()){
+        tinvar = true; tvar = true;
+    }
+    else if(X.size() == dof.ftinvar()){
+        tinvar = true;
+    }
+    else if(X.size() == dof.tvar()){
+        tvar = true;
+    }
+    else{
+        throw std::runtime_error("Error: face vector dimention does not match");
+    }
     assert(dof.AL <= fd.alCoeff.size());
     assert(dof.ID <= fd.idCoeff.size());
     assert(dof.EX <= fd.exCoeff.size());
     
     int cur_dof = 0;
-    for (int j = 0; j < dof.AL; ++j)
-    {
-        fd.alCoeff[j] = X[cur_dof + j];
+    if(tinvar){
+        for (int j = 0; j < dof.AL; ++j)
+        {
+            fd.alCoeff[j] = X[cur_dof + j];
+        }
+        cur_dof += dof.AL;
+        
+        for (int j = 0; j < dof.ID; ++j)
+        {
+            fd.idCoeff[j] = X[cur_dof + j];
+        }
+        cur_dof += dof.ID;
     }
-    cur_dof += dof.AL;
     
-    for (int j = 0; j < dof.ID; ++j)
-	{
-		fd.idCoeff[j] = X[cur_dof + j];
-	}
-    cur_dof += dof.ID;
-	
-    for (int j = 0; j < dof.EX; ++j)
-	{
-		fd.exCoeff[j] = X[cur_dof + j];
-	}
-    cur_dof += dof.EX;
+    if(tvar){
+        for (int j = 0; j < dof.EX; ++j)
+        {
+            fd.exCoeff[j] = X[cur_dof + j];
+        }
+        cur_dof += dof.EX;
 
-	for (int i = 0; i < dof.fROT; ++i)
-	{
-		rt[i] = X[cur_dof + i];
-	}
-    cur_dof += dof.fROT;
+        for (int i = 0; i < dof.fROT; ++i)
+        {
+            rt[i] = X[cur_dof + i];
+        }
+        cur_dof += dof.fROT;
 
-	for (int i = 0; i < dof.fTR; ++i)
-	{
-		rt[3 + i] = X[cur_dof + i];
-	}
-    cur_dof += dof.fTR;
+        for (int i = 0; i < dof.fTR; ++i)
+        {
+            rt[3 + i] = X[cur_dof + i];
+        }
+        cur_dof += dof.fTR;
 
-	if (dof.fROT != 0 || dof.fTR != 0){
-        fd.RT = Eigen::EulerAnglesPoseToMatrix(rt);
-	}
-    
-	assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
-    
-    switch(dof.SH)
-    {
-        case 27:
-            for (int i = 0; i < 3; ++i)
-            {
-                for (int j = 0; j < 9; ++j)
+        if (dof.fROT != 0 || dof.fTR != 0){
+            fd.RT = Eigen::EulerAnglesPoseToMatrix(rt);
+        }
+        
+        assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
+        
+        switch(dof.SH)
+        {
+            case 27:
+                for (int i = 0; i < 3; ++i)
                 {
-                    fd.SH(i,j) = X[cur_dof + i * 9 + j];
+                    for (int j = 0; j < 9; ++j)
+                    {
+                        fd.SH(i,j) = X[cur_dof + i * 9 + j];
+                    }
                 }
-            }
-            break;
-        case 9:
-            for (int i = 0; i < 3; ++i)
-            {
-                for (int j = 0; j < 9; ++j)
+                break;
+            case 9:
+                for (int i = 0; i < 3; ++i)
                 {
-                    fd.SH(i,j) = X[cur_dof + j];
+                    for (int j = 0; j < 9; ++j)
+                    {
+                        fd.SH(i,j) = X[cur_dof + j];
+                    }
                 }
-            }
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
+        }
     }
 }
 

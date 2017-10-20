@@ -16,7 +16,7 @@
 #include<opencv2/opencv.hpp>
 
 #include "fern.h"
-#include "train_util.hpp"
+#include "train_util.h"
 
 namespace cao{
 

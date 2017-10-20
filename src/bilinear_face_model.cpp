@@ -10,9 +10,9 @@
 #include <iostream>
 #include <vector>
 
-#include "face_model.hpp"
-#include "obj_loader.hpp"
-#include "fw_utils.hpp"
+#include "face_model.h"
+#include "obj_loader.h"
+#include "fw_utils.h"
 
 void BiLinearFaceModel::updateIdentity(FaceData& data)
 {

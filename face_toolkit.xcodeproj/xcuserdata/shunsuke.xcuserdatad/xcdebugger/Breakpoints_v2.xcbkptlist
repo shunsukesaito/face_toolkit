@@ -502,7 +502,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/f2f_renderer.cpp"
-            timestampString = "529312552.493881"
+            timestampString = "530219244.333098"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "254"
@@ -518,7 +518,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/IBL_renderer.cpp"
-            timestampString = "528873597.797241"
+            timestampString = "530219244.333154"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "49"
@@ -534,7 +534,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/IBL_renderer.cpp"
-            timestampString = "528873679.638548"
+            timestampString = "530219244.333193"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "104"
@@ -550,7 +550,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/framebuffer.cpp"
-            timestampString = "528856974.554273"
+            timestampString = "530219244.333232"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "281"
@@ -598,91 +598,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
+            timestampString = "529551734.700016"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "398"
-            endingLineNumber = "398"
-            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "399"
-            endingLineNumber = "399"
-            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "404"
-            endingLineNumber = "404"
-            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "425"
-            endingLineNumber = "425"
-            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "413"
-            endingLineNumber = "413"
-            landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "src/face_gradient.cpp"
-            timestampString = "529308202.508244"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "411"
-            endingLineNumber = "411"
+            startingLineNumber = "417"
+            endingLineNumber = "417"
             landmarkName = "setFaceVector(Eigen::Ref&lt;Eigen::VectorXf&gt; X, Eigen::Vector6f&amp; rt, const FaceData&amp; fd, const DOF&amp; dof)"
             landmarkType = "9">
          </BreakpointContent>
@@ -710,7 +630,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/f2f_renderer.cpp"
-            timestampString = "529312552.493881"
+            timestampString = "530219244.333358"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "182"
@@ -726,12 +646,76 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "src/linear_face_model.cpp"
-            timestampString = "529373752.409386"
+            timestampString = "530219244.333397"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "249"
-            endingLineNumber = "249"
+            startingLineNumber = "290"
+            endingLineNumber = "290"
             landmarkName = "LinearFaceModel::loadBinaryModel(const std::string&amp; file)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/IBL_renderer.cpp"
+            timestampString = "530219244.333436"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
+            landmarkName = "IBLRenderer::init(std::string data_dir, FaceModelPtr model)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/gl_core.cpp"
+            timestampString = "530219244.333472"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "728"
+            endingLineNumber = "728"
+            landmarkName = "GLTexture::CreateTexture(const cv::Mat &amp;img)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/gl_core.cpp"
+            timestampString = "530219244.333505"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "727"
+            endingLineNumber = "727"
+            landmarkName = "GLTexture::CreateTexture(const cv::Mat &amp;img)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src/linear_face_model.cpp"
+            timestampString = "530219244.333538"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "189"
+            endingLineNumber = "189"
+            landmarkName = "LinearFaceModel::loadLightStageData(const std::string&amp; data_dir)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
