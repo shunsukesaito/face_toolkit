@@ -30,3 +30,32 @@ void P2DRenderer::render(int w, int h, const std::vector<Eigen::Vector2f>& pts)
     
     prog.draw();
 }
+
+#ifdef FACE_TOOLKIT
+void P2DRenderer::init(std::string data_dir, FaceModelPtr fm)
+{
+    init(data_dir);
+}
+
+void P2DRenderer::render(const FaceResult& result)
+{
+    if(show_)
+        render(result.camera.width_, result.camera.height_, result.p2d);
+}
+#endif
+
+#ifdef WITH_IMGUI
+void P2DRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
+    }
+}
+#endif
+
+RendererHandle P2DRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new P2DRenderer(name, show);
+    
+    return RendererHandle(renderer);
+}

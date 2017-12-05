@@ -9,15 +9,14 @@
 #ifndef p3d_renderer_hpp
 #define p3d_renderer_hpp
 
-#include "EigenHelper.h"
-#include "camera.h"
-#include "gl_core.h"
-#include "gl_mesh.h"
+#include "base_renderer.h"
 
-struct P3DRenderer
+struct P3DRenderer : public BaseRenderer
 {
-    std::unordered_map<std::string, GLProgram> programs_;
     glMesh p3d_;
+    
+    P3DRenderer(){}
+    P3DRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     void init(std::string data_dir);
     
@@ -28,6 +27,17 @@ struct P3DRenderer
                 const Eigen::Matrix4f& RT,
                 const std::vector<Eigen::Vector3f>& pts,
                 const Eigen::Vector4f& color = Eigen::Vector4f(0,0,1,1));
+    
+#ifdef FACE_TOOLKIT
+    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void render(const FaceResult& result);
+#endif
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
+    
+    static RendererHandle Create(std::string name, bool show = false);
 };
 
 #endif /* p3d_renderer_hpp */

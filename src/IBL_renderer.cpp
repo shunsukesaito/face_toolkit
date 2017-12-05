@@ -30,17 +30,15 @@ void IBLRenderParams::update(GLProgram& prog)
 #ifdef WITH_IMGUI
 void IBLRenderParams::updateIMGUI()
 {
-    if (ImGui::CollapsingHeader("IBL Rendering Parameters")){
-        const char* listbox_items1[] = { "None", "UV", "Image"};
-        ImGui::ListBox("TextureMode", &texture_mode, listbox_items1, 3);
-        
-        ImGui::Checkbox("mask", &enable_mask);
-        ImGui::Checkbox("uv view", &uv_view);
-        ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
-        ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
-        ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
-        ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
-    }
+    const char* listbox_items1[] = { "None", "UV", "Image"};
+    ImGui::ListBox("TextureMode", &texture_mode, listbox_items1, 3);
+    
+    ImGui::Checkbox("mask", &enable_mask);
+    ImGui::Checkbox("uv view", &uv_view);
+    ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
+    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
+    ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
+    ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
 }
 #endif
 
@@ -242,4 +240,31 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
 //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //    prog_pl.draw();
 }
+
+#ifdef FACE_TOOLKIT
+void IBLRenderer::render(const FaceResult& result)
+{
+    if(show_)
+        render(result.camera, result.fd, show_sphere_);
+}
+#endif
+
+#ifdef WITH_IMGUI
+void IBLRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
+        ImGui::Checkbox("show sphere", &show_sphere_);
+        param_.updateIMGUI();
+    }
+}
+#endif
+
+RendererHandle IBLRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new IBLRenderer(name, show);
+    
+    return RendererHandle(renderer);
+}
+
 

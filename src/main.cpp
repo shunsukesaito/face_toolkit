@@ -15,7 +15,7 @@ int main(int argc, const char * argv[]) try
     // insert code here...
     GUI *gui = GUI::getInstance();
     
-    gui->init(1280,720);
+    gui->init(1280, 720);
     gui->loop();
     
     return 0;

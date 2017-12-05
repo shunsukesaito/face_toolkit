@@ -18,4 +18,7 @@ void main()
         f_uv = vec2(uv.x, uv.y);
 
     frag_color = texture(u_texture, f_uv);
+    
+    if(frag_color.a == 0.0)
+        discard;
 }

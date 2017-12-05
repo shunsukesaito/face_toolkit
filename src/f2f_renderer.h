@@ -2,17 +2,13 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "EigenHelper.h"
+#include "base_renderer.h"
 #include "face_gradient.h"
-#include "camera.h"
-#include "gl_core.h"
-#include "gl_mesh.h"
 #include "framebuffer.h"
 #include "face_model.h"
 
-#ifdef WITH_IMGUI
-#include "imgui.h"
-#endif
+
+class FaceResult;
 
 struct F2FRenderParams{
     bool enable_tex = 0;
@@ -36,7 +32,7 @@ struct F2FRenderParams{
 #endif
 };
 
-struct F2FRenderer
+struct F2FRenderer : public BaseRenderer
 {
     enum RT_NAMES
     {
@@ -51,18 +47,25 @@ struct F2FRenderer
         count
     };
     
-    std::unordered_map<std::string, GLProgram> programs_;
     glMesh mesh_;
     glPlane plane_;
     FramebufferPtr fb_;
     F2FRenderParams param_;
     
-    void init(std::string data_dir, FaceModelPtr model);
+    F2FRenderer(){}
+    F2FRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    
+    virtual void init(std::string data_dir, FaceModelPtr model);
+    
     void render(const Camera& camera, const FaceData& fd);
     void render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
+#ifdef FACE_TOOLKIT
+    virtual void render(const FaceResult& result);
+#endif
+    
 #ifdef WITH_IMGUI
-    inline void updateIMGUI(){ param_.updateIMGUI();}
+    virtual void updateIMGUI();
 #endif
     
     static float computeJacobianColor(Eigen::VectorXf& Jtr,
@@ -79,4 +82,6 @@ struct F2FRenderer
                                       const cv::Mat_<cv::Vec3f>& dIy,
                                       const DOF& dof,
                                       const float w);
+    
+    static RendererHandle Create(std::string name, bool show = false);
 };

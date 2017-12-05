@@ -57,3 +57,34 @@ void P3DRenderer::render(const Camera& camera,
     
     prog.draw();
 }
+
+#ifdef FACE_TOOLKIT
+void P3DRenderer::init(std::string data_dir, FaceModelPtr fm)
+{
+    init(data_dir);
+}
+
+void P3DRenderer::render(const FaceResult& result)
+{
+    if(show_){
+        render(result.camera, result.fd.RT, getP3DFromP2PC(result.fd.pts_, result.c_p2p));
+        render(result.camera, result.fd.RT, getP3DFromP2LC(result.fd.pts_, result.c_p2l));
+    }
+}
+#endif
+
+#ifdef WITH_IMGUI
+void P3DRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
+    }
+}
+#endif
+
+RendererHandle P3DRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new P3DRenderer(name, show);
+    
+    return RendererHandle(renderer);
+}

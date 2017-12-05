@@ -42,7 +42,7 @@ void BiLinearFaceModel::updateExpression(FaceData& data)
      
         data.w_id_.setZero();
         for(int i = 0; i < n_exp(); ++i)
-            data.w_id_ += data.exCoeff[i]*Cshape_[i];
+            data.w_id_ += data.exCoeff[i]*Cshape_[i+1];
     }
     
     calcNormal(data.nml_, data.pts_, tri_pts_);
@@ -177,8 +177,8 @@ void BiLinearFaceModel::computeModelFW(const std::string& mesh_dir,
         loadBlendshapeFW(filename, shapes[i-1], 10.0);
     }
     
-    computeCoreTensor(shapes, Cshape_, mu_id_, w_mu_ex_, sigma_id_, 80);
-    sigma_ex_ = Eigen::VectorXf::Ones(n_exp());
+    computeCoreTensor(shapes, Cshape_, mu_id_, w_mu_ex_, sigma_id_, sigma_ex_, 80, -1);
+    //sigma_ex_ = Eigen::VectorXf::Ones(n_exp());
     
     Eigen::VectorXf pts;
     Eigen::MatrixX3f nml;

@@ -2,16 +2,11 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "EigenHelper.h"
-#include "camera.h"
-#include "gl_core.h"
-#include "gl_mesh.h"
+#include "base_renderer.h"
+
 #include "framebuffer.h"
 #include "face_model.h"
 
-#ifdef WITH_IMGUI
-#include "imgui.h"
-#endif
 
 struct IBLRenderParams{
     int texture_mode = 0; // 0: none, 1: uv space, 2: image space
@@ -34,13 +29,13 @@ struct IBLRenderParams{
 #endif
 };
 
-struct IBLRenderer
+struct IBLRenderer : public BaseRenderer
 {
-    std::unordered_map<std::string, GLProgram> programs_;
     glMesh mesh_;
     glPlane plane_;
     FramebufferPtr fb_depth_;
     IBLRenderParams param_;
+    bool show_sphere_ = false;
     
     std::vector<GLuint> spec_HDRI_locations_;
     std::vector<GLuint> diff_HDRI_locations_;
@@ -48,13 +43,21 @@ struct IBLRenderer
     // sphere rendering
     glSphere ball_;
     
-    void init(std::string data_dir, FaceModelPtr model);
+    IBLRenderer(){}
+    IBLRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    
+    virtual void init(std::string data_dir, FaceModelPtr model);
     void render(const Camera& camera,
                 const FaceData& fd,
                 bool draw_sphere = false);
     
-#ifdef WITH_IMGUI
-    inline void updateIMGUI(){ param_.updateIMGUI();}
+#ifdef FACE_TOOLKIT
+    virtual void render(const FaceResult& result);
 #endif
     
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
+    
+    static RendererHandle Create(std::string name, bool show = false);
 };

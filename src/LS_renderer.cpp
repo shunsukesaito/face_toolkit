@@ -32,21 +32,19 @@ void LSRenderParams::update(GLProgram& prog)
 #ifdef WITH_IMGUI
 void LSRenderParams::updateIMGUI()
 {
-    if (ImGui::CollapsingHeader("LS Rendering Parameters")){
-        const char* listbox_items1[] = { "None", "UV", "Image"};
-        
-        ImGui::Checkbox("mask", &enable_mask);
-        ImGui::Checkbox("uv view", &uv_view);
-        ImGui::Checkbox("point light", &use_pointlight);
-        ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
-        ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
-        ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
-        ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
-        ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
-        
-        const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal"};
-        ImGui::ListBox("RenderTarget", &location, listbox_items, 7);
-    }
+    const char* listbox_items1[] = { "None", "UV", "Image"};
+    
+    ImGui::Checkbox("mask", &enable_mask);
+    ImGui::Checkbox("uv view", &uv_view);
+    ImGui::Checkbox("point light", &use_pointlight);
+    ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
+    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
+    ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
+    ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
+    ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
+    
+    const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal"};
+    ImGui::ListBox("RenderTarget", &location, listbox_items, 7);
 }
 #endif
 
@@ -248,5 +246,30 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     prog_pl.draw();
+}
+
+#ifdef FACE_TOOLKIT
+void LSRenderer::render(const FaceResult& result)
+{
+    if(show_)
+        render(result.camera, result.fd);
+}
+#endif
+
+#ifdef WITH_IMGUI
+void LSRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
+        param_.updateIMGUI();
+    }
+}
+#endif
+
+RendererHandle LSRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new LSRenderer(name, show);
+    
+    return RendererHandle(renderer);
 }
 

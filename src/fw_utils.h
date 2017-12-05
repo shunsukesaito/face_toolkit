@@ -27,7 +27,9 @@ void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
                        std::vector<Eigen::MatrixXf>& out,
                        Eigen::VectorXf& mean,
                        Eigen::MatrixXf& w_exp,
-                       Eigen::VectorXf& stddev,
-                       int tar_id);
+                       Eigen::VectorXf& stddev_id,
+                       Eigen::VectorXf& stddev_ex,
+                       int tar_id,
+                       int tar_ex = -1);
 
 #endif /* fw_utils_hpp */

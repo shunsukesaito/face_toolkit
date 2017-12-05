@@ -2,16 +2,9 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "EigenHelper.h"
-#include "camera.h"
-#include "gl_core.h"
-#include "gl_mesh.h"
+#include "base_renderer.h"
 #include "framebuffer.h"
 #include "face_model.h"
-
-#ifdef WITH_IMGUI
-#include "imgui.h"
-#endif
 
 struct LSRenderParams{
     
@@ -39,7 +32,7 @@ struct LSRenderParams{
 #endif
 };
 
-struct LSRenderer
+struct LSRenderer : public BaseRenderer
 {
     enum RT_NAMES
     {        
@@ -53,7 +46,6 @@ struct LSRenderer
         count
     };
 
-    std::unordered_map<std::string, GLProgram> programs_;
     glMesh mesh_;
     glPlane plane_;
     FramebufferPtr fb_;
@@ -64,12 +56,20 @@ struct LSRenderer
     std::vector<GLuint> spec_env1_locations_;
     std::vector<GLuint> spec_env2_locations_;
     
-    void init(std::string data_dir, FaceModelPtr model);
+    LSRenderer(){}
+    LSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    
+    virtual void init(std::string data_dir, FaceModelPtr model);
     void render(const Camera& camera,
                 const FaceData& fd);
     
-#ifdef WITH_IMGUI
-    inline void updateIMGUI(){ param_.updateIMGUI();}
+#ifdef FACE_TOOLKIT
+    virtual void render(const FaceResult& result);
 #endif
     
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
+    
+    static RendererHandle Create(std::string name, bool show = false);
 };

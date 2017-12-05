@@ -9,18 +9,29 @@
 #ifndef p2d_renderer_hpp
 #define p2d_renderer_hpp
 
-#include "EigenHelper.h"
-#include "gl_core.h"
-#include "gl_mesh.h"
+#include "base_renderer.h"
 
-struct P2DRenderer
+struct P2DRenderer : public BaseRenderer
 {
-    std::unordered_map<std::string, GLProgram> programs_;
     glPoint2D p2d_;
+    
+    P2DRenderer(){}
+    P2DRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     void init(std::string data_dir);
     
     void render(int w, int h, const std::vector<Eigen::Vector2f>& pts);
+    
+#ifdef FACE_TOOLKIT
+    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void render(const FaceResult& result);
+#endif
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
+    
+    static RendererHandle Create(std::string name, bool show = false);
 };
 
 #endif /* p2d_renderer_hpp */

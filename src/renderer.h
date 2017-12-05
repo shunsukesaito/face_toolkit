@@ -18,13 +18,7 @@
 #include "gl_mesh.h"
 #include "camera.h"
 
-#include "bg_renderer.h"
-#include "f2f_renderer.h"
-#include "mesh_renderer.h"
-#include "IBL_renderer.h"
-#include "LS_renderer.h"
-#include "p3d_renderer.h"
-#include "p2d_renderer.h"
+#include "base_renderer.h"
 
 #include "face_module.h"
 
@@ -92,27 +86,12 @@ struct Renderer {
     std::string data_dir_;
     FaceModelPtr face_model_;
     
-    BGRenderer bg_renderer_;
-    IBLRenderer IBL_renderer_;
-    LSRenderer LS_renderer_;
-    F2FRenderer f2f_renderer_;
-    MeshRenderer mesh_renderer_;
-    P3DRenderer p3d_renderer_;
-    P2DRenderer p2d_renderer_;
-        
+    std::unordered_map<std::string, RendererHandle> renderer_;
+
     int frame_;
     std::chrono::time_point<std::chrono::system_clock> cur_time_;
     
     bool initialized_ = false;
-    
-    bool show_mesh_ = true;
-    bool show_f2f_ = false;
-    bool show_IBL_ = false;
-    bool show_LS_ = false;
-    bool show_p3d_ = false;
-    bool show_p2d_ = false;
-    bool show_bg_ = true;
-    bool show_sphere_ = false;
 
     std::map<WINDOW, Window> windows_;
     Window & operator[](WINDOW idx) {return windows_[idx];}
@@ -124,6 +103,8 @@ struct Renderer {
     
     void initGL(int w, int h);
     void init(FaceModelPtr fm, std::string data_dir = "./");
+    
+    void addRenderer(std::string name, RendererHandle renderer);
     
     void flush() {
         glfwSwapBuffers(windows_[WINDOW::MAIN]);

@@ -36,16 +36,65 @@ void loadBlendshapeFW( const std::string& filename, Eigen::MatrixXf& shape, floa
     shape *= scale;
 }
 
+void performSVD(const Eigen::MatrixXf& A,
+                Eigen::MatrixXf& B,
+                Eigen::VectorXf& stddev,
+                int tar_dim)
+{
+    std::cout << "Get AtA..." << std::endl;
+    // get AtA
+    Eigen::MatrixXf AAt = A*A.transpose();
+    
+    // run SVD
+    std::cout << "Run SVD..." << std::endl;
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(AAt,Eigen::ComputeFullU | Eigen::ComputeFullV);
+    
+    // truncate matrix
+    Eigen::MatrixXf Uid = svd.matrixU().leftCols(tar_dim);
+    
+    // reproject ShapeTensor
+    std::cout << "Reproject ShapeTensor" << std::endl;
+    B = Uid.transpose() * A;
+    
+    // compute mean and standard deviation
+    Eigen::RowVectorXf mean_coeff = Uid.colwise().mean();
+    Eigen::RowVectorXf std_dev = ((Uid.rowwise() - mean_coeff).array().square().colwise().sum() / (Uid.rows() - 1)).sqrt();
+    
+    Eigen::RowVectorXf ub = mean_coeff + 4.0*std_dev;
+    Eigen::RowVectorXf lb = mean_coeff - 4.0*std_dev;
+    
+    std::cout << "mean" << std::endl;
+    std::cout << mean_coeff << std::endl;
+    std::cout << "std" << std::endl;
+    std::cout << std_dev << std::endl;
+    std::cout << "max" << std::endl;
+    std::cout << Uid.colwise().maxCoeff() << std::endl;
+    std::cout << "min" << std::endl;
+    std::cout << Uid.colwise().minCoeff() << std::endl;
+    std::cout << "ub coverege" << std::endl;
+    std::cout << (ub.array() > Uid.colwise().maxCoeff().array()).count() << "/" << ub.size() << std::endl;
+    std::cout << "lb coverage" << std::endl;
+    std::cout << (lb.array() < Uid.colwise().minCoeff().array()).count() << "/" << lb.size() << std::endl;
+    
+    stddev = std_dev.transpose();
+}
+
 void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
                        std::vector<Eigen::MatrixXf>& out,
                        Eigen::VectorXf& mean,
                        Eigen::MatrixXf& w_exp,
-                       Eigen::VectorXf& stddev,
-                       int tar_id)
+                       Eigen::VectorXf& stddev_id,
+                       Eigen::VectorXf& stddev_ex,
+                       int tar_id,
+                       int tar_ex)
 {
     const int n_id = in.size();
     const int n_exp = in[0].cols();
     const int n_v = in[0].rows();
+    
+    if(tar_ex == -1)
+        tar_ex = n_exp;
+    
     std::vector<Eigen::MatrixXf> shapes = in;
     mean = Eigen::VectorXf::Zero(shapes[0].rows());
     w_exp = Eigen::MatrixXf::Zero(n_v, n_exp-1);
@@ -83,54 +132,98 @@ void computeCoreTensor(const std::vector<Eigen::MatrixXf>& in,
         }
     }
     
-    std::cout << "Get AtA..." << std::endl;
-    // get AtA
-    Eigen::MatrixXf AAt = A*A.transpose();
+    Eigen::MatrixXf B;
+    performSVD(A, B, stddev_id, tar_id);
     
-    // run SVD
-    std::cout << "Run SVD..." << std::endl;
-    Eigen::JacobiSVD<Eigen::MatrixXf> svd(AAt,Eigen::ComputeFullU | Eigen::ComputeFullV);
+    if(tar_ex > 0 && tar_ex < n_exp){
+        A.resize(n_exp, tar_id*n_v);
+        for(int i = 0; i < n_exp; ++i)
+        {
+            for(int j = 0; j < tar_id; ++j)
+            {
+                for(int k = 0; k < n_v; ++k)
+                {
+                    A(i,j*n_v+k) = B(j, n_v*i+k);
+                }
+            }
+        }
+        
+        performSVD(A, B, stddev_ex, tar_ex);
+        
+        A = B;
+        for(int i = 0; i < tar_ex; ++i)
+        {
+            for(int j = 0; j < tar_id; ++j)
+            {
+                for(int k = 0; k < n_v; ++k)
+                {
+                    B(j,i*n_v+k) = A(i, n_v*j+k);
+                }
+            }
+        }
+    }
     
-    // truncate matrix
-    Eigen::MatrixXf U = svd.matrixU().leftCols(tar_id);
-    
-    // reproject ShapeTensor
-    std::cout << "Reproject ShapeTensor" << std::endl;
-    Eigen::MatrixXf B = U.transpose() * A;
-    
-    // compute mean and standard deviation
-    Eigen::RowVectorXf mean_coeff = U.colwise().mean();
-    Eigen::RowVectorXf std_dev = ((U.rowwise() - mean_coeff).array().square().colwise().sum() / (U.rows() - 1)).sqrt();
-
-    Eigen::RowVectorXf ub = mean_coeff + 4.0*std_dev;
-    Eigen::RowVectorXf lb = mean_coeff - 4.0*std_dev;
-
-    std::cout << "mean" << std::endl;
-    std::cout << mean_coeff << std::endl;
-    std::cout << "std" << std::endl;
-    std::cout << std_dev << std::endl;
-    std::cout << "max" << std::endl;
-    std::cout << U.colwise().maxCoeff() << std::endl;
-    std::cout << "min" << std::endl;
-    std::cout << U.colwise().minCoeff() << std::endl;
-    std::cout << "ub coverege" << std::endl;
-    std::cout << (ub.array() > U.colwise().maxCoeff().array()).count() << "/" << ub.size() << std::endl;
-    std::cout << "lb coverage" << std::endl;
-    std::cout << (lb.array() < U.colwise().minCoeff().array()).count() << "/" << lb.size() << std::endl;
-    
-    out.resize(n_exp);
-    for(int i = 0; i < n_exp; ++i)
+    out.resize(tar_ex);
+    for(int i = 0; i < tar_ex; ++i)
     {
         out[i].resize(n_v, tar_id);
         for(int j = 0; j < tar_id; ++j)
         {
             for(int k = 0; k < n_v; ++k)
             {
-                out[i](k,j) = std_dev(j)*B(j, n_v*i+k);
+                out[i](k,j) = stddev_id(j)*stddev_ex(i)*B(j, n_v*i+k);
             }
         }
     }
-    std_dev.setOnes();
     
-    stddev = std_dev.transpose();
+    stddev_id.setOnes();
+    stddev_ex.setOnes();
+}
+
+void computePCA(const std::vector<Eigen::MatrixXf>& in,
+                Eigen::MatrixXf& w_id,
+                Eigen::MatrixXf& w_ex,
+                Eigen::VectorXf& mu_id,
+                Eigen::VectorXf& stddev_id,
+                Eigen::VectorXf& stddev_ex,
+                int tar_id,
+                int tar_ex)
+{
+    const int n_id = in.size();
+    const int n_exp = in[0].cols();
+    const int n_v = in[0].rows();
+    
+    if(tar_ex == -1)
+        tar_ex = n_exp;
+    
+    std::vector<Eigen::MatrixXf> shapes = in;
+    mu_id = Eigen::VectorXf::Zero(n_v);
+    Eigen::VectorXf mu_ex = Eigen::VectorXf::Zero(n_v);
+    for(const Eigen::MatrixXf& sp : shapes)
+    {
+        mu_id += sp.col(0);
+        
+        for(int i = 1; i < n_exp; ++i)
+        {
+            mu_ex += sp.col(i);
+        }
+    }
+    mu_id /= (float)shapes.size();
+    mu_ex /= (float)shapes.size()*(n_exp-1);
+    
+    Eigen::MatrixXf wID = Eigen::MatrixXf::Zero(n_id, n_v);
+    Eigen::MatrixXf wEX = Eigen::MatrixXf::Zero(n_id*(n_exp-1), n_v);
+    
+    for(int j = 0; j < n_id; ++j)
+    {
+        wID.col(j) = shapes[j].col(0)-mu_id;
+
+        for(int i = 1; i < n_exp; ++i)
+        {
+            wEX.col(j*(n_exp-1)+i-1) = shapes[j].col(i) - mu_ex;
+        }
+    }
+    
+    performSVD(wID, w_id, stddev_id, tar_id);
+    performSVD(wEX, w_ex, stddev_ex, tar_ex);
 }

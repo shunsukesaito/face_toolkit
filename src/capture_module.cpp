@@ -23,24 +23,17 @@ CaptureModule::~CaptureModule()
 // stub
 void CaptureModule::Process()
 {
-    video_capture_.open(0);
-    
+    frame_loader_->init();
     std::string command = "";
-    cv::Mat frame;
-    bool pause = false;
     while(command != "stop")
     {
-        if(!pause)
-            video_capture_ >> frame;
         CaptureResult cap;
-        cv::flip(frame, cap.img, 1);
+        frame_loader_->load_frame(cap.img, command);
         cap.camera = camera_;
         output_frame_queue_->push(cap);
         
         if(command_queue_->front()){
             command = *command_queue_->front();
-            if(command == "pause")
-                pause = !pause;
             command_queue_->pop();
         }
     }
@@ -62,16 +55,23 @@ void CaptureModule::set_command_queue(CmdQueueHandle queue)
     command_queue_ = queue;
 }
 
+void CaptureModule::set_frame_loader(FrameLoaderPtr loader)
+{
+    frame_loader_ = loader;
+}
+
 // Factory method for basic module.
 // Creates a new modules and returns its handle to user
 ModuleHandle CaptureModule::Create(const std::string &name,
                                    const std::string &data_dir,
+                                   FrameLoaderPtr frame_loader,
                                    CapQueueHandle out_frame_queue,
                                    CmdQueueHandle command_queue)
 {
     auto module = new CaptureModule(name);
     // add this module to the global registry
     
+    module->set_frame_loader(frame_loader);
     module->set_output_queue(out_frame_queue);
     module->set_command_queue(command_queue);
     module->camera_ = Camera::parseCameraParams(data_dir + "data/KRT.txt");
@@ -80,3 +80,4 @@ ModuleHandle CaptureModule::Create(const std::string &name,
     ModuleRegistry::RegisterModule(handle);
     return handle;
 }
+

@@ -56,6 +56,7 @@
 		8F4B77021F8159A600033525 /* IBL_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F4B77001F8159A600033525 /* IBL_renderer.cpp */; };
 		8F4B77091F82184000033525 /* hdrloader.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F4B77051F82184000033525 /* hdrloader.cc */; };
 		8F4B770A1F82184000033525 /* tinyexr.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F4B77071F82184000033525 /* tinyexr.cc */; };
+		8F5E05131FD575200059E324 /* frame_loader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F5E05111FD575200059E324 /* frame_loader.cpp */; };
 		8F696EA61F98712100563378 /* LS_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F696EA41F98712000563378 /* LS_renderer.cpp */; };
 		8F696EAE1F99C21C00563378 /* libopencv_world.3.3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F696EAD1F99C21C00563378 /* libopencv_world.3.3.0.dylib */; };
 		8F7102121F86B08D0030052F /* fw_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F7102101F86B08D0030052F /* fw_utils.cpp */; };
@@ -181,6 +182,10 @@
 		8F4B77061F82184000033525 /* hdrloader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hdrloader.h; path = src/hdrloader.h; sourceTree = SOURCE_ROOT; };
 		8F4B77071F82184000033525 /* tinyexr.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyexr.cc; path = src/tinyexr.cc; sourceTree = SOURCE_ROOT; };
 		8F4B77081F82184000033525 /* tinyexr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyexr.h; path = src/tinyexr.h; sourceTree = SOURCE_ROOT; };
+		8F5E05111FD575200059E324 /* frame_loader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = frame_loader.cpp; path = src/frame_loader.cpp; sourceTree = SOURCE_ROOT; };
+		8F5E05121FD575200059E324 /* frame_loader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = frame_loader.h; path = src/frame_loader.h; sourceTree = SOURCE_ROOT; };
+		8F5E05151FD57FA90059E324 /* face_result.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = face_result.h; path = src/face_result.h; sourceTree = SOURCE_ROOT; };
+		8F5E05181FD62E730059E324 /* base_renderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = base_renderer.h; path = src/base_renderer.h; sourceTree = SOURCE_ROOT; };
 		8F696EA41F98712000563378 /* LS_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LS_renderer.cpp; path = src/LS_renderer.cpp; sourceTree = SOURCE_ROOT; };
 		8F696EA51F98712100563378 /* LS_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LS_renderer.h; path = src/LS_renderer.h; sourceTree = SOURCE_ROOT; };
 		8F696EA71F9871AF00563378 /* lightstage.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = lightstage.frag; sourceTree = "<group>"; };
@@ -321,6 +326,7 @@
 				8F1E492C1F6C507C0051FC8C /* p2d_renderer.h */,
 				8F1E492D1F6C507C0051FC8C /* p3d_renderer.cpp */,
 				8F1E492E1F6C507C0051FC8C /* p3d_renderer.h */,
+				8F5E05181FD62E730059E324 /* base_renderer.h */,
 			);
 			name = renderer;
 			sourceTree = "<group>";
@@ -357,6 +363,7 @@
 				8F1E49051F6C507C0051FC8C /* face_module.h */,
 				8F1E492F1F6C507C0051FC8C /* renderer.cpp */,
 				8F1E49301F6C507C0051FC8C /* renderer.h */,
+				8F5E05151FD57FA90059E324 /* face_result.h */,
 			);
 			name = module;
 			sourceTree = "<group>";
@@ -389,7 +396,9 @@
 		8F3454151EEC9E30007B479B /* src */ = {
 			isa = PBXGroup;
 			children = (
+				8F5E05101FD574FC0059E324 /* loader */,
 				8F1E49591F6C517F0051FC8C /* source.cpp */,
+				8F1E491C1F6C507C0051FC8C /* main.cpp */,
 				8F4B76FD1F80C29800033525 /* application */,
 				8F1E49581F6C51000051FC8C /* module */,
 				8F4B76FC1F80434E00033525 /* shape_model */,
@@ -398,7 +407,6 @@
 				8F530E0D1F71A12D00E4380E /* regressor */,
 				8F1E49541F6C50830051FC8C /* utility */,
 				8F1E49551F6C50AC0051FC8C /* gl_utility */,
-				8F1E491C1F6C507C0051FC8C /* main.cpp */,
 			);
 			name = src;
 			path = RenderingTemplate;
@@ -437,6 +445,15 @@
 				8F1E49771F70DDCF0051FC8C /* train_util.h */,
 			);
 			name = regressor;
+			sourceTree = "<group>";
+		};
+		8F5E05101FD574FC0059E324 /* loader */ = {
+			isa = PBXGroup;
+			children = (
+				8F5E05111FD575200059E324 /* frame_loader.cpp */,
+				8F5E05121FD575200059E324 /* frame_loader.h */,
+			);
+			path = loader;
 			sourceTree = "<group>";
 		};
 		8FDF97531F50EAFD0038065A /* shaders */ = {
@@ -540,6 +557,7 @@
 				8F4B76FB1F7EB6EE00033525 /* capture_module.cpp in Sources */,
 				8F1E494D1F6C507C0051FC8C /* p2d_optimizer.cpp in Sources */,
 				8F1E494B1F6C507C0051FC8C /* LearnGAB.cpp in Sources */,
+				8F5E05131FD575200059E324 /* frame_loader.cpp in Sources */,
 				8F4744CB1F8AFF8300E3C019 /* face_data.cpp in Sources */,
 				8F1E49511F6C507C0051FC8C /* sh_optimizer.cpp in Sources */,
 				8F1E495A1F6C517F0051FC8C /* source.cpp in Sources */,
@@ -674,6 +692,7 @@
 					"$(inherited)",
 					WITH_IMGUI,
 					DLIB_NO_GUI_SUPPORT,
+					FACE_TOOLKIT,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -712,6 +731,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					DLIB_NO_GUI_SUPPORT,
 					WITH_IMGUI,
+					FACE_TOOLKIT,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",

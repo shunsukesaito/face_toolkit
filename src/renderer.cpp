@@ -68,52 +68,30 @@ void Renderer::init(FaceModelPtr fm, std::string data_dir)
     data_dir_ = data_dir;
     face_model_ = fm;
     
-    bg_renderer_.init(data_dir_, cv::Mat_<cv::Vec3b>(1,1));
-    f2f_renderer_.init(data_dir_, face_model_);
-    mesh_renderer_.init(data_dir_, face_model_->tri_pts_);
-    LS_renderer_.init(data_dir_, face_model_);
-    IBL_renderer_.init(data_dir_, face_model_);
-    p3d_renderer_.init(data_dir_);
-    p2d_renderer_.init(data_dir_);
+    for(auto&& r : renderer_)
+        r.second->init(data_dir_, face_model_);
+}
+
+void Renderer::addRenderer(std::string name, RendererHandle renderer)
+{
+    if(renderer_.find(name) != renderer_.end()){
+        throw std::runtime_error("Attempted to create renderer with duplicate name " + name);
+    }
+    
+    renderer_[name] = renderer;
 }
 
 void Renderer::draw(const FaceResult& result)
 {
-    auto& camera = result.camera;
-    
-    if(show_bg_)
-        bg_renderer_.render(result.img);
-    if(show_IBL_)
-        IBL_renderer_.render(camera, result.fd, show_sphere_);
-    if(show_LS_)
-        LS_renderer_.render(camera, result.fd);
-    if(show_mesh_)
-        mesh_renderer_.render(camera, result.fd.RT, result.fd.pts_, result.fd.nml_, show_sphere_);
-    if(show_f2f_)
-        f2f_renderer_.render(camera, result.fd);
-    if(show_p3d_){
-        p3d_renderer_.render(camera, result.fd.RT, getP3DFromP2PC(result.fd.pts_, result.c_p2p));
-        p3d_renderer_.render(camera, result.fd.RT, getP3DFromP2LC(result.fd.pts_, result.c_p2l));
-    }
-    if(show_p2d_){
-        p2d_renderer_.render(camera.width_, camera.height_, result.p2d);
-    }    
+    for(auto&& r : renderer_)
+        r.second->render(result);
 }
 
 #ifdef WITH_IMGUI
 void Renderer::updateIMGUI()
 {
-    ImGui::Checkbox("show bg", &show_bg_);
-    ImGui::Checkbox("show mesh", &show_mesh_);
-    ImGui::Checkbox("show f2f", &show_f2f_);
-    ImGui::Checkbox("show LS", &show_LS_);
-    ImGui::Checkbox("show IBL", &show_IBL_);
-    ImGui::Checkbox("show p2d", &show_p2d_);
-    ImGui::Checkbox("show p3d", &show_p3d_);
-    ImGui::Checkbox("show sphere", &show_sphere_);
-    f2f_renderer_.updateIMGUI();
-    IBL_renderer_.updateIMGUI();
-    LS_renderer_.updateIMGUI();
+    for(auto&& r : renderer_)
+        r.second->updateIMGUI();
 }
 #endif
 

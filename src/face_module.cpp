@@ -21,30 +21,6 @@ static std::vector<Eigen::Vector3f> convPoint(const std::vector<Eigen::Vector2f>
     return out;
 }
 
-std::vector<Eigen::Vector3f> getP3DFromP2PC(const Eigen::VectorXf& pts, const std::vector<P2P2DC>& c_p2p)
-{
-    std::vector<Eigen::Vector3f> out;
-    
-    for(auto&& c : c_p2p)
-    {
-        out.push_back(pts.b3(c.v_idx));
-    }
-    
-    return out;
-}
-
-std::vector<Eigen::Vector3f> getP3DFromP2LC(const Eigen::VectorXf& pts, const std::vector<P2L2DC>& c_p2l)
-{
-    std::vector<Eigen::Vector3f> out;
-    
-    for(auto&& c : c_p2l)
-    {
-        out.push_back(pts.b3(c.v_idx));
-    }
-    
-    return out;
-}
-
 // initializes this module and the basic module
 FaceModule::FaceModule(const std::string &name)
 : Module(name)
@@ -120,8 +96,8 @@ void FaceModule::init(std::string data_dir,
     
     fd_.setFaceModel(face_model_);
 
-    P2P2DC::parseConstraints(data_dir + "data/p2p_const_fw.txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "data/p2l_const_fw.txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "data/p2p_const_bv.txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "data/p2l_const_bv.txt", c_p2l_);
     
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
     CHECK_GL_ERROR();
@@ -130,7 +106,6 @@ void FaceModule::init(std::string data_dir,
 void FaceModule::update(FaceResult& result)
 {
     cv::Rect rect;
-    
     if(p2d_param_->run_){
         fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter

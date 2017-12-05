@@ -21,24 +21,7 @@
 #include "module.h"
 #include "capture_module.h"
 
-struct FaceResult
-{
-    bool processed_ = false;
-    
-    // assume single camera for now
-    cv::Mat img;
-    Camera camera;
-    
-    FaceData fd;
-    
-    std::vector<P2P2DC> c_p2p;
-    std::vector<P2L2DC> c_p2l;
-    
-    std::vector<Eigen::Vector2f> p2d;
-};
-
-std::vector<Eigen::Vector3f> getP3DFromP2PC(const Eigen::VectorXf& pts, const std::vector<P2P2DC>& c_p2p);
-std::vector<Eigen::Vector3f> getP3DFromP2LC(const Eigen::VectorXf& pts, const std::vector<P2L2DC>& c_p2l);
+#include "face_result.h"
 
 typedef std::shared_ptr<SPSCQueue<FaceResult>> FaceQueueHandle;
 

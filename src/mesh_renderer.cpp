@@ -25,8 +25,7 @@ void MeshRenderer::init(std::string data_dir,
 
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml,
-                          bool draw_sphere)
+                          const Eigen::MatrixX3f& nml)
 {
     auto& prog = programs_["mesh"];
     
@@ -40,25 +39,12 @@ void MeshRenderer::render(const Camera& camera,
     glEnable(GL_CULL_FACE);
 
     prog.draw();
-    
-    if(draw_sphere){
-        int w, h;
-        GLFWwindow* window = glfwGetCurrentContext();
-        glfwGetFramebufferSize(window, &w, &h);
-        int sp_w = (int)(0.2*(float)std::min(w,h));
-        glViewport(w-sp_w, 0, sp_w, sp_w);
-        camera.updateUniforms4Sphere(prog, U_CAMERA_MVP | U_CAMERA_MV);
-        ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-        prog.draw();
-        glViewport(0, 0, w, h);
-    }
 }
 
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::Matrix4f& RT,
                           const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml,
-                          bool draw_sphere)
+                          const Eigen::MatrixX3f& nml)
 {
     auto& prog = programs_["mesh"];
     
@@ -72,16 +58,33 @@ void MeshRenderer::render(const Camera& camera,
     glEnable(GL_CULL_FACE);
     
     prog.draw();
-    
-    if(draw_sphere){
-        int w, h;
-        GLFWwindow* window = glfwGetCurrentContext();
-        glfwGetFramebufferSize(window, &w, &h);
-        int sp_w = (int)(0.2*(float)std::min(w,h));
-        glViewport(w-sp_w, 0, sp_w, sp_w);
-        camera.updateUniforms4Sphere(prog, U_CAMERA_MVP | U_CAMERA_MV);
-        ball_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-        prog.draw();
-        glViewport(0, 0, w, h);
+}
+
+#ifdef FACE_TOOLKIT
+void MeshRenderer::init(std::string data_dir, FaceModelPtr fm)
+{
+    init(data_dir,fm->tri_pts_);
+}
+
+void MeshRenderer::render(const FaceResult& result)
+{
+    if(show_)
+        render(result.camera, result.fd.RT, result.fd.pts_, result.fd.nml_);
+}
+#endif
+
+#ifdef WITH_IMGUI
+void MeshRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
     }
+}
+#endif
+
+RendererHandle MeshRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new MeshRenderer(name, show);
+    
+    return RendererHandle(renderer);
 }

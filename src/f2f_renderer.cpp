@@ -209,14 +209,12 @@ void F2FRenderParams::update(GLProgram& prog)
 #ifdef WITH_IMGUI
 void F2FRenderParams::updateIMGUI()
 {
-    if (ImGui::CollapsingHeader("F2F Rendering Parameters")){
-        ImGui::Checkbox("mask", &enable_mask);
-        ImGui::Checkbox("seg", &enable_seg);
-        ImGui::Checkbox("texture", &enable_tex);
-        ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
-        const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
-        ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
-    }
+    ImGui::Checkbox("mask", &enable_mask);
+    ImGui::Checkbox("seg", &enable_seg);
+    ImGui::Checkbox("texture", &enable_tex);
+    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
+    const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
+    ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
 }
 #endif
 
@@ -247,7 +245,7 @@ void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
     mesh_.update_uv(model->uvs_, model->tri_uv_, model->tri_pts_);
     mesh_.update(prog_f2f, AT_UV);
     
-    plane_.init(prog_pl,0.5);
+    plane_.init(prog_pl,0.01);
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
 }
 
@@ -346,4 +344,29 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     fb_->Unbind();
     
     fb_->RetrieveFBO(w, h, out);
+}
+
+#ifdef FACE_TOOLKIT
+void F2FRenderer::render(const FaceResult& result)
+{
+    if(show_)
+        render(result.camera, result.fd);
+}
+#endif
+
+#ifdef WITH_IMGUI
+void F2FRenderer::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader(name_.c_str())){
+        ImGui::Checkbox("show", &show_);
+        param_.updateIMGUI();
+    }
+}
+#endif
+
+RendererHandle F2FRenderer::Create(std::string name, bool show)
+{
+    auto renderer = new F2FRenderer(name, show);
+    
+    return RendererHandle(renderer);
 }
