@@ -234,7 +234,7 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     clearBuffer(COLOR::COLOR_ALPHA);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    prog_main.draw();
+    prog_main.draw(wire_);
 
     fb_->Unbind();
     
@@ -261,6 +261,7 @@ void LSRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
+        ImGui::Checkbox("wire", &wire_);
         param_.updateIMGUI();
     }
 }

@@ -2,6 +2,25 @@
 #include "f2f_optimizer.h"
 #include "minitrace.h"
 
+struct ErrF2F
+{
+    float p2p = 0.0;
+    float p2l = 0.0;
+    float pix = 0.0;
+    float sym = 0.0;
+    float pca_id = 0.0;
+    float pca_ex = 0.0;
+    float pca_cl = 0.0;
+    
+    friend std::ostream& operator<<(std::ostream& os, const ErrF2F& err)
+    {
+        os << "Total: " << err.p2p + err.p2l + err.pix + err.sym + err.pca_id + err.pca_ex + err.pca_cl;
+        os << " P2P: " << err.p2p << " P2L: " << err.p2l << " Pix: " << err.pix;
+        os << " Sym: " << err.sym << " PCAID: " << err.pca_id << " PCAEX: " << err.pca_ex << " PCACL: " << err.pca_cl;
+        return os;
+    }
+};
+
 #ifdef WITH_IMGUI
 void F2FParams::updateIMGUI()
 {
@@ -64,6 +83,7 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
                                const std::vector<P2P2DC>& CP2P,
                                std::vector<P2L2DC>& CP2L,
                                const F2FParams& params,
+                               ErrF2F& err,
                                std::shared_ptr<spdlog::logger> logger)
 {
     const DOF& dof = params.dof;
@@ -109,7 +129,7 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
         logger->info("	Computing Pixel-wise Color Jacobian...");
     
     if (params.w_pix_ != 0.f)
-        F2FRenderer::computeJacobianColor(Jtr, JtJ, fd, data.pV, data.dpV, data.nV, data.dnV,
+        err.pix += F2FRenderer::computeJacobianColor(Jtr, JtJ, fd, data.pV, data.dpV, data.nV, data.dnV,
                                           fd.SH, data.renderTarget, inputRGB, dIx, dIy, dof, params.w_pix_);
     
     if (q2V.size() != 0){
@@ -119,8 +139,8 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
             logger->info("	Computing Landmark Jacobian...");
         
         // compute landmark jacobian
-        computeJacobianPoint2Point2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
-        computeJacobianPoint2Line2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
+        err.p2p += computeJacobianPoint2Point2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
+        err.p2l += computeJacobianPoint2Line2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
     }
 }
 
@@ -129,6 +149,7 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
                                        const Eigen::VectorXf& X,
                                        const FaceData& fd,
                                        const F2FParams& params,
+                                       ErrF2F& err,
                                        std::shared_ptr<spdlog::logger> logger)
 {
     const DOF& dof = params.dof;
@@ -144,16 +165,16 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
         Eigen::Ref<Eigen::VectorXf> Jtr_shape = Jtr.segment(dof.AL, sym_dof);
         Eigen::Ref<Eigen::MatrixXf> JtJ_shape = JtJ.block(dof.AL, dof.AL, sym_dof, sym_dof);
         
-        computeJacobianSymmetry(Jtr_shape, JtJ_shape, fd, dof, params.w_sym_, params.sym_with_exp_);
+        err.sym += computeJacobianSymmetry(Jtr_shape, JtJ_shape, fd, dof, params.w_sym_, params.sym_with_exp_);
     }
     
     int cur_pos = 0;
     const Eigen::VectorXf& sigma_id = fd.model_->sigmaID();
     const Eigen::VectorXf& sigma_ex = fd.model_->sigmaEX();
     const Eigen::VectorXf& sigma_cl = fd.model_->sigmaCL();
-    computeJacobianPCAReg(Jtr, JtJ, X, sigma_cl, cur_pos, dof.AL, params.w_reg_pca_cl_); cur_pos += dof.AL;
-    computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, cur_pos, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
-    computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
+    err.pca_cl += computeJacobianPCAReg(Jtr, JtJ, X, sigma_cl, cur_pos, dof.AL, params.w_reg_pca_cl_); cur_pos += dof.AL;
+    err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, cur_pos, dof.ID, params.w_reg_pca_id_); cur_pos += dof.ID;
+    err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, cur_pos, dof.EX, params.w_reg_pca_ex_); cur_pos += dof.EX;
     
     for(int j = 0; j < Jtr.size(); ++j)
     {
@@ -224,17 +245,19 @@ void F2FGaussNewton(FaceData& fd,
         JtJ.setZero();
         Jtr.setZero();
         
+        ErrF2F err;
+        
         // render face
         if (params.verbose_) logger->info("	Computing Vert-wise Normal and its Gradient...");;
         
         if (params.w_pix_ != 0.f)
             computeVertexWiseGradNormal(data.nV, data.dnV, fd, dof);
         
-        computeF2FJacobian(Jtr, JtJ, data, renderer, fd, camera, rtf, rtc, inputRGB, dIx, dIy, q2V, CP2P, CP2L, params, logger);
+        computeF2FJacobian(Jtr, JtJ, data, renderer, fd, camera, rtf, rtc, inputRGB, dIx, dIy, q2V, CP2P, CP2L, params, err, logger);
         
         tm1 = clock(); if (params.verbose_) logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
         
-        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, logger);
+        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, err, logger);
 
         // update x
         if (params.verbose_) logger->info("	Solving Gauss-Newton Step...");
@@ -251,7 +274,7 @@ void F2FGaussNewton(FaceData& fd,
         
         if (params.verbose_) logger->info("	Error Evaluation...");
         
-        std::cout << "iter " << i << " |dX|:" << dX.norm() << std::endl;
+        std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
         
         //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());
         

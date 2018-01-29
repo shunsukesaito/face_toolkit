@@ -15,6 +15,7 @@
 #include "LS_renderer.h"
 #include "p3d_renderer.h"
 #include "p2d_renderer.h"
+#include "posmap_renderer.h"
 
 #include "obj_loader.h"
 #include "trackball.h"
@@ -270,14 +271,15 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    //face_model_ = LinearFaceModel::LoadModel(data_dir + "data/PinModel.bin");
-    face_model_ = LinearFaceModel::LoadLSData(data_dir + "data/LS/01/");
+    face_model_ = LinearFaceModel::LoadModel(data_dir + "data/PinModel.bin");
+    //face_model_ = LinearFaceModel::LoadLSData(data_dir + "data/LS/01/");
     //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "data/FWModel_BL.bin");
     
 //    renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
     renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", false));
 //    renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", false));
-    renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+//    renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+    renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
 //    renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", false));
 //    renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", false));
 //    renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", false));
@@ -287,7 +289,7 @@ void GUI::init(int w, int h)
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
     f2f_param_ = F2FParamsPtr(new F2FParams());
     
-    auto frame_loader = VideoLoader::Create(0);
+    auto frame_loader = EmptyLoader::Create();//VideoLoader::Create(0);
     
     session.capture_module_ = CaptureModule::Create("capture", data_dir, frame_loader, session.capture_queue_, session.capture_control_queue_);
     session.face_module_ = FaceModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,

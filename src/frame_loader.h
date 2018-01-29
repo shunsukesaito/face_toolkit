@@ -28,6 +28,20 @@ public:
     virtual void init(){ throw std::runtime_error( "Error: Base class is called..."); }
 };
 
+class EmptyLoader : public FrameLoader
+{
+public:
+    EmptyLoader(){}
+    ~EmptyLoader(){}
+    
+    virtual inline void load_frame(cv::Mat& frame, std::string command){frame = cv::Mat_<cv::Vec3b>(1,1);}
+    virtual void init(){}
+    
+    static FrameLoaderPtr Create(){
+        return FrameLoaderPtr(new EmptyLoader());
+    }
+};
+
 class VideoLoader : public FrameLoader
 {
 public:

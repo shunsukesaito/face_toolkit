@@ -86,43 +86,70 @@ void printProgramInfoLog(GLuint handle)
 }
 
 GLProgram::GLProgram(std::string vertShader, std::string fragShader, DrawMode drawMode_)
-: GLProgram(vertShader, "", fragShader, drawMode_)
+: GLProgram(vertShader, "", "", "", fragShader, drawMode_)
 {
 }
 
 
 GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string fragShader, DrawMode drawMode_)
+: GLProgram(vertShader, "", "", geomShader, fragShader, drawMode_)
+{
+}
+
+GLProgram::GLProgram(std::string vertShader, std::string tcShader, std::string teShader,std::string geomShader, std::string fragShader, DrawMode drawMode_)
 : drawMode(drawMode_)
 {
-    vertShaderHandle = glCreateShader(GL_VERTEX_SHADER);
-    fragShaderHandle = glCreateShader(GL_FRAGMENT_SHADER);
+    vsHandle = glCreateShader(GL_VERTEX_SHADER);
+    fsHandle = glCreateShader(GL_FRAGMENT_SHADER);
     CHECK_GL_ERROR();
     
     const char *vertShaderTmp = textFileRead(vertShader.c_str());
-    glShaderSource(vertShaderHandle, 1, &vertShaderTmp, nullptr);
-    glCompileShader(vertShaderHandle);
-    printShaderInfoLog(vertShaderHandle);
+    glShaderSource(vsHandle, 1, &vertShaderTmp, nullptr);
+    glCompileShader(vsHandle);
+    printShaderInfoLog(vsHandle);
+    
+    if(!tcShader.empty()){
+        tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
+        const char *tcShaderTmp = textFileRead(tcShader.c_str());
+        glShaderSource(tcsHandle, 1, &tcShaderTmp, nullptr);
+        glCompileShader(tcsHandle);
+        printShaderInfoLog(tcsHandle);
+    }
+    
+    if(!teShader.empty()){
+        tesHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
+        const char *teShaderTmp = textFileRead(teShader.c_str());
+        glShaderSource(tesHandle, 1, &teShaderTmp, nullptr);
+        glCompileShader(tesHandle);
+        printShaderInfoLog(tesHandle);
+    }
     
     if(!geomShader.empty()){
-        geomShaderHandle = glCreateShader(GL_GEOMETRY_SHADER);
+        gsHandle = glCreateShader(GL_GEOMETRY_SHADER);
         const char *geomShaderTmp = textFileRead(geomShader.c_str());
-        glShaderSource(geomShaderHandle, 1, &geomShaderTmp, nullptr);
-        glCompileShader(geomShaderHandle);
-        printShaderInfoLog(geomShaderHandle);
+        glShaderSource(gsHandle, 1, &geomShaderTmp, nullptr);
+        glCompileShader(gsHandle);
+        printShaderInfoLog(gsHandle);
     }
     
     const char *fragShaderTmp = textFileRead(fragShader.c_str());
-    glShaderSource(fragShaderHandle, 1, &fragShaderTmp, nullptr);
-    glCompileShader(fragShaderHandle);
-    printShaderInfoLog(fragShaderHandle);
+    glShaderSource(fsHandle, 1, &fragShaderTmp, nullptr);
+    glCompileShader(fsHandle);
+    printShaderInfoLog(fsHandle);
     
     programHandle = glCreateProgram();
-    glAttachShader(programHandle, vertShaderHandle);
-    if(!geomShader.empty()){
-        glAttachShader(programHandle, geomShaderHandle);
+    glAttachShader(programHandle, vsHandle);
+    if(!tcShader.empty()){
+        glAttachShader(programHandle, tcsHandle);
     }
-    glAttachShader(programHandle, fragShaderHandle);
-
+    if(!teShader.empty()){
+        glAttachShader(programHandle, tesHandle);
+    }
+    if(!geomShader.empty()){
+        glAttachShader(programHandle, gsHandle);
+    }
+    glAttachShader(programHandle, fsHandle);
+    
     // link the program
     glLinkProgram(programHandle);
     GLint linked;
@@ -159,6 +186,14 @@ void GLProgram::draw(bool wire)
         case DrawMode::POINTS:
             glDrawArrays(GL_POINTS, 0, (GLsizei)dataLen);
             break;
+        case DrawMode::PATCHES:
+            glPatchParameteri(GL_PATCH_VERTICES, 3);
+            glDrawArrays(GL_PATCHES, 0, (GLsizei)dataLen);
+            break;
+        case DrawMode::PATCHES_IDX:
+            glPatchParameteri(GL_PATCH_VERTICES, 3);
+            glDrawElements(GL_PATCHES, attributeMap["index"].dataSize, GL_UNSIGNED_INT, NULL);
+        break;
     }
     
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

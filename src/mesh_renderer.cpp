@@ -12,10 +12,20 @@ void MeshRenderer::init(std::string data_dir,
                         const Eigen::MatrixX3i& tri)
 {
     programs_["mesh"] = GLProgram(data_dir + "shaders/mesh.vert",
+                                  data_dir + "shaders/mesh.tc",
+                                  data_dir + "shaders/mesh.te",
+                                  "",
                                   data_dir + "shaders/mesh.frag",
-                                  DrawMode::TRIANGLES_IDX);
+                                  DrawMode::PATCHES_IDX);
+//    programs_["mesh"] = GLProgram(data_dir + "shaders/mesh.vert",
+//                                  data_dir + "shaders/mesh.frag",
+//                                  DrawMode::TRIANGLES_IDX);
     
     auto& prog = programs_["mesh"];
+    
+    prog.createUniform("u_tessinner", DataType::FLOAT);
+    prog.createUniform("u_tessouter", DataType::FLOAT);
+    prog.createUniform("u_tessalpha", DataType::FLOAT);
     
     Camera::initializeUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
@@ -35,10 +45,14 @@ void MeshRenderer::render(const Camera& camera,
     mesh_.update_normal(nml);
     mesh_.update(prog, AT_POSITION | AT_NORMAL);
     
+    prog.setUniformData("u_tessinner", (float)tessInner_);
+    prog.setUniformData("u_tessouter", (float)tessOuter_);
+    prog.setUniformData("u_tessalpha", tessAlpha_);
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    prog.draw();
+    prog.draw(wire_);
 }
 
 void MeshRenderer::render(const Camera& camera,
@@ -54,10 +68,14 @@ void MeshRenderer::render(const Camera& camera,
     mesh_.update_normal(nml);
     mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
     
+    prog.setUniformData("u_tessinner", (float)tessInner_);
+    prog.setUniformData("u_tessouter", (float)tessOuter_);
+    prog.setUniformData("u_tessalpha", tessAlpha_);
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     
-    prog.draw();
+    prog.draw(wire_);
 }
 
 #ifdef FACE_TOOLKIT
@@ -78,6 +96,10 @@ void MeshRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
+        ImGui::Checkbox("wire", &wire_);
+        ImGui::InputInt("TessInner", &tessInner_);
+        ImGui::InputInt("TessOuter", &tessOuter_);
+        ImGui::SliderFloat("TessAlpha", &tessAlpha_, 0.0, 1.0);
     }
 }
 #endif

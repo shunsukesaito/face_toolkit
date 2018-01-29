@@ -42,7 +42,7 @@
 #include "hdrloader.h"
 
 enum class DataType { UINT, FLOAT, VECTOR4, VECTOR3, VECTOR2, MATRIX44, INDEX};
-enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS };
+enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS, PATCHES, PATCHES_IDX};
 class GLProgram;
 
 struct GLAttribute {
@@ -118,8 +118,19 @@ class GLProgram {
     
 public:
     GLProgram() {}
-    GLProgram(std::string vertShader, std::string geomShader, std::string fragShader, DrawMode drawMode_);
-    GLProgram(std::string vertShader, std::string fragShader, DrawMode drawMode_);
+    GLProgram(std::string vertShader,
+              std::string tcShader,
+              std::string teShader,
+              std::string geomShader,
+              std::string fragShader,
+              DrawMode drawMode_);
+    GLProgram(std::string vertShader,
+              std::string geomShader,
+              std::string fragShader,
+              DrawMode drawMode_);
+    GLProgram(std::string vertShader,
+              std::string fragShader,
+              DrawMode drawMode_);
     
     void draw(bool wire = false);
     
@@ -156,7 +167,7 @@ private:
     std::unordered_map<std::string, GLUniform> uniformMap;
     std::unordered_map<std::string, GLTexture> textureMap;
     
-    GLuint vertShaderHandle, geomShaderHandle, fragShaderHandle, programHandle, vaoHandle;
+    GLuint vsHandle, tcsHandle, tesHandle, gsHandle, fsHandle, programHandle, vaoHandle;
     
     long long validateAttributeSizes();
     void validateUniformSet();

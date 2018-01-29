@@ -214,7 +214,7 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     // draw mesh
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    prog_IBL.draw();
+    prog_IBL.draw(wire_);
     
     if(draw_sphere){
         int w, h;
@@ -254,6 +254,7 @@ void IBLRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
+        ImGui::Checkbox("wire", &wire_);
         ImGui::Checkbox("show sphere", &show_sphere_);
         param_.updateIMGUI();
     }

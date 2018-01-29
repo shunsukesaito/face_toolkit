@@ -31,9 +31,10 @@ struct BaseRenderer
     std::unordered_map<std::string, GLProgram> programs_;
     std::string name_;
     bool show_ = false;
+    bool wire_ = false;
     
-    BaseRenderer() : name_(""), show_(false){}
-    BaseRenderer(std::string name, bool show) : name_(name), show_(show){}
+    BaseRenderer() : name_(""), show_(false), wire_(false){}
+    BaseRenderer(std::string name, bool show, bool wire = false) : name_(name), show_(show), wire_(wire){}
     
 #ifdef FACE_TOOLKIT
     virtual void init(std::string data_dir, FaceModelPtr fm){ throw std::runtime_error( "Error: Base class is called..."); }

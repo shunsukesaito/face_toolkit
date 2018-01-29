@@ -285,7 +285,7 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     // draw mesh
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    prog_f2f.draw();
+    prog_f2f.draw(wire_);
     
     fb_->Unbind();
     
@@ -338,7 +338,7 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     // draw mesh
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    prog_f2f.draw();
+    prog_f2f.draw(wire_);
     
     // unbinding framebuffer
     fb_->Unbind();
@@ -359,6 +359,7 @@ void F2FRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
+        ImGui::Checkbox("wire", &wire_);
         param_.updateIMGUI();
     }
 }

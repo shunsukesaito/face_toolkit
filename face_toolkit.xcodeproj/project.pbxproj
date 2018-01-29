@@ -41,6 +41,9 @@
 		8F1E49751F6C7B4F0051FC8C /* model.cc in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49711F6C7B4F0051FC8C /* model.cc */; };
 		8F1E49781F70DDCF0051FC8C /* train_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F1E49761F70DDCF0051FC8C /* train_util.cpp */; };
 		8F212E811F50C5CD005099A2 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F212E801F50C5CD005099A2 /* OpenGL.framework */; };
+		8F21C56A201BFE3C002CAEC0 /* posmap_renderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F21C568201BFE3C002CAEC0 /* posmap_renderer.cpp */; };
+		8F21C56D201D2DB9002CAEC0 /* subdiv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F21C56B201D2DB9002CAEC0 /* subdiv.cpp */; };
+		8F21C56F201D2E5A002CAEC0 /* OpenSubdiv.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F21C56E201D2E59002CAEC0 /* OpenSubdiv.framework */; };
 		8F2F54941F85811000B27B7B /* sh_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8F2F54921F85811000B27B7B /* sh_utils.cpp */; };
 		8F3454241EECA18F007B479B /* libgflags.2.2.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */; };
 		8F3454261EECA1A0007B479B /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3454251EECA1A0007B479B /* libGLEW.a */; };
@@ -153,6 +156,17 @@
 		8F1E49761F70DDCF0051FC8C /* train_util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = train_util.cpp; path = src/regressor/train_util.cpp; sourceTree = SOURCE_ROOT; };
 		8F1E49771F70DDCF0051FC8C /* train_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = train_util.h; path = src/regressor/train_util.h; sourceTree = SOURCE_ROOT; };
 		8F212E801F50C5CD005099A2 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		8F21C568201BFE3C002CAEC0 /* posmap_renderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = posmap_renderer.cpp; path = src/posmap_renderer.cpp; sourceTree = SOURCE_ROOT; };
+		8F21C569201BFE3C002CAEC0 /* posmap_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = posmap_renderer.h; path = src/posmap_renderer.h; sourceTree = SOURCE_ROOT; };
+		8F21C56B201D2DB9002CAEC0 /* subdiv.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = subdiv.cpp; path = src/subdiv.cpp; sourceTree = SOURCE_ROOT; };
+		8F21C56C201D2DB9002CAEC0 /* subdiv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = subdiv.h; path = src/subdiv.h; sourceTree = SOURCE_ROOT; };
+		8F21C56E201D2E59002CAEC0 /* OpenSubdiv.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenSubdiv.framework; path = external/opensubdiv/lib/OpenSubdiv.framework; sourceTree = "<group>"; };
+		8F21C574201DC08B002CAEC0 /* subdiv.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = subdiv.vert; sourceTree = "<group>"; };
+		8F21C575201DC0BA002CAEC0 /* subdiv.tc */ = {isa = PBXFileReference; lastKnownFileType = text; path = subdiv.tc; sourceTree = "<group>"; };
+		8F21C576201DC0BA002CAEC0 /* subdiv.te */ = {isa = PBXFileReference; lastKnownFileType = text; path = subdiv.te; sourceTree = "<group>"; };
+		8F21C577201E5CCD002CAEC0 /* subdiv.frag */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; path = subdiv.frag; sourceTree = "<group>"; };
+		8F21C578201EBB20002CAEC0 /* mesh.tc */ = {isa = PBXFileReference; lastKnownFileType = text; path = mesh.tc; sourceTree = "<group>"; };
+		8F21C579201EBB20002CAEC0 /* mesh.te */ = {isa = PBXFileReference; lastKnownFileType = text; path = mesh.te; sourceTree = "<group>"; };
 		8F2F54921F85811000B27B7B /* sh_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sh_utils.cpp; path = src/sh_utils.cpp; sourceTree = SOURCE_ROOT; };
 		8F2F54931F85811000B27B7B /* sh_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sh_utils.h; path = src/sh_utils.h; sourceTree = SOURCE_ROOT; };
 		8F3454131EEC9E30007B479B /* RenderingTemplate */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = RenderingTemplate; path = face_toolkit; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -222,6 +236,7 @@
 				8FE2955C1F61FD620021E914 /* libglfw3.a in Frameworks */,
 				8F212E811F50C5CD005099A2 /* OpenGL.framework in Frameworks */,
 				8F3454261EECA1A0007B479B /* libGLEW.a in Frameworks */,
+				8F21C56F201D2E5A002CAEC0 /* OpenSubdiv.framework in Frameworks */,
 				8FE295611F61FD9C0021E914 /* IOKit.framework in Frameworks */,
 				8FE295601F61FD9C0021E914 /* CoreVideo.framework in Frameworks */,
 				8F696EAE1F99C21C00563378 /* libopencv_world.3.3.0.dylib in Frameworks */,
@@ -305,6 +320,8 @@
 				8F1E490B1F6C507C0051FC8C /* gl_mesh.cpp */,
 				8F1E490C1F6C507C0051FC8C /* gl_mesh.h */,
 				8F1E490D1F6C507C0051FC8C /* gl_utils.h */,
+				8F21C56B201D2DB9002CAEC0 /* subdiv.cpp */,
+				8F21C56C201D2DB9002CAEC0 /* subdiv.h */,
 			);
 			name = gl_utility;
 			sourceTree = "<group>";
@@ -314,6 +331,8 @@
 			children = (
 				8F1E48F51F6C507C0051FC8C /* bg_renderer.cpp */,
 				8F1E48F61F6C507C0051FC8C /* bg_renderer.h */,
+				8F21C568201BFE3C002CAEC0 /* posmap_renderer.cpp */,
+				8F21C569201BFE3C002CAEC0 /* posmap_renderer.h */,
 				8F4B77001F8159A600033525 /* IBL_renderer.cpp */,
 				8F4B77011F8159A600033525 /* IBL_renderer.h */,
 				8F696EA41F98712000563378 /* LS_renderer.cpp */,
@@ -375,6 +394,7 @@
 				8FE2955E1F61FD9C0021E914 /* IOKit.framework */,
 				8FE2955F1F61FD9C0021E914 /* Cocoa.framework */,
 				8F212E801F50C5CD005099A2 /* OpenGL.framework */,
+				8F21C56E201D2E59002CAEC0 /* OpenSubdiv.framework */,
 				8F3454251EECA1A0007B479B /* libGLEW.a */,
 				8FE2955B1F61FD620021E914 /* libglfw3.a */,
 				8F3454231EECA18F007B479B /* libgflags.2.2.0.dylib */,
@@ -396,9 +416,9 @@
 		8F3454151EEC9E30007B479B /* src */ = {
 			isa = PBXGroup;
 			children = (
-				8F5E05101FD574FC0059E324 /* loader */,
 				8F1E49591F6C517F0051FC8C /* source.cpp */,
 				8F1E491C1F6C507C0051FC8C /* main.cpp */,
+				8F5E05101FD574FC0059E324 /* loader */,
 				8F4B76FD1F80C29800033525 /* application */,
 				8F1E49581F6C51000051FC8C /* module */,
 				8F4B76FC1F80434E00033525 /* shape_model */,
@@ -459,9 +479,15 @@
 		8FDF97531F50EAFD0038065A /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				8F21C577201E5CCD002CAEC0 /* subdiv.frag */,
+				8F21C575201DC0BA002CAEC0 /* subdiv.tc */,
+				8F21C576201DC0BA002CAEC0 /* subdiv.te */,
+				8F21C574201DC08B002CAEC0 /* subdiv.vert */,
 				8F696EA71F9871AF00563378 /* lightstage.frag */,
 				8F696EA81F9871AF00563378 /* lightstage.vert */,
 				8FDF97661F50F3220038065A /* mesh.frag */,
+				8F21C578201EBB20002CAEC0 /* mesh.tc */,
+				8F21C579201EBB20002CAEC0 /* mesh.te */,
 				8FDF97671F50F3220038065A /* mesh.vert */,
 				8FDF97571F50EAFD0038065A /* full_texture_bgr.frag */,
 				8FDF97581F50EAFD0038065A /* full_texture_bgr.vert */,
@@ -547,6 +573,7 @@
 				8F1E49411F6C507C0051FC8C /* gl_mesh.cpp in Sources */,
 				8F1E49451F6C507C0051FC8C /* imgui_draw.cpp in Sources */,
 				8F1E49401F6C507C0051FC8C /* gl_core.cpp in Sources */,
+				8F21C56A201BFE3C002CAEC0 /* posmap_renderer.cpp in Sources */,
 				8F7102121F86B08D0030052F /* fw_utils.cpp in Sources */,
 				8F1E49751F6C7B4F0051FC8C /* model.cc in Sources */,
 				8F4744CA1F8AFF8300E3C019 /* bilinear_face_model.cpp in Sources */,
@@ -576,6 +603,7 @@
 				8F4B77091F82184000033525 /* hdrloader.cc in Sources */,
 				8F696EA61F98712100563378 /* LS_renderer.cpp in Sources */,
 				8F1E49371F6C507C0051FC8C /* bg_renderer.cpp in Sources */,
+				8F21C56D201D2DB9002CAEC0 /* subdiv.cpp in Sources */,
 				8F1E49421F6C507C0051FC8C /* gui.cpp in Sources */,
 				8F1E494F1F6C507C0051FC8C /* p3d_renderer.cpp in Sources */,
 				8F1E494A1F6C507C0051FC8C /* common.cpp in Sources */,
@@ -686,6 +714,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/external/opensubdiv/lib",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -727,6 +756,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+					"$(PROJECT_DIR)/external/opensubdiv/lib",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					DLIB_NO_GUI_SUPPORT,

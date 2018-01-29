@@ -3,6 +3,20 @@
 #include "p2d_optimizer.h"
 #include "minitrace.h"
 
+struct ErrP2D
+{
+    float p2p = 0.0;
+    float p2l = 0.0;
+    float pca_id = 0.0;
+    float pca_ex = 0.0;
+    
+    friend std::ostream& operator<<(std::ostream& os, const ErrP2D& err)
+    {
+        os << "errTot: " << err.p2p + err.p2l + err.pca_id + err.pca_ex << " errP2P: " << err.p2p << " errP2L: " << err.p2l;
+        os << " errPCAID: " << err.pca_id << " errPCAEX: " << err.pca_ex;
+        return os;
+    }
+};
 
 #ifdef WITH_IMGUI
 void P2DFitParams::updateIMGUI()
@@ -113,21 +127,6 @@ bool RigidAlignment(const std::vector<Eigen::Vector3f> &q,
     return true;
 }
 
-struct ErrP2D
-{
-    float p2p = 0.0;
-    float p2l = 0.0;
-    float pca_id = 0.0;
-    float pca_ex = 0.0;
-    
-    friend std::ostream& operator<<(std::ostream& os, const ErrP2D& err)
-    {
-        os << "errTot: " << err.p2p + err.p2l + err.pca_id + err.pca_ex << " errP2P: " << err.p2p << " errP2L: " << err.p2l;
-        os << " errPCAID: " << err.pca_id << " errPCAEX: " << err.pca_ex;
-        return os;
-    }
-};
-
 static void computeP2DJacobian(Eigen::VectorXf& Jtr,
                                Eigen::MatrixXf& JtJ,
                                const FaceData& fd,
@@ -237,7 +236,7 @@ void P2DGaussNewton(FaceData& fd,
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "iter " << i << " errTot: " << err.p2p + err.p2l << " errP2P:" << err.p2p << " errP2L:" << err.p2l << "|dX|:" << dX.norm() << std::endl;
+        std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
         
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
