@@ -172,12 +172,6 @@ void performSubdiv(const Eigen::VectorXf& pts_src,
             triuv_dst(face*2+1,1) = fuvs[2];
             triuv_dst(face*2+1,2) = fuvs[3];
 
-//            printf("f ");
-//            for (int vert=0; vert<fverts.size(); ++vert) {
-//                // OBJ uses 1-based arrays...
-//                printf("%d/%d ", fverts[vert]+1, fuvs[vert]+1);
-//            }
-//            printf("\n");
         }
     }
 }
