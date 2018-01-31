@@ -1,0 +1,9 @@
+# This file exports the @PACKAGE_MODULE_NAME@ CMake target which should be passed to the
+# target_link_libraries command.
+
+@PACKAGE_INIT@
+
+include ("${CMAKE_CURRENT_LIST_DIR}/@PACKAGE_MODULE_NAME@Targets.cmake")
+
+add_library(PSM::@PACKAGE_MODULE_NAME@ INTERFACE IMPORTED GLOBAL)
+set_property(TARGET PSM::@PACKAGE_MODULE_NAME@ PROPERTY INTERFACE_LINK_LIBRARIES @PACKAGE_MODULE_NAME@)
