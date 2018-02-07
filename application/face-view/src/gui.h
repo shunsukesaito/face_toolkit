@@ -6,8 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#ifndef GUI_hpp
-#define GUI_hpp
+#pragma once
 
 #include <stdio.h>
 #include <thread>
@@ -81,5 +80,3 @@ private:
     double current_mouse_x, current_mouse_y;
     double down_mouse_x, down_mouse_y;
 };
-
-#endif /* GUI_hpp */

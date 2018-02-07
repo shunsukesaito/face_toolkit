@@ -10,8 +10,9 @@
 
 #include "gui.h"
 
-int main(int argc, const char * argv[]) try
+int main(int argc, char **argv) try
 {
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
     // insert code here...
     GUI *gui = GUI::getInstance();
     

@@ -527,11 +527,4 @@ FaceModelPtr LinearFaceModel::LoadModel(const std::string& file)
     return FaceModelPtr(model);
 }
 
-FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir)
-{
-    auto model = new LinearFaceModel();
-    
-    model->loadLightStageData(data_dir);
-    
-    return FaceModelPtr(model);
-}
+

@@ -1,64 +1,12 @@
-#include "LS_renderer.h"
+#include "DeepLS_renderer.h"
 
 #include <tinyexr.h>
 #include <gl_utility/sh_utils.h>
 
-void LSRenderParams::init(GLProgram& prog)
+void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
 {
-    prog.createUniform("u_enable_mask", DataType::UINT);
-    prog.createUniform("u_cull_occlusion", DataType::UINT);
-
-    prog.createUniform("u_use_pointlight", DataType::UINT);
-    prog.createUniform("u_cull_offset", DataType::FLOAT);
-    prog.createUniform("u_light_rot", DataType::FLOAT);
-    prog.createUniform("u_light_pos", DataType::VECTOR3);
-
-    prog.createUniform("u_diffscale", DataType::FLOAT);
-    prog.createUniform("u_specscale", DataType::FLOAT);
-    
-    prog.createUniform("u_uv_view", DataType::UINT);
-}
-
-void LSRenderParams::update(GLProgram& prog)
-{
-    prog.setUniformData("u_enable_mask", (uint)enable_mask);
-    prog.setUniformData("u_cull_occlusion", (uint)enable_cull_occlusion);
-    
-    prog.setUniformData("u_use_pointlight", (uint)use_pointlight);
-    prog.setUniformData("u_cull_offset", cull_offset);
-    prog.setUniformData("u_light_rot", light_rot);
-    prog.setUniformData("u_light_pos", light_pos);
-    
-    prog.setUniformData("u_diffscale", diff_scale);
-    prog.setUniformData("u_specscale", spec_scale);
-    
-    prog.setUniformData("u_uv_view", (uint)uv_view);
-}
-
-#ifdef WITH_IMGUI
-void LSRenderParams::updateIMGUI()
-{
-    ImGui::Checkbox("mask", &enable_mask);
-    ImGui::Checkbox("uv view", &uv_view);
-    ImGui::Checkbox("point light", &use_pointlight);
-    ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
-    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
-    ImGui::SliderFloat("specScale", &spec_scale, 0.0, 1.0);
-    ImGui::SliderFloat("diffScale", &diff_scale, 0.0, 1.0);
-    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
-    ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
-    ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
-    ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
-    
-    const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal"};
-    ImGui::ListBox("RenderTarget", &location, listbox_items, 7);
-}
-#endif
-
-void LSRenderer::init(std::string data_dir, FaceModelPtr model)
-{
-    programs_["main"] = GLProgram(data_dir + "shaders/lightstage.vert",
-                                 data_dir + "shaders/lightstage.frag",
+    programs_["main"] = GLProgram(data_dir + "shaders/deep_ls.vert",
+                                 data_dir + "shaders/deep_ls.frag",
                                  DrawMode::TRIANGLES);
     programs_["depth"] = GLProgram(data_dir + "shaders/depthmap.vert",
                                    data_dir + "shaders/depthmap.frag",
@@ -71,8 +19,9 @@ void LSRenderer::init(std::string data_dir, FaceModelPtr model)
     auto& prog_depth = programs_["depth"];
     auto& prog_pl = programs_["plane"];
     
+    param_.enable_mask = true;
     param_.init(prog_main);
-    prog_main.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+    prog_main.createTexture("u_sample_mask", data_dir + "deepls_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     
@@ -179,11 +128,10 @@ void LSRenderer::init(std::string data_dir, FaceModelPtr model)
     
     prog_main.createTexture("u_sample_diff_albedo", 0, 0, 0);
     prog_main.createTexture("u_sample_spec_albedo", 0, 0, 0);
-    prog_main.createTexture("u_sample_diff_normal", 0, 0, 0);
     prog_main.createTexture("u_sample_disp", 0, 0, 0);
 }
 
-void LSRenderer::render(const Camera& camera, const FaceData& fd)
+void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
 {
     if((param_.sub_samp*camera.width_ != fb_->width()) || (param_.sub_samp*camera.height_ != fb_->height()))
         fb_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, RT_NAMES::count);
@@ -204,9 +152,8 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     const auto& maps = fd.maps();
     assert(maps.size() != 0);
     prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[0]);
-    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[2]);
-    prog_main.updateTexture("u_sample_diff_normal", (GLuint)maps[1]);
-    prog_main.updateTexture("u_sample_disp", (GLuint)maps[4]);
+    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[1]);
+    prog_main.updateTexture("u_sample_disp", (GLuint)maps[2]);
 
     // camera parameters update
     camera.updateUniforms(prog_main, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
@@ -256,7 +203,7 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
 }
 
 #ifdef FACE_TOOLKIT
-void LSRenderer::render(const FaceResult& result)
+void DeepLSRenderer::render(const FaceResult& result)
 {
     if(show_)
         render(result.camera, result.fd);
@@ -264,7 +211,7 @@ void LSRenderer::render(const FaceResult& result)
 #endif
 
 #ifdef WITH_IMGUI
-void LSRenderer::updateIMGUI()
+void DeepLSRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
@@ -274,9 +221,9 @@ void LSRenderer::updateIMGUI()
 }
 #endif
 
-RendererHandle LSRenderer::Create(std::string name, bool show)
+RendererHandle DeepLSRenderer::Create(std::string name, bool show)
 {
-    auto renderer = new LSRenderer(name, show);
+    auto renderer = new DeepLSRenderer(name, show);
     
     return RendererHandle(renderer);
 }

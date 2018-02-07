@@ -30,8 +30,6 @@ in VertexData {
 
 uniform sampler2D u_sample_diff_albedo;
 uniform sampler2D u_sample_spec_albedo;
-uniform sampler2D u_sample_diff_normal;
-//uniform sampler2D u_sample_spec_normal;
 uniform sampler2D u_sample_disp;
 uniform sampler2D u_sample_diff_env;
 uniform sampler2D u_sample_spec_env1;
@@ -179,16 +177,17 @@ void main(void)
 	** reconstruct diffuse normals
 	*/
 	vec3 alpha;
-	alpha.x = pow(1.0 + SSSColor.x, -5.0) - 1.0 / 32.0; // [NOTE] empirical fit
-	alpha.y = pow(1.0 + SSSColor.y, -5.0) - 1.0 / 32.0; // [NOTE] empirical fit
-	alpha.z = pow(1.0 + SSSColor.z, -5.0) - 1.0 / 32.0; // [NOTE] empirical fit
-	vec3 diffNormalR = normalize(getNormalMap(u_sample_diff_normal, uv));
-	vec3 diffNormalG = normalize(mix(diffNormalR, specNormal, alpha.g));
-	vec3 diffNormalB = normalize(mix(diffNormalR, specNormal, alpha.b));
+	alpha.x = pow(1.0 + SSSColor.x, -5.0) - 1.0 / 3.0; // [NOTE] empirical fit
+	alpha.y = pow(1.0 + SSSColor.y, -5.0) - 1.0 / 3.0; // [NOTE] empirical fit
+	alpha.z = pow(1.0 + SSSColor.z, -5.0) - 1.0 / 3.0; // [NOTE] empirical fit
+	vec3 diffNormalR = normalize(mix(Nw, specNormal, alpha.r));
+	vec3 diffNormalG = normalize(mix(Nw, specNormal, alpha.g));
+	vec3 diffNormalB = normalize(mix(Nw, specNormal, alpha.b));
 
 	vec4 alpha_channel = vec4(1.0, 1.0, 1.0, 1.0);
     
 	frag_spec_albedo = texture(u_sample_spec_albedo, uv);
+    //frag_spec_albedo.xyz *= 0.5;
 	frag_diff_albedo = texture(u_sample_diff_albedo, uv);
     
     vec4 specular_reflection = vec4(0,0,0,0);
@@ -260,9 +259,9 @@ void main(void)
 			diff_reflection += vec4(diffuseReflection(diffNormalR, diffNormalG, diffNormalB, light), 1.0) * lColor[i];
 		}
 
-		frag_spec = u_specscale * alpha_channel * specular_reflection * frag_spec_albedo;
+		frag_spec = u_specscale * alpha_channel * gammaCorrection(specular_reflection,2.2) * frag_spec_albedo;
         frag_spec.w = 1.0;
-		frag_diff = u_diffscale * alpha_channel * frag_diff_albedo * diff_reflection;
+		frag_diff = u_diffscale * alpha_channel * frag_diff_albedo * gammaCorrection(diff_reflection,2.2);
         frag_diff.w = 1.0;
 		frag_all = frag_spec + frag_diff;
         frag_all.w = 1.0;
@@ -273,16 +272,16 @@ void main(void)
 	else
 	{	
 		vec3 freflect = normalize(reflect(-vieww, specNormal));
-		vec4 specularEnv1 = F * texture(u_sample_spec_env1, world2UV(freflect));
-		vec4 specularEnv2 = F * texture(u_sample_spec_env2, world2UV(freflect));
+		vec4 specularEnv1 = F * gammaCorrection(texture(u_sample_spec_env1, world2UV(freflect)),2.2);
+		vec4 specularEnv2 = F * gammaCorrection(texture(u_sample_spec_env2, world2UV(freflect)),2.2);
 		float lobeWeight = 0.2;
 		specular_reflection = lobeWeight * specularEnv1 + (1.0 - lobeWeight) * specularEnv2;
 		frag_spec = u_specscale * frag_spec_albedo * specular_reflection;
         frag_spec.w = 1.0;
 
-		vec4 diffuseEnvR = texture(u_sample_diff_env, world2UV(diffNormalR));
-		vec4 diffuseEnvG = texture(u_sample_diff_env, world2UV(diffNormalG));
-		vec4 diffuseEnvB = texture(u_sample_diff_env, world2UV(diffNormalB));
+		vec4 diffuseEnvR = gammaCorrection(texture(u_sample_diff_env, world2UV(diffNormalR)),2.2);
+		vec4 diffuseEnvG = gammaCorrection(texture(u_sample_diff_env, world2UV(diffNormalG)),2.2);
+		vec4 diffuseEnvB = gammaCorrection(texture(u_sample_diff_env, world2UV(diffNormalB)),2.2);
 		diff_reflection = vec4(diffuseEnvR.r, diffuseEnvG.g, diffuseEnvB.b, 1.0);
 		frag_diff = u_diffscale * frag_diff_albedo * diff_reflection;
 		
@@ -290,11 +289,11 @@ void main(void)
         frag_all.w = 1.0;
 	}
     
-    frag_all = gammaCorrection(frag_all, 2.2);
-    frag_diff = gammaCorrection(frag_diff, 2.2);
-    frag_spec = gammaCorrection(frag_spec, 2.2);
-    frag_diff_albedo = gammaCorrection(frag_diff_albedo, 2.2);
-    frag_spec_albedo = gammaCorrection(frag_spec_albedo, 2.2);
+    frag_all = frag_all;
+    frag_diff = frag_diff;
+    frag_spec = frag_spec;
+    frag_diff_albedo = frag_diff_albedo;
+    frag_spec_albedo = frag_spec_albedo;
     frag_spec_normal = vec4(specNormal,1.0);
     frag_diff_normal = vec4(diffNormalR,1.0);
 }

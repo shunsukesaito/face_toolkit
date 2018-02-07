@@ -6,36 +6,9 @@
 #include <shape_model/face_model.h>
 
 #include "base_renderer.h"
+#include "ls_renderer.h"
 
-struct LSRenderParams{
-    
-    bool use_pointlight = 0;
-    bool enable_mask = 0;
-    bool enable_cull_occlusion = 0;
-    float cull_offset = 0.0;
-    float light_rot = 0.0;
-    glm::vec3 light_pos = glm::vec3(1.0,0.0,0.0);
-    float diff_scale = 1.0;
-    float spec_scale = 1.0;
-    
-    bool uv_view = 0;
-    
-    int env_id = 0;
-    int env_size = 0;
-    
-    int location = 0;
-    
-    int sub_samp = 2; // subsampling rate for depth map (higher, more accurate, but maybe slower)
-    
-    void init(GLProgram& prog);
-    void update(GLProgram& prog);
-    
-#ifdef WITH_IMGUI
-    void updateIMGUI();
-#endif
-};
-
-struct LSRenderer : public BaseRenderer
+struct DeepLSRenderer : public BaseRenderer
 {
     enum RT_NAMES
     {        
@@ -59,8 +32,8 @@ struct LSRenderer : public BaseRenderer
     std::vector<GLuint> spec_env1_locations_;
     std::vector<GLuint> spec_env2_locations_;
     
-    LSRenderer(){}
-    LSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    DeepLSRenderer(){}
+    DeepLSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     virtual void init(std::string data_dir, FaceModelPtr model);
     void render(const Camera& camera,

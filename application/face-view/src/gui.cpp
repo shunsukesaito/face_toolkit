@@ -12,6 +12,7 @@
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>
 #include <renderer/LS_renderer.h>
+#include <renderer/DeepLS_renderer.h>
 #include <renderer/p3d_renderer.h>
 #include <renderer/p2d_renderer.h>
 #include <renderer/posmap_renderer.h>
@@ -19,6 +20,12 @@
 
 #include <utility/obj_loader.h>
 #include <utility/trackball.h>
+
+// constants
+#include <gflags/gflags.h>
+
+DEFINE_string(facemodel, "pin", "FaceModel to use");
+DEFINE_string(renderer, "geo", "Renderer to use");
 
 struct Session{
     ModuleHandle capture_module_;
@@ -271,18 +278,45 @@ void GUI::init(int w, int h)
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-//    face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin");
-    face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/01/");
-    //face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin");
-    
-//    renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
-    renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", false));
-//    renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", false));
-    renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
-//    renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
-    renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", false));
-    renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", false));
-    renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", false));
+    if( FLAGS_facemodel.find("pin") != std::string::npos )
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin");
+    else if( FLAGS_facemodel.find("bv") != std::string::npos )
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin");
+    else if(FLAGS_facemodel.find("deepls") != std::string::npos ){
+        int start = FLAGS_facemodel.find("deepls") + 6;
+        int len = FLAGS_facemodel.size()-6;
+        std::string fm_name =  FLAGS_facemodel.substr(start,
+                                                      len);
+        std::cout << fm_name << std::endl;
+        face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" , true);
+    }
+    else if(FLAGS_facemodel.find("ls") != std::string::npos ){
+        int start = FLAGS_facemodel.find("ls") + 2;
+        int len = FLAGS_facemodel.size()-2;
+        std::string fm_name = FLAGS_facemodel.substr(start, len);
+        face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" );
+    }
+    else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
+        face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin");
+
+    if( FLAGS_renderer.find("bg") != std::string::npos )
+        renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
+    if( FLAGS_renderer.find("geo") != std::string::npos )
+        renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
+    if( FLAGS_renderer.find("ibl") != std::string::npos )
+        renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
+    if( FLAGS_renderer.find("deepls") != std::string::npos )
+        renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
+    if( FLAGS_renderer.find("lstage") != std::string::npos )
+        renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+    if( FLAGS_renderer.find("pm") != std::string::npos )
+        renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
+    if( FLAGS_renderer.find("f2f") != std::string::npos )
+        renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", true));
+    if( FLAGS_renderer.find("p3d") != std::string::npos )
+        renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", true));
+    if( FLAGS_renderer.find("p2d") != std::string::npos )
+        renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
     
     renderer_.init(face_model_, data_dir);
     

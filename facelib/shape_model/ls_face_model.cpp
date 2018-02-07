@@ -36,3 +36,43 @@ void LinearFaceModel::loadLightStageData(const std::string& data_dir)
         maps_[i] = GLTexture::CreateTexture(tmp);
     }
 }
+
+void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
+{
+    // 0: obj, 1: diff_albedo(png), 2: spec_albedo(png), 3: displacement
+    std::string files[4];
+    std::ifstream fin(data_dir + "list.txt");
+    if(fin.is_open()){
+        for(int i = 0; i < 4; ++i)
+        {
+            fin >> files[i];
+            files[i] = data_dir + files[i];
+        }
+    }
+    
+    Eigen::MatrixX3f nml;
+    loadObjFile(files[0], mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    maps_.resize(3);
+    
+    cv::Mat_<cv::Vec3b> diff = cv::imread(files[1]);
+    cv::flip(diff,diff,0);
+    maps_[0] = GLTexture::CreateTexture(diff);
+    cv::Mat_<cv::Vec3b> spec = cv::imread(files[2]);
+    cv::flip(spec,spec,0);
+    maps_[1] = GLTexture::CreateTexture(spec);
+    cv::Mat_<cv::Vec4f> disp;
+    loadEXRToCV(files[3], disp);
+    maps_[2] = GLTexture::CreateTexture(disp);
+}
+
+FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir, bool deep)
+{
+    auto model = new LinearFaceModel();
+    
+    if(deep)
+        model->loadDeepLSData(data_dir);
+    else
+        model->loadLightStageData(data_dir);
+    
+    return FaceModelPtr(model);
+}

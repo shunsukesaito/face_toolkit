@@ -155,6 +155,7 @@ struct LinearFaceModel : public BaseFaceModel
     std::vector<std::array<Eigen::Matrix3Xf, 2>> ex_edge_;
     
     void loadLightStageData(const std::string& data_dir);
+    void loadDeepLSData(const std::string& data_dir);
     
     void saveBinaryModel(const std::string& file);
     void loadBinaryModel(const std::string& file);
@@ -189,7 +190,7 @@ struct LinearFaceModel : public BaseFaceModel
     virtual void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv, const FaceData& data) const;
     
     static FaceModelPtr LoadModel(const std::string& file);
-    static FaceModelPtr LoadLSData(const std::string& data_dir);
+    static FaceModelPtr LoadLSData(const std::string& data_dir, bool deep = false);
 };
 
 struct BiLinearFaceModel : public BaseFaceModel
