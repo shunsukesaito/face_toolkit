@@ -29,6 +29,7 @@ struct PosMapRenderer : public BaseRenderer
                       FaceModelPtr model);
     
     void render(const FaceData& fd);
+    void render(const Camera& camera, const FaceData& fd);
     void render(int w, int h, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
 #ifdef FACE_TOOLKIT

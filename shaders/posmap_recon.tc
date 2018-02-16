@@ -7,13 +7,9 @@ uniform float u_tessouter;
 layout(vertices = 3) out;
 
 // in / out
-in vec3 vPosition[];
-in vec3 vWorldPos[];
-in vec3 vNormal[];
+in vec2 vTexcoord[];
 
-out vec3 tcPosition[];
-out vec3 tcWorldPos[];
-out vec3 tcNormal[];
+out vec2 tcTexcoord[];
 
 #define ID gl_InvocationID
 
@@ -27,10 +23,8 @@ void main(void)
 	float TessLevelOuter = u_tessouter;
 
 	// Set the control points of the output patch
-	tcPosition[ID] = vPosition[ID];
-	tcWorldPos[ID] = vWorldPos[ID];
+	tcTexcoord[ID] = vTexcoord[ID];
 
-	tcNormal[ID] = normalize(vNormal[ID]);
 	gl_out[ID].gl_Position = gl_in[ID].gl_Position;
 	if(ID == 0)
 	{
