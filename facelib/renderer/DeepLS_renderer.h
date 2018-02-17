@@ -6,7 +6,7 @@
 #include <shape_model/face_model.h>
 
 #include "base_renderer.h"
-#include "ls_renderer.h"
+#include "LS_renderer.h"
 
 struct DeepLSRenderer : public BaseRenderer
 {

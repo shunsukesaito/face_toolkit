@@ -10,6 +10,8 @@
 
 #include <array>
 #include <mutex>
+#include <iostream>
+#include <memory>
 
 #include <utility/EigenHelper.h>
 

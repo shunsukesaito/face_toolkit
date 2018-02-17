@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <gflags/gflags.h>
 
 #include "gui.h"
 
