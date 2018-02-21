@@ -186,10 +186,11 @@ void BiLinearFaceModel::computeModelFW(const std::string& mesh_dir,
     loadObjFile(topo_mesh, pts, nml, uvs_, tri_pts_, tri_uv_);    
 }
 
-FaceModelPtr BiLinearFaceModel::LoadModel(const std::string& file)
+FaceModelPtr BiLinearFaceModel::LoadModel(const std::string& file, const std::string& fm_type)
 {
     auto model = new BiLinearFaceModel();
     
+    model->fm_type_ = fm_type;
     model->loadBinaryModel(file);
     
     return FaceModelPtr(model);

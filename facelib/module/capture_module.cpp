@@ -1,7 +1,6 @@
 // contains basic module functionality
 
 // std includes
-#include <unordered_map>
 #include <vector>
 
 // internal includes

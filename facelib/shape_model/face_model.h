@@ -96,6 +96,8 @@ struct FaceData
 
 struct BaseFaceModel
 {
+    std::string fm_type_;
+    
     // texture coordinates
     Eigen::MatrixX2f uvs_;
     
@@ -191,7 +193,7 @@ struct LinearFaceModel : public BaseFaceModel
     
     virtual void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv, const FaceData& data) const;
     
-    static FaceModelPtr LoadModel(const std::string& file);
+    static FaceModelPtr LoadModel(const std::string& file, const std::string& fm_type);
     static FaceModelPtr LoadLSData(const std::string& data_dir, bool deep = false);
 };
 
@@ -230,5 +232,5 @@ struct BiLinearFaceModel : public BaseFaceModel
     
     inline virtual const Eigen::VectorXf& meanShape() const { return mu_id_; }
 
-    static FaceModelPtr LoadModel(const std::string& file);
+    static FaceModelPtr LoadModel(const std::string& file, const std::string& fm_type);
 };

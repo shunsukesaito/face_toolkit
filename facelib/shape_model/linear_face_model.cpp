@@ -503,7 +503,7 @@ void LinearFaceModel::loadMMBinaryModel(const std::string& modelfile)
     }
     
     // transforming shapeCoreTensor
-    float scale = 1.e4;
+    float scale = 1.e-4;
     Eigen::Matrix3f R = Eigen::Matrix3f::Identity();//Eigen::Quaternion<float>(0,1,0,0).toRotationMatrix();
     for (int i = 0; i < property[0]; ++i)
     {
@@ -513,15 +513,28 @@ void LinearFaceModel::loadMMBinaryModel(const std::string& modelfile)
         w_ex_.block(3 * i, 0, 3, property[3]) = scale*R*w_ex_.block(3 * i, 0, 3, property[3]);
     }
     
+    // normalizing albedo basis + rescale to [0,1]
+    w_id_ = w_id_*sigma_id_.asDiagonal();
+    sigma_id_.setConstant(1.0f);
+
+    w_ex_ = 0.02f*w_ex_*sigma_ex_.asDiagonal();
+    sigma_ex_.setConstant(1.0f);
+
+    // normalizing albedo basis + rescale to [0,1]
+    mu_cl_ *= 1.f / 255.f;
+    w_cl_ = 1.f / 255.f * w_cl_*sigma_cl_.asDiagonal();
+    sigma_cl_.setOnes();
+    
     fclose(fp);
     
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }
 
-FaceModelPtr LinearFaceModel::LoadModel(const std::string& file)
+FaceModelPtr LinearFaceModel::LoadModel(const std::string& file, const std::string& fm_type)
 {
     auto model = new LinearFaceModel();
     
+    model->fm_type_ = fm_type;
     model->loadBinaryModel(file);
     
     return FaceModelPtr(model);
