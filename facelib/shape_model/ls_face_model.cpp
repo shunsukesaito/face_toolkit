@@ -77,5 +77,9 @@ FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir, bool deep)
         model->fm_type_ = "ls";
         model->loadLightStageData(data_dir);
     }
+
+    std::cout << "Face Model Info:" << std::endl;
+    std::cout << "#Vert: " << model->mu_id_.size()/3 << " #Tri: " << model->tri_pts_.rows() << std::endl;
+
     return FaceModelPtr(model);
 }

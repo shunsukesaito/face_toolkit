@@ -109,6 +109,7 @@ struct Renderer {
         windows_[WINDOW::MAIN].resize(supsample_scale, width, height);
     }
     void draw(const FaceResult& result);
+    void screenshot(cv::Mat& img);
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

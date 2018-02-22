@@ -15,6 +15,22 @@ void error_callback(int error, const char* description)
     fputs(description, stderr);
 }
 
+void Renderer::screenshot(cv::Mat& img)
+{
+    int width, height;
+    glfwGetFramebufferSize(windows_[MAIN], &width, &height);
+    
+    unsigned char* img_ptr = new unsigned char[3 * width * height];
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, &img_ptr[0]);
+    img = cv::Mat(height,width,CV_8UC3,img_ptr);
+    cv::resize(img,img,cv::Size(windows_[MAIN].width_, windows_[MAIN].height_));
+    
+    cv::flip(img,img,0);
+    
+    delete [] img_ptr;
+}
+
 void Renderer::initGL(int w, int h)
 {
     glfwSetErrorCallback(error_callback);

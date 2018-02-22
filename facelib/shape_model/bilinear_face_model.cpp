@@ -193,5 +193,8 @@ FaceModelPtr BiLinearFaceModel::LoadModel(const std::string& file, const std::st
     model->fm_type_ = fm_type;
     model->loadBinaryModel(file);
     
+    std::cout << "Face Model Info:" << std::endl;
+    std::cout << "#Vert: " << model->mu_id_.size()/3 << " #Tri: " << model->tri_pts_.rows() << std::endl;
+
     return FaceModelPtr(model);
 }
