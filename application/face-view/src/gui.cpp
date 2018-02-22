@@ -23,7 +23,6 @@
 
 // constants
 #include <gflags/gflags.h>
-
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 

@@ -7,9 +7,12 @@
 //
 
 #include <iostream>
-#include <gflags/gflags.h>
 
 #include "gui.h"
+
+#include <gflags/gflags.h>
+DEFINE_uint32(win_w, 1280, "window width");
+DEFINE_uint32(win_h, 720, "window height");
 
 int main(int argc, char **argv) try
 {
@@ -17,7 +20,7 @@ int main(int argc, char **argv) try
     // insert code here...
     GUI *gui = GUI::getInstance();
     
-    gui->init(1280, 720);
+    gui->init(FLAGS_win_w, FLAGS_win_h);
     gui->loop();
     
     return 0;

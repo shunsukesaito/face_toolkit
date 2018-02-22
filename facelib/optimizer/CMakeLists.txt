@@ -4,6 +4,7 @@ include(../../ModuleGate.cmake)
 PinscreenModuleBegin(optimizer DEPENDS 
                     library/Eigen3 
                     library/OpenCV
+                    library/gflags 
                     utility/minitrace 
                     utility/imgui
                     facelib/utility 
@@ -14,7 +15,7 @@ file(GLOB_RECURSE all_sources *.cpp)
 file(GLOB_RECURSE all_headers *.h)
 add_library(optimizer ${all_sources} ${all_headers})
 
-target_link_libraries(optimizer PSM::OpenCV PSM::Eigen3 PSM::minitrace PSM::utility PSM::gl_utility PSM::shape_model)
+target_link_libraries(optimizer PSM::OpenCV PSM::Eigen3 PSM::gflags PSM::minitrace PSM::utility PSM::gl_utility PSM::shape_model)
 
 if(WITH_IMGUI)
     target_link_libraries(optimizer PSM::imgui)

@@ -4,6 +4,7 @@ include(../../ModuleGate.cmake)
 PinscreenModuleBegin(renderer DEPENDS 
                     library/Eigen3 
                     library/OpenCV
+                    library/gflags 
                     utility/imgui
                     facelib/utility
                     facelib/gl_utility
@@ -14,7 +15,7 @@ file(GLOB_RECURSE all_sources *.cpp)
 file(GLOB_RECURSE all_headers *.h)
 add_library(renderer ${all_sources} ${all_headers})
 
-target_link_libraries(renderer PSM::OpenCV PSM::Eigen3 PSM::utility PSM::gl_utility PSM::shape_model)
+target_link_libraries(renderer PSM::OpenCV PSM::Eigen3 PSM::gflags PSM::utility PSM::gl_utility PSM::shape_model)
 
 if(WITH_IMGUI)
     target_link_libraries(renderer PSM::imgui)
