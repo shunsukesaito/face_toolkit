@@ -53,6 +53,7 @@ struct Camera
     
     void updateUniforms4Sphere(GLProgram& program, int flag) const;
     
+    static Camera craeteFromFOV(int w, int h, int FOV);
     static Camera parseCameraParams(std::string filename);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);
     static Eigen::Matrix4f loadRTFromTxt(std::string filename);

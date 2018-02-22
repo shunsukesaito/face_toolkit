@@ -143,6 +143,29 @@ void Camera::updateUniforms4Sphere(GLProgram& program, int flag) const
         program.setUniformData("u_camera_pos", pos);
 }
 
+Camera Camera::craeteFromFOV(int w, int h, int FOV)
+{
+    Camera camera;
+    
+    camera.width_ = w;
+    camera.height_ = h;
+    
+    Eigen::Matrix3f I;
+    float focal = 0.5*(float)h/tan((float)FOV/360.0*PI);
+    I << focal, 0, 0.5 * (float)w,
+         0, focal, 0.5 * (float)h,
+         0, 0, 1;
+    Eigen::Matrix4f RT;
+    RT << 1, 0, 0, 0,
+        0, -1, 0, 0,
+        0, 0, -1, 30.0,
+        0, 0, 0, 1;
+    camera.intrinsic_.block(0,0,3,3) = I;
+    camera.extrinsic_ = RT;
+    
+    return camera;
+}
+
 Camera Camera::parseCameraParams(std::string filename)
 {
     std::ifstream fin(filename);
@@ -234,6 +257,7 @@ Eigen::Matrix4f Camera::loadRTFromTxt(std::string filename)
     
     return RT;
 }
+
 
 #ifdef WITH_IMGUI
 void Camera::updateIMGUI()

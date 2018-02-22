@@ -324,7 +324,7 @@ void GUI::init(int w, int h)
     
     auto frame_loader = EmptyLoader::Create();//VideoLoader::Create(0);
     
-    session.capture_module_ = CaptureModule::Create("capture", data_dir, frame_loader, session.capture_queue_, session.capture_control_queue_);
+    session.capture_module_ = CaptureModule::Create("capture", data_dir, w, h, frame_loader, session.capture_queue_, session.capture_control_queue_);
     session.face_module_ = FaceModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
                                               session.capture_queue_, session.result_queue_, session.face_control_queue_);
     
