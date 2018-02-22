@@ -18,8 +18,8 @@ struct PosMapRenderer : public BaseRenderer
     glMesh mesh_;
     FramebufferPtr fb_;
     int location_ = 0; // 0: position, 1: normal
-    int tessInner_ = 21;
-    int tessOuter_ = 21;
+    int tessInner_ = 1;
+    int tessOuter_ = 1;
     float tessAlpha_ = 1.0;
     
     PosMapRenderer(){}

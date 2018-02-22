@@ -96,8 +96,8 @@ void FaceModule::init(std::string data_dir,
     
     fd_.setFaceModel(face_model_);
 
-    P2P2DC::parseConstraints(data_dir + "p2p_const_bv.txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "p2l_const_bv.txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "p2p_const_" + face_model->fm_type_ + ".txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "p2l_const_" + face_model->fm_type_ + ".txt", c_p2l_);
     
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
     CHECK_GL_ERROR();

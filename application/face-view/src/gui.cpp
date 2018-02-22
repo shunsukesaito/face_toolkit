@@ -23,7 +23,6 @@
 
 // constants
 #include <gflags/gflags.h>
-
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 
@@ -279,9 +278,9 @@ void GUI::init(int w, int h)
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
     if( FLAGS_facemodel.find("pin") != std::string::npos )
-        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin");
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin", "pin");
     else if( FLAGS_facemodel.find("bv") != std::string::npos )
-        face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin");
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
     else if(FLAGS_facemodel.find("deepls") != std::string::npos ){
         int start = FLAGS_facemodel.find("deepls") + 6;
         int len = FLAGS_facemodel.size()-6;
@@ -297,7 +296,7 @@ void GUI::init(int w, int h)
         face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" );
     }
     else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
-        face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin");
+        face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
 
     if( FLAGS_renderer.find("bg") != std::string::npos )
         renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));

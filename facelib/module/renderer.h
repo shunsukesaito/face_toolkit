@@ -9,7 +9,6 @@
 
 #include <map>
 #include <chrono>
-#include <unordered_map>
 
 #include <gl_utility/gl_core.h>
 #include <gl_utility/framebuffer.h>
@@ -83,7 +82,7 @@ struct Renderer {
     std::string data_dir_;
     FaceModelPtr face_model_;
     
-    std::unordered_map<std::string, RendererHandle> renderer_;
+    std::map<std::string, RendererHandle> renderer_;
 
     int frame_;
     std::chrono::time_point<std::chrono::system_clock> cur_time_;

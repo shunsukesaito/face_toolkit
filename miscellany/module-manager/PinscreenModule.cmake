@@ -124,7 +124,7 @@ macro(PinscreenModulePrebuilt BASE_MODULE_NAME)
       ExternalProject_Add (${BASE_MODULE_NAME}
         DEPENDS ${EXTERNAL_MODULES}
         SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}"
-        CMAKE_ARGS -DACTUAL_BUILDING=ON "-DCMAKE_INSTALL_PREFIX=${MODULE_INSTALL_PATH}"
+        CMAKE_ARGS -DACTUAL_BUILDING=ON "-DCMAKE_INSTALL_PREFIX=${MODULE_INSTALL_PATH}" "-DPINSCREEN_PLATFORM=${PINSCREEN_PLATFORM}"
         BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/actual-build"
         INSTALL_DIR "${MODULE_INSTALL_PATH}"
         )
@@ -172,9 +172,10 @@ macro(PinscreenHeaderModule BASE_MODULE_NAME)
   if(TARGET PSM::${BASE_MODULE_NAME})
     return()
   endif()
+  set(optionArgs HIDE_HEADER)
   set(multiValueArgs DEPENDS)
   set(singleValueArgs LOCATION)
-  cmake_parse_arguments(PSC_MODULE "" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(PSC_MODULE "${optionArgs}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
   if(NOT PSC_MODULE_LOCATION)
     message(FATAL_ERROR "need to specify when header files are.")
   endif()
@@ -184,4 +185,10 @@ macro(PinscreenHeaderModule BASE_MODULE_NAME)
   set_target_properties(PSM::${BASE_MODULE_NAME} PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PSC_MODULE_LOCATION}"
   )
+
+  if(NOT PSC_MODULE_HIDE_HEADER)
+    file(GLOB_RECURSE all_files "${CMAKE_CURRENT_LIST_DIR}/*.h" "${CMAKE_CURRENT_LIST_DIR}/*.hpp")
+    add_custom_target(${BASE_MODULE_NAME} SOURCES ${all_files})
+  endif()
+
 endmacro(PinscreenHeaderModule)

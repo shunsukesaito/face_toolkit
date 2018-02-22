@@ -69,10 +69,13 @@ FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir, bool deep)
 {
     auto model = new LinearFaceModel();
     
-    if(deep)
+    if(deep){
+        model->fm_type_ = "deepls";
         model->loadDeepLSData(data_dir);
-    else
+    }
+    else{
+        model->fm_type_ = "ls";
         model->loadLightStageData(data_dir);
-    
+    }
     return FaceModelPtr(model);
 }

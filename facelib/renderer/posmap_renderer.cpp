@@ -8,6 +8,12 @@
 
 #include "posmap_renderer.h"
 
+// constants
+#include <gflags/gflags.h>
+DEFINE_uint32(pm_size, 256, "size of geometry_image");
+DEFINE_uint32(pm_tessin, 3, "number of tessellation in inner loop");
+DEFINE_uint32(pm_tessout, 3, "number of tessellation in outer loop");
+
 void PosMapRenderer::init(std::string data_dir,
                           FaceModelPtr model)
 {
@@ -33,7 +39,7 @@ void PosMapRenderer::init(std::string data_dir,
     auto& prog_rec = programs_["recon"];
     auto& prog_pl = programs_["plane"];
     
-    fb_ = Framebuffer::Create(256, 256, 2); // will be resized based on frame size
+    fb_ = Framebuffer::Create(FLAGS_pm_size, FLAGS_pm_size, 2); // will be resized based on frame size
     
     prog.createUniform("u_tessinner", DataType::FLOAT);
     prog.createUniform("u_tessouter", DataType::FLOAT);
@@ -56,6 +62,9 @@ void PosMapRenderer::init(std::string data_dir,
     
     plane_.init(prog_pl,0.01);
     prog_pl.createTexture("u_texture", fb_->color(0), fb_->width(), fb_->height());
+    
+    tessInner_ = FLAGS_pm_tessin;
+    tessOuter_ = FLAGS_pm_tessout;
 }
 
 void PosMapRenderer::render(const FaceData& fd)
@@ -84,7 +93,7 @@ void PosMapRenderer::render(const FaceData& fd)
     fb_->Unbind();
     
     std::vector<cv::Mat_<cv::Vec4f>> out;
-    fb_->RetrieveFBO(256, 256, out);
+    fb_->RetrieveFBO(FLAGS_pm_size, FLAGS_pm_size, out);
     
 //    prog_pl.updateTexture("u_texture", fb_->color((uint)location_));
     GLFWwindow* window = glfwGetCurrentContext();
