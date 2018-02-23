@@ -23,6 +23,7 @@
 
 // constants
 #include <gflags/gflags.h>
+DEFINE_bool(preview, false, "preview mode");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 
@@ -330,7 +331,11 @@ void GUI::init(int w, int h)
     auto frame_loader = EmptyLoader::Create();//VideoLoader::Create(0);
     
     session.capture_module_ = CaptureModule::Create("capture", data_dir, w, h, frame_loader, session.capture_queue_, session.capture_control_queue_);
-    session.face_module_ = FaceModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
+    if(FLAGS_preview)
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_);
+    else
+        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
                                               session.capture_queue_, session.result_queue_, session.face_control_queue_);
     
     GLFWwindow* window = renderer_.windows_[MAIN];
@@ -400,8 +405,10 @@ void GUI::loop()
         renderer_.updateIMGUI();
         result_.camera.updateIMGUI();
         result_.fd.updateIMGUI();
-        p2d_param_->updateIMGUI();
-        f2f_param_->updateIMGUI();
+        if(!FLAGS_preview){
+            p2d_param_->updateIMGUI();
+            f2f_param_->updateIMGUI();
+        }
         
         ImGui::End();
         ImGui::Render();

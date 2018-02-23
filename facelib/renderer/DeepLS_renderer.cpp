@@ -3,6 +3,9 @@
 #include <tinyexr.h>
 #include <gl_utility/sh_utils.h>
 
+#include <gflags/gflags.h>
+DEFINE_double(dls_spec_scale, 0.26, "default specular scale for deepLS");
+
 void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
 {
     programs_["main"] = GLProgram(data_dir + "shaders/deep_ls.vert",
@@ -20,6 +23,7 @@ void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
     auto& prog_pl = programs_["plane"];
     
     param_.enable_mask = true;
+    param_.spec_scale = FLAGS_dls_spec_scale;
     param_.init(prog_main);
     prog_main.createTexture("u_sample_mask", data_dir + "deepls_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size

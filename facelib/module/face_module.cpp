@@ -22,20 +22,20 @@ static std::vector<Eigen::Vector3f> convPoint(const std::vector<Eigen::Vector2f>
 }
 
 // initializes this module and the basic module
-FaceModule::FaceModule(const std::string &name)
+FaceOptModule::FaceOptModule(const std::string &name)
 : Module(name)
 {
     // nothing to do
 }
 
 // default destructor
-FaceModule::~FaceModule()
+FaceOptModule::~FaceOptModule()
 {
     // nothing to do
 }
 
 // stub
-void FaceModule::Process()
+void FaceOptModule::Process()
 {
     std::string command = "";
     
@@ -71,12 +71,12 @@ void FaceModule::Process()
 }
 
 // the interruption point
-void FaceModule::Stop()
+void FaceOptModule::Stop()
 {
     // nothing to do
 }
 
-void FaceModule::init(std::string data_dir,
+void FaceOptModule::init(std::string data_dir,
                       FaceModelPtr face_model,
                       P2DFitParamsPtr p2d_param,
                       F2FParamsPtr f2f_param)
@@ -103,7 +103,7 @@ void FaceModule::init(std::string data_dir,
     CHECK_GL_ERROR();
 }
 
-void FaceModule::update(FaceResult& result)
+void FaceOptModule::update(FaceResult& result)
 {
     cv::Rect rect;
     if(p2d_param_->run_){
@@ -136,22 +136,22 @@ void FaceModule::update(FaceResult& result)
     result.c_p2l = c_p2l_;
 }
 
-void FaceModule::set_input_queue(CapQueueHandle queue)
+void FaceOptModule::set_input_queue(CapQueueHandle queue)
 {
     input_frame_queue_ = queue;
 }
 
-void FaceModule::set_output_queue(FaceQueueHandle queue)
+void FaceOptModule::set_output_queue(FaceQueueHandle queue)
 {
     output_result_queue_ = queue;
 }
 
-void FaceModule::set_command_queue(CmdQueueHandle queue)
+void FaceOptModule::set_command_queue(CmdQueueHandle queue)
 {
     command_queue_ = queue;
 }
 
-ModuleHandle FaceModule::Create(const std::string &name,
+ModuleHandle FaceOptModule::Create(const std::string &name,
                                 const std::string &data_dir,
                                 FaceModelPtr face_model,
                                 P2DFitParamsPtr p2d_param,
@@ -160,7 +160,7 @@ ModuleHandle FaceModule::Create(const std::string &name,
                                 FaceQueueHandle output_result_queue,
                                 CmdQueueHandle command_queue)
 {
-    auto module = new FaceModule(name);
+    auto module = new FaceOptModule(name);
     // add this module to the global registry
     
     module->init(data_dir,face_model,p2d_param,f2f_param);
@@ -172,3 +172,108 @@ ModuleHandle FaceModule::Create(const std::string &name,
     ModuleRegistry::RegisterModule(handle);
     return handle;
 }
+
+// initializes this module and the basic module
+FacePreviewModule::FacePreviewModule(const std::string &name)
+: Module(name)
+{
+    // nothing to do
+}
+
+// default destructor
+FacePreviewModule::~FacePreviewModule()
+{
+    // nothing to do
+}
+
+// stub
+void FacePreviewModule::Process()
+{
+    std::string command = "";
+    
+    // OpenGL cannot share context across different threads...
+    glfwWindowHint(GLFW_VISIBLE, false);
+    glfwWindowHint(GLFW_FOCUSED, false);
+    auto window = Window(1, 1, 1, "F2F Window");
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
+    
+    while(command != "stop")
+    {
+        if(input_frame_queue_->front()){
+            FaceResult result;
+            result.img = input_frame_queue_->front()->img;
+            result.camera = input_frame_queue_->front()->camera;
+            if(result.img.empty()){
+                std::cout << "Warning: Frame drop!" << std::endl;
+                input_frame_queue_->pop();
+                continue;
+            }
+            update(result);
+            output_result_queue_->push(result);
+            input_frame_queue_->pop();
+        }
+        if(command_queue_->front()){
+            command = *command_queue_->front();
+            command_queue_->pop();
+        }
+    }
+}
+
+// the interruption point
+void FacePreviewModule::Stop()
+{
+    // nothing to do
+}
+
+void FacePreviewModule::init(std::string data_dir,
+                         FaceModelPtr face_model)
+{
+    data_dir_ = data_dir;
+    
+    face_model_ = face_model;
+    fd_.setFaceModel(face_model_);
+}
+
+void FacePreviewModule::update(FaceResult& result)
+{
+    result.fd = fd_;
+    result.c_p2p = c_p2p_;
+    result.c_p2l = c_p2l_;
+}
+
+void FacePreviewModule::set_input_queue(CapQueueHandle queue)
+{
+    input_frame_queue_ = queue;
+}
+
+void FacePreviewModule::set_output_queue(FaceQueueHandle queue)
+{
+    output_result_queue_ = queue;
+}
+
+void FacePreviewModule::set_command_queue(CmdQueueHandle queue)
+{
+    command_queue_ = queue;
+}
+
+ModuleHandle FacePreviewModule::Create(const std::string &name,
+                                   const std::string &data_dir,
+                                   FaceModelPtr face_model,
+                                   CapQueueHandle input_frame_queue,
+                                   FaceQueueHandle output_result_queue,
+                                   CmdQueueHandle command_queue)
+{
+    auto module = new FacePreviewModule(name);
+    // add this module to the global registry
+    
+    module->init(data_dir,face_model);
+    module->set_input_queue(input_frame_queue);
+    module->set_output_queue(output_result_queue);
+    module->set_command_queue(command_queue);
+    
+    ModuleHandle handle(module);
+    ModuleRegistry::RegisterModule(handle);
+    return handle;
+}
+

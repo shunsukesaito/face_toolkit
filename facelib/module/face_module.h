@@ -22,13 +22,13 @@
 
 typedef std::shared_ptr<SPSCQueue<FaceResult>> FaceQueueHandle;
 
-class FaceModule : public Module
+class FaceOptModule : public Module
 {
 public:
     // initializes a module
-    FaceModule(const std::string &name);
+    FaceOptModule(const std::string &name);
     // destructor
-    ~FaceModule();
+    ~FaceOptModule();
     
     void init(std::string data_dir,
               FaceModelPtr face_model,
@@ -91,3 +91,63 @@ private:
     P2DFitParamsPtr p2d_param_;
     F2FParamsPtr f2f_param_;    
 };
+
+class FacePreviewModule : public Module
+{
+public:
+    // initializes a module
+    FacePreviewModule(const std::string &name);
+    // destructor
+    ~FacePreviewModule();
+    
+    void init(std::string data_dir,
+              FaceModelPtr face_model);
+    
+    void update(FaceResult& result);
+    
+    // does module specific work
+    virtual void Process();
+    
+    // Provides a way to interrupt the process.
+    // Default implementation does nothing.
+    virtual void Stop();
+    
+    inline void reset(){ fd_.init(); }
+    
+    // Set input queue. The input queue is automatically set in Create().
+    // Not thread safe.
+    void set_input_queue(CapQueueHandle queue);
+    
+    // Set output queue. The output queue is automatically set in Create().
+    // Not thread safe.
+    void set_output_queue(FaceQueueHandle queue);
+    
+    // Set control queue. The control queue is automatically set in Create().
+    // Not thread safe.
+    void set_command_queue(CmdQueueHandle queue);
+    
+    
+    // construct a default module
+    static ModuleHandle Create(const std::string &name,
+                               const std::string &data_dir,
+                               FaceModelPtr face_model,
+                               CapQueueHandle input_frame_queue,
+                               FaceQueueHandle output_result_queue,
+                               CmdQueueHandle command_queue);
+private:
+    std::string data_dir_;
+    
+    CapQueueHandle input_frame_queue_;
+    FaceQueueHandle output_result_queue_;
+    CmdQueueHandle command_queue_;
+    
+    FaceModelPtr face_model_;
+    FaceData fd_;
+    
+    std::vector<P2P2DC> c_p2p_;
+    std::vector<P2L2DC> c_p2l_;
+    
+    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
+};
+
+
