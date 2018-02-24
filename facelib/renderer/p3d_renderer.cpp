@@ -46,6 +46,16 @@ void P3DRenderer::render(const Camera& camera,
     auto& prog = programs_["p3d"];
     
     camera.updateUniforms(prog, RT, U_CAMERA_MVP);
+    
+//    for(auto&& p: pts)
+//    {
+//        Eigen::Vector4f q;
+//        q << p, 1.0;
+//        q = camera.intrinsic_ * camera.extrinsic_ * RT * q;
+//        q /= q[2];
+//        std::cout << q.segment(0,2).transpose() << std::endl;
+//    }
+//    std::cout << std::endl;
 
     p3d_.update_position(pts);
     p3d_.update_color(color);

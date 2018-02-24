@@ -9,8 +9,8 @@
 #include "framebuffer.h"
 
 // Constructor requires at least one of the textures (color or depth) to be valid.
-Framebuffer::Framebuffer(unsigned int width, unsigned int height, int color_size)
-: width_(width), height_(height), handle_(-1), depth_(-1)
+Framebuffer::Framebuffer(unsigned int width, unsigned int height, int color_size, int tex_filter)
+: width_(width), height_(height), handle_(-1), depth_(-1), tex_filter_(tex_filter)
 {
     init(width, height, color_size);
 }
@@ -25,9 +25,9 @@ Framebuffer::~Framebuffer()
     glDeleteTextures(1, &depth_);
 }
 
-FramebufferPtr Framebuffer::Create(unsigned int width, unsigned int height, int color_size)
+FramebufferPtr Framebuffer::Create(unsigned int width, unsigned int height, int color_size, int tex_filter)
 {
-    return FramebufferPtr(new Framebuffer(width, height, color_size));
+    return FramebufferPtr(new Framebuffer(width, height, color_size, tex_filter));
 }
 
 void Framebuffer::AttachColorTexture()
@@ -41,8 +41,8 @@ void Framebuffer::AttachColorTexture()
     glGenTextures(1, &color);
     glBindTexture(GL_TEXTURE_2D, color);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width_, height_, 0, GL_RGBA, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex_filter_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex_filter_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     
@@ -281,8 +281,8 @@ void Framebuffer::init(unsigned int width, unsigned int height, int color_size)
         glGenTextures(1, &depth_);
     glBindTexture(GL_TEXTURE_2D, depth_);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width_, height_, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, tex_filter_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, tex_filter_);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     CHECK_GL_ERROR();

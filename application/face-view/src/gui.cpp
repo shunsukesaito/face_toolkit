@@ -312,9 +312,11 @@ void GUI::init(int w, int h)
         renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
     if( FLAGS_renderer.find("deepls") != std::string::npos )
         renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
-    if( FLAGS_renderer.find("lstage") != std::string::npos )
+    else if( FLAGS_renderer.find("ls") != std::string::npos )
         renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
-    if( FLAGS_renderer.find("pm") != std::string::npos )
+    if( FLAGS_renderer.find("pmrec") != std::string::npos )
+        renderer_.addRenderer("PMRec", PosMapReconRenderer::Create("PosMapRecon Rendering", true));
+    else if( FLAGS_renderer.find("pm") != std::string::npos )
         renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
     if( FLAGS_renderer.find("f2f") != std::string::npos )
         renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", true));

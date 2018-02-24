@@ -131,6 +131,12 @@ void FaceOptModule::update(FaceResult& result)
         }
     }
     
+//    for(auto&& c : c_p2p_)
+//    {
+//        std::cout << face_model_->uvs_.row(c.v_idx) << std::endl;
+//    }
+//    std::cout << std::endl;
+    
     result.fd = fd_;
     result.c_p2p = c_p2p_;
     result.c_p2l = c_p2l_;

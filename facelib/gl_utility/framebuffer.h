@@ -24,14 +24,14 @@ typedef std::shared_ptr<Framebuffer> FramebufferPtr;
 // Describes a framebuffer object
 class Framebuffer
 {
-    Framebuffer(unsigned int width, unsigned int height,int color_size);
+    Framebuffer(unsigned int width, unsigned int height,int color_size,int tex_filter);
     Framebuffer(const Framebuffer &);
     const Framebuffer &operator =(const Framebuffer &);
     
 public:
     ~Framebuffer();
     
-    static FramebufferPtr Create(unsigned int width, unsigned int height, int color_size);
+    static FramebufferPtr Create(unsigned int width, unsigned int height, int color_size, int tex_filter=GL_NEAREST);
     void AttachColorTexture();
     void ApplyBuffers();
     
@@ -62,6 +62,7 @@ private:
     
     GLuint depth_;
     std::vector<GLuint> colors_;
+    GLint tex_filter_;
     
     unsigned int width_;
     unsigned int height_;
