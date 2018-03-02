@@ -29,7 +29,7 @@ struct PosMapRenderer : public BaseRenderer
     virtual void init(std::string data_dir,
                       FaceModelPtr model);
     
-    void render(const FaceData& fd);
+    void render(const FaceData& fd, std::string out_name = "pos.exr");
     void render(const Camera& camera, const FaceData& fd);
     void render(int w, int h, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     

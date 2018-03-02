@@ -69,7 +69,7 @@ void PosMapRenderer::init(std::string data_dir,
     tessOuter_ = FLAGS_pm_tessout;
 }
 
-void PosMapRenderer::render(const FaceData& fd)
+void PosMapRenderer::render(const FaceData& fd, std::string out_name)
 {
     // render parameters update
     auto& prog = programs_["main"];
@@ -108,7 +108,7 @@ void PosMapRenderer::render(const FaceData& fd)
     cv::Scharr(pos, dIy, CV_32F, 0, 1);
     
     cv::Mat_<cv::Vec3f> nml(pos.size());
-    cv::imwrite("pos.exr", pos);
+    cv::imwrite(out_name, pos);
 }
 
 void PosMapRenderer::render(const Camera& camera, const FaceData& fd)

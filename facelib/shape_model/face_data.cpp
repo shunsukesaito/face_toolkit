@@ -170,6 +170,14 @@ void FaceData::updateIMGUI()
 {
     Eigen::Vector3f euler = Eigen::matToEulerAngle(RT.block<3,3>(0,0));
     if (ImGui::CollapsingHeader("Face Parameters")){
+        if (ImGui::Button("Reset")){
+            idCoeff.setZero();
+            exCoeff.setZero();
+            alCoeff.setZero();
+            RT = Eigen::Matrix4f::Identity();
+            SH.setZero();
+            SH.col(0).setOnes();
+        }
         if(idCoeff.size() != 0)
         if (ImGui::TreeNode("ID")){
             for(int i = 0; i < idCoeff.size(); ++i)
