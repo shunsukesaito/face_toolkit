@@ -101,7 +101,8 @@ public:
     ~FacePreviewModule();
     
     void init(std::string data_dir,
-              FaceModelPtr face_model);
+              FaceModelPtr face_model,
+              const std::vector<std::string>& flist = std::vector<std::string>());
     
     void update(FaceResult& result);
     
@@ -133,7 +134,10 @@ public:
                                FaceModelPtr face_model,
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
-                               CmdQueueHandle command_queue);
+                               CmdQueueHandle command_queue,
+                               const std::string &file_fmt = "",
+                               int begin_frame = 0,
+                               int end_frame = 0);
 private:
     std::string data_dir_;
     
@@ -143,6 +147,8 @@ private:
     
     FaceModelPtr face_model_;
     FaceData fd_;
+    
+    std::vector<std::string> flist_;
     
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;

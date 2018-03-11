@@ -13,6 +13,7 @@
 
 struct CaptureResult
 {
+    int frame_id;
     cv::Mat img;
     Camera camera;
 };
@@ -59,4 +60,5 @@ private:
     
     FrameLoaderPtr frame_loader_;
     Camera camera_;
+    int frame_id_;
 };

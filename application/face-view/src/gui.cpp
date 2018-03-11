@@ -24,8 +24,12 @@
 // constants
 #include <gflags/gflags.h>
 DEFINE_bool(preview, false, "preview mode");
+DEFINE_bool(no_imgui, false, "disable IMGUI");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
+DEFINE_string(fd_path, "", "FaceData path");
+DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
+DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
 
 struct Session{
     ModuleHandle capture_module_;
@@ -335,7 +339,8 @@ void GUI::init(int w, int h)
     session.capture_module_ = CaptureModule::Create("capture", data_dir, w, h, frame_loader, session.capture_queue_, session.capture_control_queue_);
     if(FLAGS_preview)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
-                                                         session.result_queue_, session.face_control_queue_);
+                                                         session.result_queue_, session.face_control_queue_,
+                                                         FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
     else
         session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
                                               session.capture_queue_, session.result_queue_, session.face_control_queue_);
@@ -382,6 +387,7 @@ void GUI::loop()
                 result_.c_p2l = result.c_p2l;
                 result_.c_p2p = result.c_p2p;
                 result_.p2d = result.p2d;
+                result_.frame_id = result.frame_id;
             }
             result_.p2d = result.p2d;
             
@@ -401,21 +407,27 @@ void GUI::loop()
         renderer_.draw(result_);
         
 #ifdef WITH_IMGUI
-        ImGui_ImplGlfwGL3_NewFrame();
-        ImGui::Begin("Control Panel", &show_control_panel_);
-        
-        renderer_.updateIMGUI();
-        result_.camera.updateIMGUI();
-        result_.fd.updateIMGUI();
-        if(!FLAGS_preview){
-            p2d_param_->updateIMGUI();
-            f2f_param_->updateIMGUI();
+        if(!FLAGS_no_imgui){
+            ImGui_ImplGlfwGL3_NewFrame();
+            ImGui::Begin("Control Panel", &show_control_panel_);
+            
+            renderer_.updateIMGUI();
+            result_.camera.updateIMGUI();
+            result_.fd.updateIMGUI();
+            if(!FLAGS_preview){
+                p2d_param_->updateIMGUI();
+                f2f_param_->updateIMGUI();
+            }
+            
+            ImGui::End();
+            ImGui::Render();
         }
-        
-        ImGui::End();
-        ImGui::Render();
-#endif
+#endif        
         renderer_.flush();
+//        cv::Mat img;
+//        renderer_.screenshot(img);
+//        cv::imwrite(std::to_string(result_.frame_id) + ".png", img);
+//        if(result_.frame_fid == FLAGS_fd_end_id) break;
         
         glDeleteSync(tsync);
         tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

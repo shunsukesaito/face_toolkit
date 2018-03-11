@@ -133,7 +133,7 @@ void FaceOptModule::update(FaceResult& result)
     
 //    for(auto&& c : c_p2p_)
 //    {
-//        std::cout << face_model_->uvs_.row(c.v_idx) << std::endl;
+//        std::cout << face_model_->uvs_(c.v_idx,0) << " " << 1.0-face_model_->uvs_(c.v_idx,1) << std::endl;
 //    }
 //    std::cout << std::endl;
     
@@ -210,6 +210,7 @@ void FacePreviewModule::Process()
             FaceResult result;
             result.img = input_frame_queue_->front()->img;
             result.camera = input_frame_queue_->front()->camera;
+            result.frame_id = input_frame_queue_->front()->frame_id;
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
@@ -233,10 +234,12 @@ void FacePreviewModule::Stop()
 }
 
 void FacePreviewModule::init(std::string data_dir,
-                         FaceModelPtr face_model)
+                             FaceModelPtr face_model,
+                             const std::vector<std::string>& flist)
 {
     data_dir_ = data_dir;
     
+    flist_ = flist;
     face_model_ = face_model;
     fd_.setFaceModel(face_model_);
 }
@@ -244,6 +247,10 @@ void FacePreviewModule::init(std::string data_dir,
 void FacePreviewModule::update(FaceResult& result)
 {
     result.fd = fd_;
+    if(flist_.size() != 0){
+        result.loadFromTXT(flist_[result.frame_id%(int)flist_.size()]);
+        result.processed_ = true;
+    }
     result.c_p2p = c_p2p_;
     result.c_p2l = c_p2l_;
 }
@@ -264,16 +271,32 @@ void FacePreviewModule::set_command_queue(CmdQueueHandle queue)
 }
 
 ModuleHandle FacePreviewModule::Create(const std::string &name,
-                                   const std::string &data_dir,
-                                   FaceModelPtr face_model,
-                                   CapQueueHandle input_frame_queue,
-                                   FaceQueueHandle output_result_queue,
-                                   CmdQueueHandle command_queue)
+                                       const std::string &data_dir,
+                                       FaceModelPtr face_model,
+                                       CapQueueHandle input_frame_queue,
+                                       FaceQueueHandle output_result_queue,
+                                       CmdQueueHandle command_queue,
+                                       const std::string &file_fmt,
+                                       int begin_frame,
+                                       int end_frame)
 {
     auto module = new FacePreviewModule(name);
     // add this module to the global registry
     
-    module->init(data_dir,face_model);
+    if(file_fmt.empty()){
+        module->init(data_dir,face_model);
+    }
+    else{
+        char tmp[256];
+        std::vector<std::string> file_list;
+        for(int i = begin_frame; i <= end_frame; ++i)
+        {
+            sprintf(tmp, file_fmt.c_str(), i);
+            file_list.push_back(std::string(tmp));
+        }
+        module->init(data_dir,face_model,file_list);
+    }
+    
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);
     module->set_command_queue(command_queue);
