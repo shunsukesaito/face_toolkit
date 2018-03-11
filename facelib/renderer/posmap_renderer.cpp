@@ -8,6 +8,8 @@
 
 #include "posmap_renderer.h"
 
+#include <utility/exr_loader.h>
+
 // constants
 #include <gflags/gflags.h>
 DEFINE_uint32(pm_size, 256, "size of geometry_image");
@@ -237,9 +239,9 @@ void PosMapReconRenderer::init(std::string data_dir,
     mesh_.update(prog, AT_UV);
     Camera::initializeUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
-    cv::Mat posmap = cv::imread(FLAGS_pmrec_file, CV_LOAD_IMAGE_ANYCOLOR | CV_LOAD_IMAGE_ANYDEPTH);
-    cv::flip(posmap,posmap,0);
-    cv::cvtColor(posmap,posmap,CV_BGR2RGB);
+    cv::Mat posmap;
+    loadEXRToCV(FLAGS_pmrec_file, posmap);
+    cv::cvtColor(posmap,posmap,CV_BGRA2RGB);
     prog.createTexture("u_sample_pos", posmap);
     
     tessInner_ = FLAGS_pm_tessin;
