@@ -14,6 +14,104 @@
 
 #include "face_model.h"
 
+// constants
+#include <gflags/gflags.h>
+DEFINE_uint32(fw_cont_size, 15, "number of contour vertices on FW");
+
+std::vector<int> sampleUniformContour(int n_sample, std::vector<int>& cont_indices, const Eigen::VectorXf& pts, const Eigen::Matrix4f& KRT)
+{
+    if(n_sample < 1) return;
+    
+    std::vector<Eigen::Vector2f> p2d;
+    Eigen::Vector4f v;
+    for(int i = 0; i < cont_indices.size(); ++i)
+    {
+        int idx = cont_indices[i];
+        v << pts.b3(idx), 1.0;
+        v = KRT * v;
+        if(fabs(v[2]) > 1e-8)
+            v /= v[2];
+        p2d.push_back(v.segment(0,2));
+    }
+    
+    assert(n_sample%2 == 0); // the landmark points are sampled evenly on the right and left side separetely
+    assert(p2d.size()%2 == 1);
+    const int half_index = n_sample / 2;
+    const int half_vertices_list = (p2d.size() - 1) / 2;
+    float total_len = 0.0;
+    
+    // sample the first half of contour
+    Eigen::Vector2f prev_p = p2d[0];
+    std::vector<float> piece_lengthes;
+    for(int i = 1; i < half_vertices_list+1; ++i)
+    {
+        float len = (p2d[i]-prev_p).norm();
+        piece_lengthes.push_back(len);
+        total_len += len;
+        prev_p = p2d[i];
+    }
+    
+    float step = total_len / (float)half_index;
+    std::vector<int> sampled_contour_indices;
+    sampled_contour_indices.push_back(cont_indices[0]);
+    float cur_len = piece_lengthes[0];
+    for(int i = 1; i <= piece_lengthes.size(); ++i)
+    {
+        if(cur_len > step){
+            float ratio = (cur_len-step)/piece_lengthes[i-1];
+            if(ratio > 0.5)
+                sampled_contour_indices.push_back(cont_indices[i-1]);
+            else
+                sampled_contour_indices.push_back(cont_indices[i]);
+            cur_len = cur_len - step;
+            i--;
+            continue;
+        }
+        cur_len += piece_lengthes[i];
+    }
+    if(sampled_contour_indices.size() != half_index + 1)
+        sampled_contour_indices.push_back(cont_indices[half_vertices_list]);
+    
+    // sampled points on the second half of the contour
+    total_len = 0.0;
+    
+    prev_p = p2d[half_vertices_list];
+    piece_lengthes.clear();
+    for(int i = half_vertices_list+1; i < p2d.size(); ++i)
+    {
+        float len = (p2d[i]-prev_p).norm();
+        piece_lengthes.push_back(len);
+        total_len += len;
+        prev_p = p2d[i];
+    }
+    
+    step = total_len / (float)half_index;
+    
+    cur_len = piece_lengthes[0];
+    for(int i = 1; i <= piece_lengthes.size(); ++i)
+    {
+        if(cur_len > step){
+            float ratio = (cur_len-step)/piece_lengthes[i-1];
+            if(ratio > 0.5)
+                sampled_contour_indices.push_back(cont_indices[half_vertices_list+i-1]);
+            else
+                sampled_contour_indices.push_back(cont_indices[half_vertices_list+i]);
+
+            if(sampled_contour_indices.size() == n_sample) break;
+            cur_len = cur_len - step;
+            i--;
+            continue;
+        }
+        cur_len += piece_lengthes[i];
+    }
+    if(sampled_contour_indices.size() != n_sample+1)
+        sampled_contour_indices.push_back(cont_indices[p2d.size()-1]);
+
+    assert(sampled_contour_indices.size() == n_sample+1);
+
+    return sampled_contour_indices;
+}
+
 void FaceData::updateParams(const FaceParams& fp)
 {
     this->idCoeff = fp.idCoeff;
@@ -165,6 +263,161 @@ void FaceData::saveObj(const std::string& filename)
     }
 }
 
+void FaceData::updateContour(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc)
+{
+    if(model_->fm_type_.find("bv") != std::string::npos)
+        updateContourBV(K, RTc);
+    else if(model_->fm_type_.find("fw") != std::string::npos)
+        updateContourFW(K, RTc);
+    else if(model_->fm_type_.find("pin") != std::string::npos)
+        updateContourPIN(K, RTc);
+}
+
+void FaceData::updateContourBV(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc)
+{
+    const auto& cont_lists = model_->cont_candi_;
+    
+	Eigen::Matrix4f KRT = K*RTc*RT;
+    
+    Eigen::Vector4f v;
+    cont_idx_.clear();
+    for(int i = 0; i < cont_lists.size(); ++i)
+    {
+		int idx = cont_lists[i][0];
+        v << pts_.b3(idx), 1.0;
+		v = KRT*v;
+
+        float px = v[0]/v[2];
+        for(int j = 1; j < cont_lists[i].size(); ++j)
+        {
+			v << pts_.b3(cont_lists[i][j]), 1.0;
+			v = KRT*v;
+            v /= v[2];
+            if(i < 8){
+                if(v[0] < px){
+					px = v[0];
+                    idx = cont_lists[i][j];
+                }
+            }
+            else{
+				if (v[0] > px){
+					px = v[0];
+                    idx = cont_lists[i][j];
+                }
+            }
+        }
+        cont_idx_.push_back(idx);
+    }
+}
+
+void FaceData::updateContourPIN(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc)
+{
+    const auto& cont_lists = model_->cont_candi_;
+    
+    Eigen::Matrix4f extRT = RTc*RT;
+    Eigen::Matrix4f KRT = K*RTc*RT;
+    
+    cont_idx_.clear();
+    Eigen::Vector4f n, v;
+    for(int i = 0; i < cont_lists.size(); ++i)
+    {
+        int min_id = -1;
+        float prev_dot = 0.0;
+        float dot = 0.0;
+        
+        std::vector<int> cont_cand;
+        for(int j = 0; j < cont_lists[i].size(); ++j)
+        {
+            int idx = cont_lists[i][j];
+            n << nml_.row(idx).transpose(), 0.0;
+            v << pts_.b3(idx), 1.0;
+            
+            n = extRT * n;
+            v = extRT * v;
+            
+            dot = v.segment(0,3).normalized().dot(n.segment(0,3));
+            if(j != 0 && prev_dot*dot < 0){
+                if(fabs(dot) < fabs(prev_dot)){
+                    cont_cand.push_back(cont_lists[i][j]);
+                }
+                else{
+                    cont_cand.push_back(cont_lists[i][j-1]);
+                }
+            }
+            prev_dot = dot;
+        }
+        if(cont_cand.size() == 0){
+            if(prev_dot < 0){
+                min_id = cont_lists[i][0];
+            }
+            else{
+                min_id = cont_lists[i][cont_lists[i].size()-1];
+            }
+        }
+        else {
+            min_id = cont_cand[0]; // Note: so far, it works.
+        }
+        
+        assert(min_id != -1);
+        cont_idx_.push_back(min_id);
+    }
+}
+
+void FaceData::updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc)
+{
+    const auto& cont_lists = model_->cont_candi_;
+    
+    Eigen::Matrix4f extRT = RTc*RT;
+	Eigen::Matrix4f KRT = K*RTc*RT;
+    
+    std::vector<int> contour_indices;
+    Eigen::Vector4f n, v;
+    for(int i = 0; i < cont_lists.size(); ++i)
+    {
+        int min_id = -1;
+        float prev_dot = 0.0;
+        float dot = 0.0;
+
+        std::vector<int> cont_cand;
+        for(int j = 0; j < cont_lists[i].size(); ++j)
+        {
+            int idx = cont_lists[i][j];
+            n << nml_.row(idx).transpose(), 0.0;
+            v << pts_.b3(idx), 1.0;
+
+            n = extRT * n;
+            v = extRT * v;
+          
+            dot = v.segment(0,3).normalized().dot(n.segment(0,3));
+            if(j != 0 && prev_dot*dot < 0){
+                if(fabs(dot) < fabs(prev_dot)){
+                    cont_cand.push_back(cont_lists[i][j]);
+                }
+                else{
+                    cont_cand.push_back(cont_lists[i][j-1]);
+                }
+            }
+            prev_dot = dot;
+        }
+        if(cont_cand.size() == 0){
+            if(prev_dot < 0){
+                min_id = cont_lists[i][0];
+            }
+            else{
+                min_id = cont_lists[i][cont_lists[i].size()-1];
+            }
+        }
+        else {
+            min_id = cont_cand[0]; // Note: so far, it works.
+        }
+
+        assert(min_id != -1);
+        contour_indices.push_back(min_id);
+    }
+    
+    cont_idx_ = sampleUniformContour(FLAGS_fw_cont_size-1, contour_indices, pts_, KRT);
+}
+
 #ifdef WITH_IMGUI
 void FaceData::updateIMGUI()
 {
@@ -207,4 +460,34 @@ void FaceData::updateIMGUI()
 
 }
 #endif
+
+void BaseFaceModel::loadContourList(std::string file)
+{
+    std::ifstream fin;
+    fin.open(file,std::ifstream::in);
+    
+    cont_candi_.clear();
+    if(fin.is_open()){
+        std::string line;
+        
+        int index;
+        while(getline(fin, line))
+        {
+            std::vector<int> points;
+            size_t current = 0, found;
+            while((found = line.find_first_of(" ", current)) != std::string::npos){
+                index = atoi(std::string(line,current,found - current).c_str());
+                points.push_back(index);
+                current = found+1;
+            }
+            index = atoi(std::string(line,current,line.size()-current).c_str());
+            points.push_back(index);
+            cont_candi_.push_back(points);
+        }
+        fin.close();
+    }
+    else{
+        std::cout << "Error Contour List cannot open... " << file << std::endl;
+    }
+}
 

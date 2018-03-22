@@ -99,6 +99,8 @@ void FaceOptModule::init(std::string data_dir,
     P2P2DC::parseConstraints(data_dir + "p2p_const_" + face_model->fm_type_ + ".txt", c_p2p_);
     P2L2DC::parseConstraints(data_dir + "p2l_const_" + face_model->fm_type_ + ".txt", c_p2l_);
     
+    face_model_->loadContourList(data_dir + "cont_list_" + face_model->fm_type_ + ".txt");
+    
     fdetector_ = std::make_shared<Face2DDetector>(data_dir);
     CHECK_GL_ERROR();
 }
@@ -130,6 +132,24 @@ void FaceOptModule::update(FaceResult& result)
             result.processed_ = true;
         }
     }
+    
+//    std::ifstream infile("/Users/shunsuke/Documents/contour_index.txt");
+//    std::string line;
+//    for(int i = 0; i < 17; ++i)
+//    {
+//        std::ofstream ofile("/Users/shunsuke/Documents/cont" + std::to_string(i) + ".txt");
+//        std::vector<int> tmp;
+//        // identity
+//        std::getline(infile, line);
+//        std::istringstream iss(line);
+//        int tmp_i;
+//        while (iss >> tmp_i)
+//        {
+//            ofile << face_model_->uvs_(tmp_i,0) << " " << 1.0-face_model_->uvs_(tmp_i,1) << std::endl;
+//        }
+//        ofile.close();
+//    }
+//    exit(0);
     
 //    for(auto&& c : c_p2p_)
 //    {

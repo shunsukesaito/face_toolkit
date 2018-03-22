@@ -1,5 +1,8 @@
 #include "f2f_renderer.h"
 
+#include <gflags/gflags.h>
+DEFINE_uint32(f2f_render_location, 4, "f2f rendering location (defalut: diffuse)");
+
 static const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
 
 static Eigen::MatrixXf computedIdn(int ch,
@@ -368,6 +371,7 @@ void F2FRenderer::updateIMGUI()
 RendererHandle F2FRenderer::Create(std::string name, bool show)
 {
     auto renderer = new F2FRenderer(name, show);
+    renderer->param_.location = FLAGS_f2f_render_location;
     
     return RendererHandle(renderer);
 }

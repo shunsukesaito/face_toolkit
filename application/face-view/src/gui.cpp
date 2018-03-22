@@ -24,6 +24,7 @@
 // constants
 #include <gflags/gflags.h>
 DEFINE_bool(preview, false, "preview mode");
+DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
@@ -393,6 +394,12 @@ void GUI::loop()
             
             session.result_queue_->pop();
             result_.fd.updateAll();
+            result_.fd.updateContour(result_.camera.intrinsic_, result_.camera.extrinsic_);
+            
+            for(int i = 0; i < result_.fd.cont_idx_.size(); ++i)
+            {
+                result_.c_p2l[i].v_idx = result_.fd.cont_idx_[i];
+            }
         }
         
         char title[256];
@@ -424,10 +431,13 @@ void GUI::loop()
         }
 #endif        
         renderer_.flush();
-//        cv::Mat img;
-//        renderer_.screenshot(img);
-//        cv::imwrite(std::to_string(result_.frame_id) + ".png", img);
-//        if(result_.frame_fid == FLAGS_fd_end_id) break;
+        
+        if(FLAGS_fd_record){
+            cv::Mat img;
+            renderer_.screenshot(img);
+            cv::imwrite(std::to_string(result_.frame_id) + ".png", img);
+            if(result_.frame_id == FLAGS_fd_end_id) break;
+        }
         
         glDeleteSync(tsync);
         tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

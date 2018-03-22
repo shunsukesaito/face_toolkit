@@ -10,6 +10,7 @@
 
 #include <array>
 #include <mutex>
+#include <fstream>
 #include <iostream>
 #include <memory>
 
@@ -59,6 +60,8 @@ struct FaceData
     
     Eigen::MatrixXf w_ex_; // blendshape basis for bilinear model
     Eigen::MatrixXf w_id_; // identity basis for bilinear model
+
+    std::vector<int> cont_idx_;
         
     bool id_opt_ = false; // for bilinear identity optimization
     
@@ -70,6 +73,12 @@ struct FaceData
     
     void updateAll();
     void updateShape();
+
+    void updateContour(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
+
+    void updateContourBV(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
+    void updateContourPIN(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
+    void updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
     
     Eigen::Vector3f computeV(int vidx) const;
     Eigen::Ref<const Eigen::MatrixXf> dID(int vidx, int size) const;
@@ -107,6 +116,11 @@ struct BaseFaceModel
     
     // for rendering 
     std::vector<unsigned int> maps_;
+
+    // contour candidates for fitting
+    std::vector<std::vector<int>> cont_candi_;
+    
+    void loadContourList(std::string file);
     
     virtual void updateExpression(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
     virtual void updateIdentity(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
