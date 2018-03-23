@@ -7,6 +7,10 @@
 //
 #include "face2d_detector.h"
 
+#include <gflags/gflags.h>
+
+DEFINE_string(cpm_ip, "csloadbalancer-dev-746798469.us-east-1.elb.amazonaws.com", "IP for CPM net");
+
 cv::Rect ScaleRect(const cv::Rect& rect,float scale)
 {
     int cx = rect.x + rect.width/2;
@@ -25,10 +29,13 @@ void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector2f>& p2d)
 }
 
 Face2DDetector::Face2DDetector(std::string data_dir){
+    cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
+
     detector_ = dlib::get_frontal_face_detector();
     dlib::deserialize(data_dir + DLIB_68_FACEALIGNMENT_MODEL) >> sp_;
     gab_detector_.LoadModel(data_dir + NPD_MODEL);
     gab_detector_.DetectSize = 200;
+    
 }
 
 void Face2DDetector::GetFaceRects(const cv::Mat &img,
@@ -107,7 +114,11 @@ void Face2DDetector::GetFaceRects(const cv::Mat &img,
     
 }
 
-bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img, std::vector<Eigen::Vector2f>& p2d, cv::Rect& rect, bool enable_dlib)
+bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
+                                      std::vector<Eigen::Vector2f>& p2d,
+                                      cv::Rect& rect,
+                                      bool enable_dlib,
+                                      bool enable_cpm)
 {
     std::vector<dlib::rectangle> dets;
     dlib::array2d<dlib::rgb_pixel> img_dlib, img_sml_dlib;
@@ -162,18 +173,8 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img, std::vector<Eigen::Vec
         }
     }
     
-    dlib::full_object_detection shape;
     if(dets.size() == 0){
         return false;
-    }
-    else{
-        shape = sp_(img_dlib, dets[0]);
-    }
-    
-    p2d.clear();
-    for(int i = 0; i < shape.num_parts(); ++i)
-    {
-        p2d.push_back(Eigen::Vector2f(shape.part(i)(0),shape.part(i)(1)));
     }
     
     rect.x = dets[0].left();
@@ -181,11 +182,43 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img, std::vector<Eigen::Vec
     rect.width = dets[0].width();
     rect.height = dets[0].height();
     
+    if(enable_cpm){
+        cpm_tcp_->sendImage(img, rect);
+        std::vector<Eigen::Vector3f> p2d_with_conf = cpm_tcp_->getLandmarks();
+        p2d.clear();
+        for(int i = 0; i < p2d_with_conf.size(); ++i)
+        {
+            p2d.push_back(Eigen::Vector2f(p2d_with_conf[i][0],p2d_with_conf[i][1]));
+        }
+        return true;
+    }
+    
+    dlib::full_object_detection shape = sp_(img_dlib, dets[0]);
+    
+    p2d.clear();
+    for(int i = 0; i < shape.num_parts(); ++i)
+    {
+        p2d.push_back(Eigen::Vector2f(shape.part(i)(0),shape.part(i)(1)));
+    }
+    
     return true;
 }
 
-bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img, const cv::Rect &rect, std::vector<Eigen::Vector2f>& p2d)
+bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
+                                      const cv::Rect &rect,
+                                      std::vector<Eigen::Vector2f>& p2d,
+                                      bool enable_cpm)
 {
+    if(enable_cpm){
+        cpm_tcp_->sendImage(img, rect);
+        std::vector<Eigen::Vector3f> p2d_with_conf = cpm_tcp_->getLandmarks();
+        p2d.clear();
+        for(int i = 0; i < p2d_with_conf.size(); ++i)
+        {
+            p2d.push_back(Eigen::Vector2f(p2d_with_conf[i][0],p2d_with_conf[i][1]));
+        }
+        return true;
+    }
     dlib::array2d<dlib::rgb_pixel> img_dlib;
     assign_image(img_dlib, dlib::cv_image<dlib::bgr_pixel>(img));
     

@@ -33,7 +33,8 @@ public:
     void init(std::string data_dir,
               FaceModelPtr face_model,
               P2DFitParamsPtr p2d_param,
-              F2FParamsPtr f2f_param);
+              F2FParamsPtr f2f_param,
+              Face2DDetectorPtr face_detector);
     
     void update(FaceResult& result);
     
@@ -65,6 +66,7 @@ public:
                                FaceModelPtr face_model,
                                P2DFitParamsPtr p2d_param,
                                F2FParamsPtr f2f_param,
+                               Face2DDetectorPtr face_detector,
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue);

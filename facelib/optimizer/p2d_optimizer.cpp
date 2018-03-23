@@ -27,7 +27,9 @@ void P2DFitParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("P2DFit Parameters")){
         ImGui::Checkbox("Run", &run_);
-
+        ImGui::Checkbox("verbose", &verbose_);
+        ImGui::Checkbox("update land", &update_land_);
+        
         ImGui::Checkbox("robust", &robust_);
         ImGui::InputInt("maxIter", &maxIter_);
         ImGui::InputInt("DOF ID", &dof.ID);
@@ -240,7 +242,7 @@ void P2DGaussNewton(FaceData& fd,
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
+        if (params.verbose_) std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
         
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
@@ -339,7 +341,7 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
             setFaceVector(Xf, rtf[j], fd[j], dof);
         }
         
-        std::cout << "iter " << i << " " << err << std::endl;
+        if (params.verbose_) std::cout << "iter " << i << " " << err << std::endl;
 
         if (dX.norm() < params.gn_thresh_) break;
     }

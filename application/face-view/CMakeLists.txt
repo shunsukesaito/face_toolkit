@@ -9,6 +9,7 @@ PinscreenModuleBegin(faceview DEPENDS
 					library/gflags 
 					library/OpenCV 
 					library/dlib 
+					library/LibUV
 					utility/spdlog 
 					utility/glm 
 					utility/cereal 

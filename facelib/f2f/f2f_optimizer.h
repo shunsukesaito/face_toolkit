@@ -24,6 +24,8 @@ struct F2FParams
     bool robust_ = false;
     bool sym_with_exp_ = false;
     
+    bool update_land_ = false;
+    
     float gn_thresh_ = 1.e-6f; // gauss-newton threshold
     float mclose_thresh_ = 4.0f; // mouth close threshold
     float w_pix_ = 1.0f;

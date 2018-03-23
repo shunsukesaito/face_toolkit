@@ -77,6 +77,7 @@ target_link_libraries(faceview
                       PSM::utility
                       PSM::gflags
                       PSM::OpenCV
+                      PSM::LibUV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}

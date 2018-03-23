@@ -27,8 +27,9 @@ void F2FParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("F2F Parameters")){
         ImGui::Checkbox("Run", &run_);
-        
         ImGui::Checkbox("verbose", &verbose_);
+        ImGui::Checkbox("update land", &update_land_);
+        
         ImGui::Checkbox("robust", &robust_);
         ImGui::Checkbox("sym including exp", &sym_with_exp_);
         ImGui::InputIntn("maxIter", &maxIter_[0], maxIter_.size());
@@ -275,7 +276,7 @@ void F2FGaussNewton(FaceData& fd,
         
         if (params.verbose_) logger->info("	Error Evaluation...");
         
-        std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
+        if (params.verbose_) std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
         
         //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());
         

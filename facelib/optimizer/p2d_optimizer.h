@@ -21,6 +21,9 @@ struct P2DFitParams
     int maxIter_ = 10;
     
     bool robust_ = false;
+    bool verbose_ = false;
+    
+    bool update_land_ = false;
     
     float gn_thresh_ = 1.0e-4f;
     float mclose_thresh_ = 4.0f;

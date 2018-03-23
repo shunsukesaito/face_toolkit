@@ -8,6 +8,10 @@
 
 #include "gui.h"
 
+#include <memory>
+
+#include <uv.h>
+
 #include <renderer/bg_renderer.h>
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>
@@ -29,6 +33,7 @@ DEFINE_bool(no_imgui, false, "disable IMGUI");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
+DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
 DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
 DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
 
@@ -335,7 +340,24 @@ void GUI::init(int w, int h)
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
     f2f_param_ = F2FParamsPtr(new F2FParams());
     
-    auto frame_loader = EmptyLoader::Create();//VideoLoader::Create(0);
+    auto frame_loader = EmptyLoader::Create();
+    if( FLAGS_loader.find("jpg") != std::string::npos ||
+        FLAGS_loader.find("png") != std::string::npos ||
+        FLAGS_loader.find("bmp") != std::string::npos){
+        frame_loader = SingleImageLoader::Create(FLAGS_loader);
+    }
+    else if( FLAGS_loader.find("avi") != std::string::npos ||
+             FLAGS_loader.find("mp4") != std::string::npos ||
+             FLAGS_loader.find("mov") != std::string::npos){
+        frame_loader = VideoLoader::Create(FLAGS_loader);
+    }
+    else if( !FLAGS_loader.empty() ){
+        int vid;
+        std::istringstream( FLAGS_loader ) >> vid;
+        frame_loader = VideoLoader::Create(vid);
+    }
+    
+    auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
     
     session.capture_module_ = CaptureModule::Create("capture", data_dir, w, h, frame_loader, session.capture_queue_, session.capture_control_queue_);
     if(FLAGS_preview)
@@ -343,7 +365,7 @@ void GUI::init(int w, int h)
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
     else
-        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
+        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_, face_detector,
                                               session.capture_queue_, session.result_queue_, session.face_control_queue_);
     
     GLFWwindow* window = renderer_.windows_[MAIN];
@@ -364,7 +386,13 @@ void GUI::init(int w, int h)
 void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    
+
+    uv_async_t async_handle;
+    uv_prepare_t prep;
+
+    check_uv(uv_async_init(uv_default_loop(), &async_handle, NULL));
+    check_uv(uv_prepare_init(uv_default_loop(), &prep));
+
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
     
@@ -443,6 +471,8 @@ void GUI::loop()
         tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
         glfwPollEvents();
+        
+        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
     }
     
 #ifdef WITH_IMGUI

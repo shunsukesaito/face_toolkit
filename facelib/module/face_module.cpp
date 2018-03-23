@@ -79,13 +79,16 @@ void FaceOptModule::Stop()
 void FaceOptModule::init(std::string data_dir,
                       FaceModelPtr face_model,
                       P2DFitParamsPtr p2d_param,
-                      F2FParamsPtr f2f_param)
+                      F2FParamsPtr f2f_param,
+                      Face2DDetectorPtr face_detector)
 {
     data_dir_ = data_dir;
     
     face_model_ = face_model;
     p2d_param_ = p2d_param;
     f2f_param_ = f2f_param;
+    
+    fdetector_ = face_detector;
     
     p2d_param_->dof.ID = std::min(p2d_param_->dof.ID, face_model->n_id());
     p2d_param_->dof.EX = std::min(p2d_param_->dof.EX, face_model->n_exp());
@@ -100,16 +103,21 @@ void FaceOptModule::init(std::string data_dir,
     P2L2DC::parseConstraints(data_dir + "p2l_const_" + face_model->fm_type_ + ".txt", c_p2l_);
     
     face_model_->loadContourList(data_dir + "cont_list_" + face_model->fm_type_ + ".txt");
-    
-    fdetector_ = std::make_shared<Face2DDetector>(data_dir);
     CHECK_GL_ERROR();
 }
 
 void FaceOptModule::update(FaceResult& result)
 {
     cv::Rect rect;
+    if(p2d_param_->update_land_ || f2f_param_->update_land_){
+        fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
+        p2d_ = result.p2d;
+    }
+    else{
+        result.p2d = p2d_;
+    }
+    
     if(p2d_param_->run_){
-        fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
         if(result.p2d.size() != 0){
@@ -118,7 +126,6 @@ void FaceOptModule::update(FaceResult& result)
         }
     }
     if(f2f_param_->run_){
-        fdetector_->GetFaceLandmarks(result.img, result.p2d, rect);
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
         
@@ -182,6 +189,7 @@ ModuleHandle FaceOptModule::Create(const std::string &name,
                                 FaceModelPtr face_model,
                                 P2DFitParamsPtr p2d_param,
                                 F2FParamsPtr f2f_param,
+                                Face2DDetectorPtr face_detector,
                                 CapQueueHandle input_frame_queue,
                                 FaceQueueHandle output_result_queue,
                                 CmdQueueHandle command_queue)
@@ -189,7 +197,7 @@ ModuleHandle FaceOptModule::Create(const std::string &name,
     auto module = new FaceOptModule(name);
     // add this module to the global registry
     
-    module->init(data_dir,face_model,p2d_param,f2f_param);
+    module->init(data_dir,face_model,p2d_param,f2f_param,face_detector);
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);
     module->set_command_queue(command_queue);
