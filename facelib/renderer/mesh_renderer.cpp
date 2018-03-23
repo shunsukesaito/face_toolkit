@@ -26,6 +26,8 @@ void MeshRenderer::init(std::string data_dir,
     prog.createUniform("u_tessinner", DataType::FLOAT);
     prog.createUniform("u_tessouter", DataType::FLOAT);
     prog.createUniform("u_tessalpha", DataType::FLOAT);
+
+    prog.createUniform("u_alpha", DataType::FLOAT);
     
     Camera::initializeUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
@@ -48,9 +50,13 @@ void MeshRenderer::render(const Camera& camera,
     prog.setUniformData("u_tessinner", (float)tessInner_);
     prog.setUniformData("u_tessouter", (float)tessOuter_);
     prog.setUniformData("u_tessalpha", tessAlpha_);
+
+    prog.setUniformData("u_alpha", alpha);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     prog.draw(wire_);
 }
@@ -71,9 +77,13 @@ void MeshRenderer::render(const Camera& camera,
     prog.setUniformData("u_tessinner", (float)tessInner_);
     prog.setUniformData("u_tessouter", (float)tessOuter_);
     prog.setUniformData("u_tessalpha", tessAlpha_);
+
+    prog.setUniformData("u_alpha", alpha);
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     prog.draw(wire_);
 }
@@ -97,9 +107,11 @@ void MeshRenderer::updateIMGUI()
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
         ImGui::Checkbox("wire", &wire_);
+        ImGui::SliderFloat("Transparency", &alpha, 0.0, 1.0);
         ImGui::InputInt("TessInner", &tessInner_);
         ImGui::InputInt("TessOuter", &tessOuter_);
         ImGui::SliderFloat("TessAlpha", &tessAlpha_, 0.0, 1.0);
+        
     }
 }
 #endif

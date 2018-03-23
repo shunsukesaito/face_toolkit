@@ -13,6 +13,7 @@ uniform float u_light_rot;
 uniform vec3 u_light_pos;
 uniform float u_specscale;
 uniform float u_diffscale;
+uniform float u_alpha;
 
 // from camera
 uniform vec3 u_camera_pos;
@@ -295,4 +296,12 @@ void main(void)
     frag_spec_albedo = gammaCorrection(frag_spec_albedo, 2.2);
     frag_spec_normal = vec4(specNormal,1.0);
     frag_diff_normal = vec4(diffNormalR,1.0);
+
+    frag_all.a = u_alpha;
+    frag_diff.a = u_alpha;
+    frag_spec.a = u_alpha;
+    frag_diff_albedo.a = u_alpha;
+    frag_spec_albedo.a = u_alpha;
+    frag_spec_normal.a = u_alpha;
+    frag_diff_normal.a = u_alpha;
 }

@@ -5,6 +5,7 @@ uniform uint u_enable_texture;
 uniform uint u_enable_mask;
 uniform uint u_enable_seg;
 uniform float u_cull_offset;
+uniform float u_alpha;
 
 uniform vec3 u_SHCoeffs[9];
 
@@ -92,4 +93,13 @@ void main()
         if (texture(u_sample_seg, VertexIn.proj_texcoord)[0] > 0.5)
             discard;
     }
+
+    frag_pos.a = u_alpha;
+    frag_normal.a = u_alpha;
+    frag_color.a = u_alpha;
+    frag_texcoord.a = u_alpha;
+    frag_diffuse.a = u_alpha;
+    frag_shading.a = u_alpha;
+    frag_barycentric.a = u_alpha;
+    frag_indices.a = u_alpha;
 }

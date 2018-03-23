@@ -6,6 +6,7 @@ uniform uint u_enable_mask;
 uniform uint u_enable_seg;
 uniform uint u_inv_diffuse;
 uniform float u_cull_offset;
+uniform float u_alpha;
 
 uniform vec3 u_SHCoeffs[9];
 
@@ -87,4 +88,6 @@ void main()
         if (texture(u_sample_seg, VertexIn.proj_texcoord)[0] > 0.5)
             discard;
     }
+
+    frag_diffuse.a = u_alpha;
 }

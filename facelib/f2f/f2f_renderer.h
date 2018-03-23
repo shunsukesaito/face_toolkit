@@ -15,6 +15,7 @@ struct F2FRenderParams{
     bool enable_mask = 1;
     bool enable_seg = 0;
     float cull_offset = 0.0;
+    float alpha = 1.0;
     
     // for preview
     bool tex_mode = 0;

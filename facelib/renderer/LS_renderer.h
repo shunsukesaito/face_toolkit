@@ -18,6 +18,8 @@ struct LSRenderParams{
     float diff_scale = 1.0;
     float spec_scale = 1.0;
     
+    float alpha = 1.0;
+    
     bool uv_view = 0;
     
     int env_id = 0;

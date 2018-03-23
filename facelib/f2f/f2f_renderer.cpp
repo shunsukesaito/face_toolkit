@@ -187,6 +187,7 @@ void F2FRenderParams::init(GLProgram& prog, bool _preview)
     prog.createUniform("u_enable_seg", DataType::UINT);
     
     prog.createUniform("u_cull_offset", DataType::FLOAT);
+    prog.createUniform("u_alpha", DataType::FLOAT);
     
     preview = _preview;
     if(preview){
@@ -202,6 +203,7 @@ void F2FRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_enable_seg", (uint)enable_seg);
     
     prog.setUniformData("u_cull_offset", cull_offset);
+    prog.setUniformData("u_alpha", alpha);
     
     if(preview){
         prog.setUniformData("u_tex_mode", (uint)tex_mode);
@@ -215,6 +217,7 @@ void F2FRenderParams::updateIMGUI()
     ImGui::Checkbox("mask", &enable_mask);
     ImGui::Checkbox("seg", &enable_seg);
     ImGui::Checkbox("texture", &enable_tex);
+    ImGui::SliderFloat("Transparency", &alpha, 0.0, 1.0);
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
     ImGui::ListBox("RenderTarget", &location, listbox_items, 8);

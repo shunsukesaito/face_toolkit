@@ -13,6 +13,8 @@ void IBLRenderParams::init(GLProgram& prog)
     prog.createUniform("u_light_rot", DataType::FLOAT);
     
     prog.createUniform("u_uv_view", DataType::UINT);
+
+    prog.createUniform("u_alpha", DataType::FLOAT);
 }
 
 void IBLRenderParams::update(GLProgram& prog)
@@ -25,6 +27,8 @@ void IBLRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_light_rot", light_rot);
     
     prog.setUniformData("u_uv_view", (uint)uv_view);
+
+    prog.setUniformData("u_alpha", alpha);
 }
 
 #ifdef WITH_IMGUI
@@ -36,6 +40,7 @@ void IBLRenderParams::updateIMGUI()
     ImGui::Checkbox("mask", &enable_mask);
     ImGui::Checkbox("uv view", &uv_view);
     ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
+    ImGui::SliderFloat("Transparency", &alpha, 0.0, 1.0);
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
     ImGui::SliderInt("env ID", &env_id, 0, env_size-1);

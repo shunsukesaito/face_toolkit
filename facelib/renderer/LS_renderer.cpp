@@ -17,6 +17,8 @@ void LSRenderParams::init(GLProgram& prog)
     prog.createUniform("u_specscale", DataType::FLOAT);
     
     prog.createUniform("u_uv_view", DataType::UINT);
+
+    prog.createUniform("u_alpha", DataType::FLOAT);
 }
 
 void LSRenderParams::update(GLProgram& prog)
@@ -33,6 +35,8 @@ void LSRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_specscale", spec_scale);
     
     prog.setUniformData("u_uv_view", (uint)uv_view);
+
+    prog.setUniformData("u_alpha", alpha);
 }
 
 #ifdef WITH_IMGUI
@@ -42,6 +46,7 @@ void LSRenderParams::updateIMGUI()
     ImGui::Checkbox("uv view", &uv_view);
     ImGui::Checkbox("point light", &use_pointlight);
     ImGui::Checkbox("cull occlusion", &enable_cull_occlusion);
+    ImGui::SliderFloat("Transparency", &alpha, 0.0, 1.0);
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     ImGui::SliderFloat("specScale", &spec_scale, 0.0, 1.0);
     ImGui::SliderFloat("diffScale", &diff_scale, 0.0, 1.0);

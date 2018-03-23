@@ -15,6 +15,7 @@ struct MeshRenderer : public BaseRenderer
     int tessInner_ = 2;
     int tessOuter_ = 2;
     float tessAlpha_ = 1.0;
+    float alpha = 1.0;
     
     MeshRenderer(){}
     MeshRenderer(std::string name, bool show) : BaseRenderer(name,show){}

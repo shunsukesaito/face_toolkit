@@ -13,6 +13,8 @@ struct IBLRenderParams{
     float cull_offset = 0.0;
     float light_rot = 0.0;
     bool uv_view = 0;
+
+    float alpha = 1.0;
     
     int env_id = 0;
     int env_size = 0;
