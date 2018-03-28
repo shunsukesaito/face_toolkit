@@ -6,20 +6,13 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
+#include <utility/pts_loader.h>
+
 #include "face_module.h"
 #include "renderer.h"
 
-static std::vector<Eigen::Vector3f> convPoint(const std::vector<Eigen::Vector2f>& in)
-{
-    std::vector<Eigen::Vector3f> out(in.size());
-    
-    for(int i = 0; i < in.size(); ++i)
-    {
-        out[i] = Eigen::Vector3f(in[i](0),in[i](1),1.0f);
-    }
-    
-    return out;
-}
+#include <gflags/gflags.h>
+DEFINE_string(land_type, "cpm", "landmark type");
 
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
@@ -88,6 +81,9 @@ void FaceOptModule::init(std::string data_dir,
     p2d_param_ = p2d_param;
     f2f_param_ = f2f_param;
     
+    p2d_param_->loadParamFromTxt("p2d.ini");
+    f2f_param_->loadParamFromTxt("f2f.ini");
+    
     fdetector_ = face_detector;
     
     p2d_param_->dof.ID = std::min(p2d_param_->dof.ID, face_model->n_id());
@@ -108,24 +104,37 @@ void FaceOptModule::init(std::string data_dir,
 
 void FaceOptModule::update(FaceResult& result)
 {
+    // update contour
+    result_.fd.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
+    for(int i = 0; i < result.fd.cont_idx_.size(); ++i)
+    {
+        c_p2l[i].v_idx = result_.fd.cont_idx_[i];
+    }
+
     cv::Rect rect;
     if(p2d_param_->update_land_ || f2f_param_->update_land_){
-        fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
+        if(FLAGS_land_type.find("cpm") != std::string::npos)
+            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
+        else if(FLAGS_land_type.find("dlib") != std::string::npos)
+            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
+        else if(FLAGS_land_type.find("pts") != std::string::npos)
+            result.p2d = load_pts(FLAGS_land_type);
         p2d_ = result.p2d;
     }
     else{
         result.p2d = p2d_;
     }
     
-    if(p2d_param_->run_){
+    if(p2d_param_->run_ || p2d_param_->onetime_run_){
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
         if(result.p2d.size() != 0){
-            P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param);
+            P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, result.p2d, opt_param);
             result.processed_ = true;
         }
+        if(p2d_param_->onetime_run_) p2d_param_->onetime_run_ = false;
     }
-    if(f2f_param_->run_){
+    if(f2f_param_->run_ || f2f_param_->onetime_run_){
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
         
@@ -135,9 +144,10 @@ void FaceOptModule::update(FaceResult& result)
             cv::cvtColor(result.img, tmp, CV_BGR2RGBA);
             tmp.convertTo(inputRGB, CV_32F);
             inputRGB *= 1.f / 255.f;
-            F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, convPoint(result.p2d), opt_param, logger_);
+            F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, result.p2d, opt_param, logger_);
             result.processed_ = true;
         }
+        if(f2f_param_->onetime_run_) f2f_param_->onetime_run_ = false;
     }
     
 //    std::ifstream infile("/Users/shunsuke/Documents/contour_index.txt");

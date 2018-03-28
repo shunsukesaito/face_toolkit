@@ -31,6 +31,19 @@ void P2DRenderer::render(int w, int h, const std::vector<Eigen::Vector2f>& pts)
     prog.draw();
 }
 
+void P2DRenderer::render(int w, int h, const std::vector<Eigen::Vector3f>& pts)
+{
+    auto& prog = programs_["p2d"];
+    
+    p2d_.update(prog, w, h, pts);
+    
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    
+    prog.draw();
+}
+
 #ifdef FACE_TOOLKIT
 void P2DRenderer::init(std::string data_dir, FaceModelPtr fm)
 {

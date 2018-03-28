@@ -44,6 +44,11 @@ struct glPoint2D
                 int height,
                 const std::vector<Eigen::Vector2f>& pts,
                 const Eigen::Vector4f& clr);
+    
+    void update(GLProgram& program,
+                int width,
+                int height,
+                const std::vector<Eigen::Vector3f>& pts);
 };
 
 struct glSphere

@@ -161,14 +161,14 @@ public:
                              int min_size = 60);
     
     bool        GetFaceLandmarks(const cv::Mat &img,
-                                 std::vector<Eigen::Vector2f>& p2d,
+                                 std::vector<Eigen::Vector3f>& p2d,
                                  cv::Rect& rect,
                                  bool enable_dlib = false,
                                  bool enable_cpm = false);
     
     bool        GetFaceLandmarks(const cv::Mat &img,
                                  const cv::Rect &rect,
-                                 std::vector<Eigen::Vector2f>& p2d,
+                                 std::vector<Eigen::Vector3f>& p2d,
                                  bool enable_cpm = false);
     
     bool        CropFaceImage(cv::Mat& output,

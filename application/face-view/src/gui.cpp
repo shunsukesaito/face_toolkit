@@ -37,6 +37,9 @@ DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or e
 DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
 DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
 
+DEFINE_uint32(cam_w, 0, "camera width");
+DEFINE_uint32(cam_h, 0, "camera height");
+
 struct Session{
     ModuleHandle capture_module_;
     ModuleHandle face_module_;
@@ -358,8 +361,10 @@ void GUI::init(int w, int h)
     }
     
     auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
-    
-    session.capture_module_ = CaptureModule::Create("capture", data_dir, w, h, frame_loader, session.capture_queue_, session.capture_control_queue_);
+    int cam_w = FLAGS_cam_w != 0 ? FLAGS_cam_w : w;
+    int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
+    session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
+                                                    session.capture_queue_, session.capture_control_queue_);
     if(FLAGS_preview)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
@@ -390,9 +395,10 @@ void GUI::loop()
     uv_async_t async_handle;
     uv_prepare_t prep;
 
-    check_uv(uv_async_init(uv_default_loop(), &async_handle, NULL));
-    check_uv(uv_prepare_init(uv_default_loop(), &prep));
-
+    if(!FLAGS_preview){
+        check_uv(uv_async_init(uv_default_loop(), &async_handle, NULL));
+        check_uv(uv_prepare_init(uv_default_loop(), &prep));
+    }
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
     
@@ -422,12 +428,6 @@ void GUI::loop()
             
             session.result_queue_->pop();
             result_.fd.updateAll();
-            result_.fd.updateContour(result_.camera.intrinsic_, result_.camera.extrinsic_);
-            
-            for(int i = 0; i < result_.fd.cont_idx_.size(); ++i)
-            {
-                result_.c_p2l[i].v_idx = result_.fd.cont_idx_[i];
-            }
         }
         
         char title[256];
@@ -472,7 +472,8 @@ void GUI::loop()
 
         glfwPollEvents();
         
-        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
+        if(!FLAGS_preview)
+            check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
     }
     
 #ifdef WITH_IMGUI

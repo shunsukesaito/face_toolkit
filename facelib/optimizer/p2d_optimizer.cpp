@@ -7,6 +7,8 @@
 
 #include <minitrace.h>
 
+#include <utility/str_utils.h>
+
 struct ErrP2D
 {
     float p2p = 0.0;
@@ -22,10 +24,106 @@ struct ErrP2D
     }
 };
 
+bool P2DFitParams::loadParamFromTxt(std::string file)
+{
+    std::ifstream fin(file);
+    if(!fin.is_open()){
+        std::cout << "Warning: failed parsing p2dfit params from " << file << std::endl;
+        return false;
+    }
+    
+    std::string label, val;
+    while(std::getline(fin, label, ' '))
+    {
+        if (label.empty())
+            continue;
+        std::getline(fin, val);
+        if(label.find("DOF") != std::string::npos){
+            std::vector<int> da = string2array(val);
+            if(da.size() != 9)
+                continue;
+            dof = DOF(da[0],da[1],da[2],da[3],da[4],da[5],da[6],da[7],da[8]);
+        }
+        if(label.find("maxIter") != std::string::npos){
+            maxIter_ = std::stoi(val);
+        }
+        if(label.find("run") != std::string::npos){
+            run_ = bool(std::stoi(val));
+        }
+        if(label.find("verbose") != std::string::npos){
+            verbose_ = bool(std::stoi(val));
+        }
+        if(label.find("robust") != std::string::npos){
+            robust_ = bool(std::stoi(val));
+        }
+        if(label.find("update_land") != std::string::npos){
+            update_land_ = bool(std::stoi(val));
+        }
+        if(label.find("gn_thresh") != std::string::npos){
+            gn_thresh_ = std::stof(val);
+        }
+        if(label.find("angle_thresh") != std::string::npos){
+            angle_thresh_ = std::stof(val);
+        }
+        if(label.find("mclose_thresh") != std::string::npos){
+            mclose_thresh_ = std::stof(val);
+        }
+        if(label.find("w_reg_pca_id") != std::string::npos){
+            w_reg_pca_id_ = std::stof(val);
+        }
+        if(label.find("w_reg_pca_ex") != std::string::npos){
+            w_reg_pca_ex_ = std::stof(val);
+        }
+        if(label.find("w_p2p") != std::string::npos){
+            w_p2p_ = std::stof(val);
+        }
+        if(label.find("w_p2l") != std::string::npos){
+            w_p2l_ = std::stof(val);
+        }
+    }
+    
+    return true;
+}
+
+bool P2DFitParams::saveParamToTxt(std::string file)
+{
+    std::ofstream fout(file);
+    if(!fout.is_open()){
+        std::cout << "Warning: failed writing p2dfit params to " << file << std::endl;
+        return false;
+    }
+    
+    fout << "DOF: " << dof.ID << " " << dof.EX << " " << dof.AL << " " << dof.fROT << " ";
+    fout << dof.fTR << " " << dof.cROT << " " << dof.cTR << " " << dof.CAM << " " << dof.SH << std::endl;
+    fout << "maxIter: " << maxIter_ << std::endl;
+    fout << "run: " << run_ << std::endl;
+    fout << "verbose: " << verbose_ << std::endl;
+    fout << "robust: " << robust_ << std::endl;
+    fout << "update_land: " << update_land_ << std::endl;
+    fout << "gn_thresh: " << gn_thresh_ << std::endl;
+    fout << "angle_thresh: " << angle_thresh_ << std::endl;
+    fout << "mclose_thresh: " << mclose_thresh_ << std::endl;
+    fout << "w_reg_pca_id: " << w_reg_pca_id_ << std::endl;
+    fout << "w_reg_pca_ex: " << w_reg_pca_ex_ << std::endl;
+    fout << "w_p2p: " << w_p2p_ << std::endl;
+    fout << "w_p2l: " << w_p2l_ << std::endl;
+    
+    fout.close();
+    
+    return true;
+}
+
 #ifdef WITH_IMGUI
 void P2DFitParams::updateIMGUI()
 {
     if (ImGui::CollapsingHeader("P2DFit Parameters")){
+        if (ImGui::Button("Load"))
+            loadParamFromTxt("p2d.ini");
+        if (ImGui::Button("Save"))
+            saveParamToTxt("p2d.ini");
+        if (ImGui::Button("OneTimeRun"))
+            onetime_run_ = true;
+
         ImGui::Checkbox("Run", &run_);
         ImGui::Checkbox("verbose", &verbose_);
         ImGui::Checkbox("update land", &update_land_);

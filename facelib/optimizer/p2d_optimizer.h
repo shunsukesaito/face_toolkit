@@ -14,6 +14,7 @@ using namespace std;
 
 struct P2DFitParams
 {
+    bool onetime_run_ = false;
     bool run_ = false;
     
     DOF dof = DOF(40, 20, 0, 3, 3, 0, 0, 0, 0);
@@ -33,6 +34,9 @@ struct P2DFitParams
     float w_p2l_ = 1.e-3f;
     float w_reg_pca_id_ = 1.e-1f;
     float w_reg_pca_ex_ = 1.e-1f;
+    
+    bool loadParamFromTxt(std::string file);
+    bool saveParamToTxt(std::string file);
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

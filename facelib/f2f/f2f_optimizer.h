@@ -14,11 +14,12 @@
 
 struct F2FParams
 {
+    bool onetime_run_ = false;
     bool run_ = false;
     
     DOF dof = DOF( 40, 40, 40, 3, 3, 0, 0, 0, 27);
 
-    std::vector<int> maxIter_ = {0, 3, 5, 5};
+    std::vector<int> maxIter_ = {0, 3, 5, 5, 0, 0, 0, 0};
     
     bool verbose_ = false;
     bool robust_ = false;
@@ -44,12 +45,17 @@ struct F2FParams
     
     char* dampDataDir_ = 0;
     
+    bool loadParamFromTxt(std::string file);
+    bool saveParamToTxt(std::string file);
+    
 #ifdef WITH_IMGUI
     void updateIMGUI();
 #endif
 };
 
 typedef std::shared_ptr<F2FParams> F2FParamsPtr;
+
+
 
 // renderTarget contains 
 // positions,normals,colors,vIndices,vBarycentric,texCoords

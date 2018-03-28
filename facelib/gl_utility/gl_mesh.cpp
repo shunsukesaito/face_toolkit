@@ -62,6 +62,24 @@ void glPoint2D::update(GLProgram& program,
     program.setAttributeData("v_color", clr_);
 }
 
+void glPoint2D::update(GLProgram& program,
+                       int width,
+                       int height,
+                       const std::vector<Eigen::Vector3f>& pts)
+{
+    pts_.clear();
+    clr_.clear();
+    
+    for(int i = 0; i < pts.size(); ++i)
+    {
+        pts_.push_back(glm::vec2(pts[i](0)/(float)width,pts[i](1)/(float)height));
+        clr_.push_back(glm::vec4(1.0-pts[i](2),pts[i](2),0.0,1.0));
+    }
+    
+    program.setAttributeData("v_p2d", pts_);
+    program.setAttributeData("v_color", clr_);
+}
+
 void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sectors, bool with_idx)
 {
     float const R = 1./(float)(rings-1);

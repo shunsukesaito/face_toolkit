@@ -115,7 +115,7 @@ void Face2DDetector::GetFaceRects(const cv::Mat &img,
 }
 
 bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
-                                      std::vector<Eigen::Vector2f>& p2d,
+                                      std::vector<Eigen::Vector3f>& p2d,
                                       cv::Rect& rect,
                                       bool enable_dlib,
                                       bool enable_cpm)
@@ -184,12 +184,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     
     if(enable_cpm){
         cpm_tcp_->sendImage(img, rect);
-        std::vector<Eigen::Vector3f> p2d_with_conf = cpm_tcp_->getLandmarks();
-        p2d.clear();
-        for(int i = 0; i < p2d_with_conf.size(); ++i)
-        {
-            p2d.push_back(Eigen::Vector2f(p2d_with_conf[i][0],p2d_with_conf[i][1]));
-        }
+        p2d = cpm_tcp_->getLandmarks();
         return true;
     }
     
@@ -198,7 +193,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     p2d.clear();
     for(int i = 0; i < shape.num_parts(); ++i)
     {
-        p2d.push_back(Eigen::Vector2f(shape.part(i)(0),shape.part(i)(1)));
+        p2d.push_back(Eigen::Vector3f(shape.part(i)(0),shape.part(i)(1),1.0));
     }
     
     return true;
@@ -206,17 +201,12 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
 
 bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
                                       const cv::Rect &rect,
-                                      std::vector<Eigen::Vector2f>& p2d,
+                                      std::vector<Eigen::Vector3f>& p2d,
                                       bool enable_cpm)
 {
     if(enable_cpm){
         cpm_tcp_->sendImage(img, rect);
-        std::vector<Eigen::Vector3f> p2d_with_conf = cpm_tcp_->getLandmarks();
-        p2d.clear();
-        for(int i = 0; i < p2d_with_conf.size(); ++i)
-        {
-            p2d.push_back(Eigen::Vector2f(p2d_with_conf[i][0],p2d_with_conf[i][1]));
-        }
+        p2d = cpm_tcp_->getLandmarks();
         return true;
     }
     dlib::array2d<dlib::rgb_pixel> img_dlib;
@@ -233,7 +223,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     p2d.clear();
     for(int i = 0; i < shape.num_parts(); ++i)
     {
-        p2d.push_back(Eigen::Vector2f(shape.part(i)(0),shape.part(i)(1)));
+        p2d.push_back(Eigen::Vector3f(shape.part(i)(0),shape.part(i)(1),1.0));
     }
     
     return true;

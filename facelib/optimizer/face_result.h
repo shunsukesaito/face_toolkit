@@ -38,7 +38,7 @@ struct FaceResult
     std::vector<P2P2DC> c_p2p;
     std::vector<P2L2DC> c_p2l;
     
-    std::vector<Eigen::Vector2f> p2d;
+    std::vector<Eigen::Vector3f> p2d;
     
     inline void loadFromTXT(std::string filename){
         std::ifstream infile(filename);

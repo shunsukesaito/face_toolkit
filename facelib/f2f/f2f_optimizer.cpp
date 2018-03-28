@@ -3,6 +3,8 @@
 
 #include <minitrace.h>
 
+#include <utility/str_utils.h>
+
 struct ErrF2F
 {
     float p2p = 0.0;
@@ -20,12 +22,141 @@ struct ErrF2F
         os << " Sym: " << err.sym << " PCAID: " << err.pca_id << " PCAEX: " << err.pca_ex << " PCACL: " << err.pca_cl;
         return os;
     }
+    
+    float total(){
+        return p2p + p2l + pix + sym + pca_id + pca_ex + pca_cl;
+    }
 };
+
+bool F2FParams::loadParamFromTxt(std::string file)
+{
+    std::ifstream fin(file);
+    if(!fin.is_open()){
+        std::cout << "Warning: failed parsing f2f params from " << file << std::endl;
+        return false;
+    }
+    
+    std::string label, val;
+    while(std::getline(fin, label, ' '))
+    {
+        if (label.empty())
+            continue;
+        std::getline(fin, val);
+        if(label.find("DOF") != std::string::npos){
+            std::vector<int> da = string2array(val);
+            if(da.size() != 9)
+                continue;
+            dof = DOF(da[0],da[1],da[2],da[3],da[4],da[5],da[6],da[7],da[8]);
+        }
+        if(label.find("maxIter") != std::string::npos){
+            maxIter_ = string2array(val);
+        }
+        if(label.find("onetime") != std::string::npos){
+            onetime_run_ = bool(std::stoi(val));
+        }
+        if(label.find("run") != std::string::npos){
+            run_ = bool(std::stoi(val));
+        }
+        if(label.find("verbose") != std::string::npos){
+            verbose_ = bool(std::stoi(val));
+        }
+        if(label.find("robust") != std::string::npos){
+            robust_ = bool(std::stoi(val));
+        }
+        if(label.find("sym_with_exp") != std::string::npos){
+            sym_with_exp_ = bool(std::stoi(val));
+        }
+        if(label.find("update_land") != std::string::npos){
+            update_land_ = bool(std::stoi(val));
+        }
+        if(label.find("smoothLev") != std::string::npos){
+            smoothLev_ = std::stoi(val);
+        }
+        if(label.find("gn_thresh") != std::string::npos){
+            gn_thresh_ = std::stof(val);
+        }
+        if(label.find("mclose_thresh") != std::string::npos){
+            mclose_thresh_ = std::stof(val);
+        }
+        if(label.find("w_pix") != std::string::npos){
+            w_pix_ = std::stof(val);
+        }
+        if(label.find("w_reg_pca_id") != std::string::npos){
+            w_reg_pca_id_ = std::stof(val);
+        }
+        if(label.find("w_reg_pca_ex") != std::string::npos){
+            w_reg_pca_ex_ = std::stof(val);
+        }
+        if(label.find("w_reg_pca_cl") != std::string::npos){
+            w_reg_pca_cl_ = std::stof(val);
+        }
+        if(label.find("w_p2p") != std::string::npos){
+            w_p2p_ = std::stof(val);
+        }
+        if(label.find("w_p2l") != std::string::npos){
+            w_p2l_ = std::stof(val);
+        }
+        if(label.find("w_p3d") != std::string::npos){
+            w_p3d_ = std::stof(val);
+        }
+        if(label.find("w_sym") != std::string::npos){
+            w_sym_ = std::stof(val);
+        }
+    }
+    
+    return true;
+}
+
+bool F2FParams::saveParamToTxt(std::string file)
+{
+    std::ofstream fout(file);
+    if(!fout.is_open()){
+        std::cout << "Warning: failed writing f2f params to " << file << std::endl;
+        return false;
+    }
+
+    fout << "DOF: " << dof.ID << " " << dof.EX << " " << dof.AL << " " << dof.fROT << " ";
+    fout << dof.fTR << " " << dof.cROT << " " << dof.cTR << " " << dof.CAM << " " << dof.SH << std::endl;
+    fout << "maxIter:";
+    for(int i : maxIter_)
+    {
+        fout << " " << i;
+    }
+    fout << std::endl;
+    fout << "onetime: " << onetime_run_ << std::endl;
+    fout << "run: " << run_ << std::endl;
+    fout << "verbose: " << verbose_ << std::endl;
+    fout << "robust: " << robust_ << std::endl;
+    fout << "sym_with_exp: " << sym_with_exp_ << std::endl;
+    fout << "update_land: " << update_land_ << std::endl;
+    fout << "smoothLev: " << smoothLev_ << std::endl;
+    fout << "gn_thresh: " << gn_thresh_ << std::endl;
+    fout << "mclose_thresh: " << mclose_thresh_ << std::endl;
+    fout << "w_pix: " << w_pix_ << std::endl;
+    fout << "w_reg_pca_id: " << w_reg_pca_id_ << std::endl;
+    fout << "w_reg_pca_ex: " << w_reg_pca_ex_ << std::endl;
+    fout << "w_reg_pca_cl: " << w_reg_pca_cl_ << std::endl;
+    fout << "w_p2p: " << w_p2p_ << std::endl;
+    fout << "w_p2l: " << w_p2l_ << std::endl;
+    fout << "w_p2d: " << w_p3d_ << std::endl;
+    fout << "w_sym: " << w_sym_ << std::endl;
+   
+    fout.close();
+    
+    return true;
+}
 
 #ifdef WITH_IMGUI
 void F2FParams::updateIMGUI()
 {
-    if (ImGui::CollapsingHeader("F2F Parameters")){
+    if (ImGui::CollapsingHeader("F2F Parameters")){        
+        if (ImGui::Button("Load"))
+            loadParamFromTxt("f2f.ini");
+        if (ImGui::Button("Save"))
+            saveParamToTxt("f2f.ini");
+        if (ImGui::Button("OneTimeRun"))
+            onetime_run_ = true;
+
         ImGui::Checkbox("Run", &run_);
         ImGui::Checkbox("verbose", &verbose_);
         ImGui::Checkbox("update land", &update_land_);
@@ -242,6 +373,7 @@ void F2FGaussNewton(FaceData& fd,
     
     tm1 = clock(); if (params.verbose_) logger->info(" data/cucg init: ", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
     
+    float err_cur, err_prev = 1.e10;
     for (int i = 0; i < params.maxIter_[level]; ++i)
     {
         JtJ.setZero();
@@ -278,9 +410,11 @@ void F2FGaussNewton(FaceData& fd,
         
         if (params.verbose_) std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
         
+        err_cur = err.total();
         //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());
         
-        if (dX.norm() < params.gn_thresh_) break;
+        if (dX.norm() < params.gn_thresh_ || err_cur > err_prev) break;
+        err_prev = err_cur;
     }
 }
 

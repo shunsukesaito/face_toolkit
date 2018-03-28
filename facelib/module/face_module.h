@@ -83,7 +83,7 @@ private:
     FaceModelPtr face_model_;
     FaceData fd_;
 
-    std::vector<Eigen::Vector2f> p2d_;
+    std::vector<Eigen::Vector3f> p2d_;
     
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
