@@ -2,6 +2,8 @@
 
 #include <gflags/gflags.h>
 DEFINE_uint32(f2f_render_location, 4, "f2f rendering location (defalut: diffuse)");
+DEFINE_string(f2f_seg_path, "", "segmentation file for f2f (default: none)");
+DEFINE_string(f2f_tex_path, "", "texture file for f2f (default: none)");
 
 static const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
 
@@ -224,6 +226,14 @@ void F2FRenderParams::updateIMGUI()
 }
 #endif
 
+void F2FRenderer::updateSegment(const cv::Mat& seg)
+{
+    auto& prog_f2f = programs_["f2f"];
+    cv::Mat seg_flip;
+    cv::flip(seg, seg_flip, 0);
+    prog_f2f.updateTexture("u_sample_seg", seg_flip);
+}
+
 void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
 {
     programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
@@ -240,6 +250,19 @@ void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
     param_.init(prog_f2f);
     prog_f2f.createUniform("u_SHCoeffs", DataType::VECTOR3);
     prog_f2f.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+     if (!FLAGS_f2f_seg_path.empty())
+         prog_f2f.createTexture("u_sample_seg", FLAGS_f2f_seg_path);
+     else{
+         cv::Mat_<cv::Vec3b> seg(100,100,cv::Vec3b(0,0,0));
+         prog_f2f.createTexture("u_sample_seg", seg);
+     }
+     if (!FLAGS_f2f_tex_path.empty())
+         prog_f2f.createTexture("u_sample_texture", FLAGS_f2f_tex_path);
+     else{
+         cv::Mat_<cv::Vec3b> tex(100,100,cv::Vec3b(0,0,0));
+         prog_f2f.createTexture("u_sample_texture", tex);
+     }
+
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     
     Camera::initializeUniforms(prog_f2f, U_CAMERA_MVP | U_CAMERA_MV);

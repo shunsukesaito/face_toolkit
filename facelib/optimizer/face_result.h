@@ -31,6 +31,7 @@ struct FaceResult
     
     // assume single camera for now
     cv::Mat img;
+    cv::Mat seg;
     Camera camera;
     
     FaceData fd;

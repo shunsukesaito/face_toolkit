@@ -9,9 +9,9 @@ uniform float u_alpha;
 
 uniform vec3 u_SHCoeffs[9];
 
-uniform sampler2D u_sample_texture;
 uniform sampler2D u_sample_mask;
 uniform sampler2D u_sample_seg;
+uniform sampler2D u_sample_texture;
 
 in VertexData {
     vec4 color;

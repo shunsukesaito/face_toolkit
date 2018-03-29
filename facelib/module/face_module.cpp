@@ -13,6 +13,8 @@
 
 #include <gflags/gflags.h>
 DEFINE_string(land_type, "cpm", "landmark type");
+DEFINE_string(seg_ip, "csloadbalancer-dev-746798469.us-east-1.elb.amazonaws.com", "IP for hair segmentation net");
+DEFINE_uint32(prob_size, 340, "size of probability map");
 
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
@@ -83,6 +85,8 @@ void FaceOptModule::init(std::string data_dir,
     
     p2d_param_->loadParamFromTxt("p2d.ini");
     f2f_param_->loadParamFromTxt("f2f.ini");
+
+    seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
     
     fdetector_ = face_detector;
     
@@ -105,24 +109,36 @@ void FaceOptModule::init(std::string data_dir,
 void FaceOptModule::update(FaceResult& result)
 {
     // update contour
-    result_.fd.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
-    for(int i = 0; i < result.fd.cont_idx_.size(); ++i)
+    fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
+    for(int i = 0; i < fd_.cont_idx_.size(); ++i)
     {
-        c_p2l[i].v_idx = result_.fd.cont_idx_[i];
+        c_p2l_[i].v_idx = fd_.cont_idx_[i];
     }
 
     cv::Rect rect;
     if(p2d_param_->update_land_ || f2f_param_->update_land_){
-        if(FLAGS_land_type.find("cpm") != std::string::npos)
+        if(FLAGS_land_type.find("cpm") != std::string::npos){
             fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
-        else if(FLAGS_land_type.find("dlib") != std::string::npos)
+            seg_tcp_->sendImage(result.img, rect, 1.5);
+            seg_tcp_->getSegmentation(result.seg);
+        }
+        else if(FLAGS_land_type.find("dlib") != std::string::npos){
             fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
-        else if(FLAGS_land_type.find("pts") != std::string::npos)
+            seg_tcp_->sendImage(result.img, rect, 1.5);
+            seg_tcp_->getSegmentation(result.seg);
+        }
+        else if(FLAGS_land_type.find("pts") != std::string::npos){
             result.p2d = load_pts(FLAGS_land_type);
+            rect = GetBBoxFromLandmarks(result.p2d);
+            seg_tcp_->sendImage(result.img, rect, 2.0);
+            seg_tcp_->getSegmentation(result.seg);
+        }
         p2d_ = result.p2d;
+        seg_ = result.seg.clone();
     }
     else{
         result.p2d = p2d_;
+        result.seg = seg_.clone();
     }
     
     if(p2d_param_->run_ || p2d_param_->onetime_run_){

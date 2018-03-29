@@ -28,6 +28,24 @@ void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector2f>& p2d)
     }
 }
 
+cv::Rect GetBBoxFromLandmarks(std::vector<Eigen::Vector3f>& shape)
+{
+    float max_x = 0, min_x = 1e4, max_y = 0, min_y = 1e4;
+    for(int i = 0; i < shape.size(); ++i)
+    {
+        if(shape[i](0)>max_x) max_x = shape[i](0);
+        if(shape[i](0)<min_x) min_x = shape[i](0);
+        if(shape[i](1)>max_y) max_y = shape[i](1);
+        if(shape[i](1)<min_y) min_y = shape[i](1);
+    }
+
+    float cx = 0.5*(max_x + min_x);
+    float cy = 0.5*(max_y + min_y);
+    float length = std::max(max_x-min_x,max_y-min_y);
+    
+    return cv::Rect(cx-0.5*length,cy-0.5*length,length,length);
+}
+
 Face2DDetector::Face2DDetector(std::string data_dir){
     cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
 
@@ -219,6 +237,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     det.set_right(rect.x + rect.width);
     
     dlib::full_object_detection shape = sp_(img_dlib, det);
+    
     
     p2d.clear();
     for(int i = 0; i < shape.num_parts(); ++i)

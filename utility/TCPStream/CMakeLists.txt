@@ -2,10 +2,14 @@ cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
 PinscreenModuleBegin(tcpstream DEPENDS
-                     library/LibUV)
+                     library/OpenCV 
+                     library/LibUV
+                     library/Eigen3)
 
-add_library(tcpstream tcp_stream.cc tcp_stream.h)
+file(GLOB_RECURSE all_sources *.cc)
+file(GLOB_RECURSE all_headers *.h)
+add_library(tcpstream ${all_sources} ${all_headers})
 
-target_link_libraries(tcpstream PSM::LibUV)
+target_link_libraries(tcpstream PSM::LibUV PSM::OpenCV PSM::Eigen3)
 target_include_directories(tcpstream INTERFACE .)
 PinscreenModuleEnd(tcpstream)

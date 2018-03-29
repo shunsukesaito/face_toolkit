@@ -14,6 +14,9 @@
 #include <iostream>
 #include <queue>
 
+#include <opencv2/opencv.hpp>
+#include <Eigen/Core>
+
 #include <uv.h>
 
 #define check_uv(status) \
@@ -30,7 +33,18 @@ struct Frame{
     Frame() : eof(false){}
     virtual ~Frame() {}
 };
+
+struct LandmarkFrame : public Frame {
+    std::vector<Eigen::Vector3f> lands;
+};
+
+struct ImageFrame : public Frame {
+    cv::Mat image;
+};
+
 typedef std::shared_ptr<Frame> FramePtr;
+typedef std::shared_ptr<ImageFrame> ImageFramePtr;
+typedef std::shared_ptr<LandmarkFrame> LandmarkFramePtr;
 
 struct TCPStream {
     /// LibUV design begin

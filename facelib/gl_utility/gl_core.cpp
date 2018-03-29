@@ -746,7 +746,7 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
                 break;
             case 1:
                 mode1 = GL_RED;
-                mode1 = GL_RED;
+                mode2 = GL_RED;
                 break;
             default:
                 cerr << "ERROR: Unsupported channels" << endl;
@@ -768,7 +768,7 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
                 break;
             case 1:
                 mode1 = GL_RED;
-                mode1 = GL_RED;
+                mode2 = GL_RED;
                 break;
             default:
                 cerr << "ERROR: Unsupported channels" << endl;
@@ -922,7 +922,6 @@ void GLTexture::UpdateTexture(const cv::Mat& img)
     if(width != img.cols || height != img.rows){
         glDeleteTextures(1, &location);
         location = CreateTexture(img);
-    
         width = img.cols;
         height = img.rows;
         

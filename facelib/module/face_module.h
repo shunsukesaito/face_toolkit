@@ -16,6 +16,7 @@
 #include <optimizer/p2d_optimizer.h>
 #include <f2f/f2f_optimizer.h>
 #include <optimizer/face_result.h>
+#include <seg_stream.h>
 
 #include "module.h"
 #include "capture_module.h"
@@ -82,6 +83,9 @@ private:
     
     FaceModelPtr face_model_;
     FaceData fd_;
+    cv::Mat seg_;
+
+    SegmentationTCPStreamPtr seg_tcp_;
 
     std::vector<Eigen::Vector3f> p2d_;
     

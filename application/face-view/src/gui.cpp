@@ -423,6 +423,9 @@ void GUI::loop()
                 result_.c_p2p = result.c_p2p;
                 result_.p2d = result.p2d;
                 result_.frame_id = result.frame_id;
+                auto f2f_renderer = renderer_.renderer_["F2F"];
+                std::shared_ptr<F2FRenderer> ahaha = std::static_pointer_cast<F2FRenderer>(f2f_renderer);
+                ahaha->updateSegment(result.seg);
             }
             result_.p2d = result.p2d;
             
