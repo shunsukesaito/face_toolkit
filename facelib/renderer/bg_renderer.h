@@ -15,6 +15,8 @@ struct BGRenderer : public BaseRenderer
     glPlane plane_;
     int width_, height_;
     
+    float alpha_ = 1.0;
+    
     BGRenderer(){}
     BGRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     

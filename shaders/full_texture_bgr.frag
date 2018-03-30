@@ -3,6 +3,8 @@
 uniform uint u_tex_mode; // 0: openGL, 1: openCVMat (flip:0) , 2: videoCapture (flip:-1)
 uniform sampler2D  u_texture;
 
+uniform float u_alpha;
+
 in vec2 uv;
 
 layout (location = 0) out vec4 frag_color;
@@ -21,4 +23,7 @@ void main()
     
     if(frag_color.a == 0.0)
         discard;
+    
+    if(u_alpha >= 0.0)
+        frag_color.a = u_alpha;
 }

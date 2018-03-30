@@ -17,8 +17,6 @@ void LSRenderParams::init(GLProgram& prog)
     prog.createUniform("u_specscale", DataType::FLOAT);
     
     prog.createUniform("u_uv_view", DataType::UINT);
-
-    prog.createUniform("u_alpha", DataType::FLOAT);
 }
 
 void LSRenderParams::update(GLProgram& prog)
@@ -35,8 +33,6 @@ void LSRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_specscale", spec_scale);
     
     prog.setUniformData("u_uv_view", (uint)uv_view);
-
-    prog.setUniformData("u_alpha", alpha);
 }
 
 #ifdef WITH_IMGUI
@@ -92,7 +88,8 @@ void LSRenderer::init(std::string data_dir, FaceModelPtr model)
     
     plane_.init(prog_pl,0.5);
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::all), fb_->width(), fb_->height());
-    
+    prog_pl.createUniform("u_alpha", DataType::FLOAT);
+
     const int order = 2;
     const int numSHBasis = (order + 1) * (order + 1);
 
@@ -190,10 +187,15 @@ void LSRenderer::init(std::string data_dir, FaceModelPtr model)
 
 void LSRenderer::render(const Camera& camera, const FaceData& fd)
 {
-    if((param_.sub_samp*camera.width_ != fb_->width()) || (param_.sub_samp*camera.height_ != fb_->height()))
-        fb_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, RT_NAMES::count);
-    if((param_.sub_samp*camera.width_ != fb_depth_->width()) || (param_.sub_samp*camera.height_ != fb_depth_->height()))
-        fb_depth_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, 0);
+    int w, h;
+    GLFWwindow* window = glfwGetCurrentContext();
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    
+    if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
+        fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, RT_NAMES::count);
+    if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))
+        fb_depth_->Resize(param_.sub_samp*w, param_.sub_samp*h, 0);
     
     // render parameters update
     auto& prog_main = programs_["main"];
@@ -212,6 +214,8 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[2]);
     prog_main.updateTexture("u_sample_diff_normal", (GLuint)maps[1]);
     prog_main.updateTexture("u_sample_disp", (GLuint)maps[4]);
+    
+    prog_pl.setUniformData("u_alpha", param_.alpha);
 
     // camera parameters update
     camera.updateUniforms(prog_main, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
@@ -235,16 +239,12 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_depth.draw();
     fb_depth_->Unbind();
     
-    int w, h;
-    GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
     // draw mesh
     fb_->Bind();
     glViewport(0, 0, fb_->width(), fb_->height());
     clearBuffer(COLOR::COLOR_ALPHA);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     prog_main.draw(wire_);
 
@@ -255,7 +255,7 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     glViewport(0, 0, w, h);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     prog_pl.draw();
 }

@@ -227,13 +227,21 @@ void PosMapReconRenderer::init(std::string data_dir,
                                   "",
                                   data_dir + "shaders/posmap_recon.frag",
                                   DrawMode::PATCHES);
+    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
+                                   data_dir + "shaders/full_texture_bgr.frag",
+                                   DrawMode::TRIANGLES);
+    
+    fb_ = Framebuffer::Create(1, 1, 1); // will be resized based on frame size
     
     auto& prog = programs_["main"];
+    auto& prog_pl = programs_["plane"];
     
     prog.createUniform("u_tessinner", DataType::FLOAT);
     prog.createUniform("u_tessouter", DataType::FLOAT);
     prog.createUniform("u_delta", DataType::FLOAT);
     
+    prog_pl.createUniform("u_alpha", DataType::FLOAT);
+
     mesh_.init(prog, AT_UV);
     mesh_.update_uv(model->uvs_, model->tri_uv_);
     mesh_.update(prog, AT_UV);
@@ -246,27 +254,50 @@ void PosMapReconRenderer::init(std::string data_dir,
     
     tessInner_ = FLAGS_pm_tessin;
     tessOuter_ = FLAGS_pm_tessout;
+    
+    plane_.init(prog_pl,0.5);
+    prog_pl.createTexture("u_texture", fb_->color(0), fb_->width(), fb_->height());
 }
 
 void PosMapReconRenderer::render(const Camera& camera, const FaceData& fd)
 {
+    if((sub_samp_*camera.width_ != fb_->width()) || (sub_samp_*camera.height_ != fb_->height()))
+        fb_->Resize(sub_samp_*camera.width_, sub_samp_*camera.height_, 1);
+    
     // render parameters update
     auto& prog = programs_["main"];
+    auto& prog_pl = programs_["plane"];
     
     prog.setUniformData("u_tessinner", (float)tessInner_);
     prog.setUniformData("u_tessouter", (float)tessOuter_);
     prog.setUniformData("u_delta", delta_);
+    
+    prog_pl.setUniformData("u_alpha", alpha_);
+    prog_pl.updateTexture("u_texture", fb_->color(0));
+    
     camera.updateUniforms(prog, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
     
-    GLFWwindow* window = glfwGetCurrentContext();
     int w, h;
+    GLFWwindow* window = glfwGetCurrentContext();
     glfwGetFramebufferSize(window, &w, &h);
     glViewport(0, 0, w, h);
     
+    fb_->Bind();
+    glViewport(0, 0, fb_->width(), fb_->height());
+    clearBuffer(COLOR::COLOR_ALPHA);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
-    
     prog.draw(wire_);
+    
+    fb_->Unbind();
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    prog_pl.draw();
 }
 
 
@@ -284,6 +315,7 @@ void PosMapReconRenderer::updateIMGUI()
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
         ImGui::Checkbox("wire", &wire_);
+        ImGui::SliderFloat("Transparency", &alpha_, 0.0, 1.0);
         ImGui::InputInt("TessInner", &tessInner_);
         ImGui::InputInt("TessOuter", &tessOuter_);
         ImGui::InputFloat("Delta", &delta_);

@@ -10,13 +10,11 @@
 #include <gl_utility/camera.h>
 #include <shape_model/face_model.h>
 
-#include <face2d-detector/face2d_detector.h>
 #include <f2f/f2f_renderer.h>
 
 #include <optimizer/p2d_optimizer.h>
 #include <f2f/f2f_optimizer.h>
 #include <optimizer/face_result.h>
-#include <seg_stream.h>
 
 #include "module.h"
 #include "capture_module.h"
@@ -34,8 +32,7 @@ public:
     void init(std::string data_dir,
               FaceModelPtr face_model,
               P2DFitParamsPtr p2d_param,
-              F2FParamsPtr f2f_param,
-              Face2DDetectorPtr face_detector);
+              F2FParamsPtr f2f_param);
     
     void update(FaceResult& result);
     
@@ -67,7 +64,6 @@ public:
                                FaceModelPtr face_model,
                                P2DFitParamsPtr p2d_param,
                                F2FParamsPtr f2f_param,
-                               Face2DDetectorPtr face_detector,
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue);
@@ -78,17 +74,11 @@ private:
     FaceQueueHandle output_result_queue_;
     CmdQueueHandle command_queue_;
     
-    Face2DDetectorPtr fdetector_;
     F2FRenderer f2f_renderer_;
     
     FaceModelPtr face_model_;
     FaceData fd_;
-    cv::Mat seg_;
-
-    SegmentationTCPStreamPtr seg_tcp_;
-
-    std::vector<Eigen::Vector3f> p2d_;
-    
+        
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
     

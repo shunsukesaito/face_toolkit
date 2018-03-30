@@ -12,7 +12,6 @@ uniform uint u_enable_mask;
 uniform uint u_cull_occlusion;
 uniform float u_cull_offset;
 uniform float u_light_rot;
-uniform float u_alpha;
 
 // from camera
 uniform vec3 u_camera_pos;
@@ -113,5 +112,4 @@ void main()
     }
     
     frag_color = specScale * specAlbedo * specularReflectionEM + diffuseColor * diffuseReflection;
-    frag_color.a = u_alpha;
 }

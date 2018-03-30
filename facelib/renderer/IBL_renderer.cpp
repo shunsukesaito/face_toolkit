@@ -13,8 +13,6 @@ void IBLRenderParams::init(GLProgram& prog)
     prog.createUniform("u_light_rot", DataType::FLOAT);
     
     prog.createUniform("u_uv_view", DataType::UINT);
-
-    prog.createUniform("u_alpha", DataType::FLOAT);
 }
 
 void IBLRenderParams::update(GLProgram& prog)
@@ -27,8 +25,6 @@ void IBLRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_light_rot", light_rot);
     
     prog.setUniformData("u_uv_view", (uint)uv_view);
-
-    prog.setUniformData("u_alpha", alpha);
 }
 
 #ifdef WITH_IMGUI
@@ -65,6 +61,9 @@ void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
     
     param_.init(prog_IBL);
     prog_IBL.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+    
+    prog_pl.createUniform("u_alpha", DataType::FLOAT);
+    
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     
     Camera::initializeUniforms(prog_IBL, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
@@ -78,8 +77,8 @@ void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
     mesh_.update_uv(model->uvs_, model->tri_uv_);
     mesh_.update(prog_IBL, AT_UV);
     
-    //plane_.init(prog_pl,0.5);
-    //prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
+    plane_.init(prog_pl,0.5);
+    prog_pl.createTexture("u_texture", 1, fb_->width(), fb_->height());
     
     const int order = 2;
     const int numSHBasis = (order + 1) * (order + 1);
@@ -179,8 +178,15 @@ void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
 
 void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sphere)
 {
-    if((param_.sub_samp*camera.width_ != fb_depth_->width()) || (param_.sub_samp*camera.height_ != fb_depth_->height()))
-        fb_depth_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, 0);
+    int w, h;
+    GLFWwindow* window = glfwGetCurrentContext();
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    
+    if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
+        fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, 1);
+    if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))
+        fb_depth_->Resize(param_.sub_samp*w, param_.sub_samp*h, 0);
     
     // render parameters update
     auto& prog_IBL = programs_["IBL"];
@@ -188,6 +194,8 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     auto& prog_depth = programs_["depth"];
     
     param_.update(prog_IBL);
+    
+    prog_pl.setUniformData("u_alpha", param_.alpha);
     
     prog_IBL.updateTexture("u_sample_diffHDRI", diff_HDRI_locations_[param_.env_id]);
     prog_IBL.updateTexture("u_sample_specHDRI", spec_HDRI_locations_[param_.env_id]);
@@ -211,20 +219,28 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     prog_depth.draw();
     fb_depth_->Unbind();
     
-    int w, h;
-    GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
     // draw mesh
+    fb_->Bind();
+    glViewport(0, 0, fb_->width(), fb_->height());
+    clearBuffer(COLOR::COLOR_ALPHA);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     prog_IBL.draw(wire_);
+    fb_->Unbind();
+    
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    prog_pl.draw();
     
     if(draw_sphere){
-        int w, h;
-        GLFWwindow* window = glfwGetCurrentContext();
-        glfwGetFramebufferSize(window, &w, &h);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
         int sp_w = (int)(0.2*(float)std::min(w,h));
         glViewport(w-sp_w, 0, sp_w, sp_w);
         camera.updateUniforms4Sphere(prog_IBL, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
@@ -232,18 +248,6 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
         prog_IBL.draw();
         glViewport(0, 0, w, h);
     }
-
-    
-//    prog_pl.updateTexture("u_texture", fb_->color((uint)param_.location));
-//    GLFWwindow* window = glfwGetCurrentContext();
-//    int w, h;
-//    glfwGetFramebufferSize(window, &w, &h);
-//    glViewport(0, 0, w, h);
-//    glDisable(GL_CULL_FACE);
-//    glEnable(GL_BLEND);
-//    glEnable(GL_DEPTH_TEST);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//    prog_pl.draw();
 }
 
 #ifdef FACE_TOOLKIT

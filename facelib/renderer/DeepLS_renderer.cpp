@@ -29,6 +29,8 @@ void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     
+    prog_pl.createUniform("u_alpha", DataType::FLOAT);
+    
     Camera::initializeUniforms(prog_main, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
     Camera::initializeUniforms(prog_depth, U_CAMERA_MVP);
     
@@ -137,11 +139,16 @@ void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
 
 void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
 {
-    if((param_.sub_samp*camera.width_ != fb_->width()) || (param_.sub_samp*camera.height_ != fb_->height()))
-        fb_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, RT_NAMES::count);
-    if((param_.sub_samp*camera.width_ != fb_depth_->width()) || (param_.sub_samp*camera.height_ != fb_depth_->height()))
-        fb_depth_->Resize(param_.sub_samp*camera.width_, param_.sub_samp*camera.height_, 0);
+    int w, h;
+    GLFWwindow* window = glfwGetCurrentContext();
+    glfwGetFramebufferSize(window, &w, &h);
+    glViewport(0, 0, w, h);
     
+    if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
+        fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, RT_NAMES::count);
+    if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))
+        fb_depth_->Resize(param_.sub_samp*w, param_.sub_samp*h, 0);
+
     // render parameters update
     auto& prog_main = programs_["main"];
     auto& prog_pl = programs_["plane"];
@@ -158,6 +165,8 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[0]);
     prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[1]);
     prog_main.updateTexture("u_sample_disp", (GLuint)maps[2]);
+    
+    prog_pl.setUniformData("u_alpha", param_.alpha);
 
     // camera parameters update
     camera.updateUniforms(prog_main, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
@@ -181,16 +190,12 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_depth.draw();
     fb_depth_->Unbind();
     
-    int w, h;
-    GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
     // draw mesh
     fb_->Bind();
     glViewport(0, 0, fb_->width(), fb_->height());
     clearBuffer(COLOR::COLOR_ALPHA);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     prog_main.draw(wire_);
 

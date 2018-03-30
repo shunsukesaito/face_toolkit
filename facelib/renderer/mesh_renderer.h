@@ -8,14 +8,21 @@
 #pragma once
 
 #include "base_renderer.h"
+#include <gl_utility/framebuffer.h>
 
 struct MeshRenderer : public BaseRenderer
 {
     glMesh mesh_;
-    int tessInner_ = 2;
-    int tessOuter_ = 2;
+    glPlane plane_;
+    FramebufferPtr fb_;
+    
+    int tessInner_ = 1;
+    int tessOuter_ = 1;
     float tessAlpha_ = 1.0;
-    float alpha = 1.0;
+    
+    float alpha_ = 1.0;
+    
+    int sub_samp_ = 1;
     
     MeshRenderer(){}
     MeshRenderer(std::string name, bool show) : BaseRenderer(name,show){}

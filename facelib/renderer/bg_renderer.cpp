@@ -20,6 +20,8 @@ void BGRenderer::init(std::string data_dir,
     
     programs_["bg"].createUniform("u_tex_mode", DataType::UINT);
     programs_["bg"].setUniformData("u_tex_mode", (uint)1);
+    
+    programs_["bg"].createUniform("u_alpha", DataType::FLOAT);
 }
 
 void BGRenderer::init(std::string data_dir,
@@ -37,6 +39,9 @@ void BGRenderer::init(std::string data_dir,
     
     programs_["bg"].createUniform("u_tex_mode", DataType::UINT);
     programs_["bg"].setUniformData("u_tex_mode", (uint)1);
+    
+    programs_["bg"].createUniform("u_alpha", DataType::FLOAT);
+
 }
 
 void BGRenderer::render(const cv::Mat& img, bool mirror)
@@ -46,6 +51,8 @@ void BGRenderer::render(const cv::Mat& img, bool mirror)
         if(mirror)
             programs_["bg"].setUniformData("u_tex_mode", (uint)2);
     }
+    programs_["bg"].setUniformData("u_alpha", alpha_);
+    
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     programs_["bg"].draw();
@@ -69,6 +76,7 @@ void BGRenderer::updateIMGUI()
 {
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
+        ImGui::SliderFloat("Transparency", &alpha_, 0.0, 1.0);
     }
 }
 #endif

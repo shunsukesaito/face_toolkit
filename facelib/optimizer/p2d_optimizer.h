@@ -24,8 +24,6 @@ struct P2DFitParams
     bool robust_ = false;
     bool verbose_ = false;
     
-    bool update_land_ = false;
-    
     float gn_thresh_ = 1.0e-4f;
     float mclose_thresh_ = 4.0f;
     float angle_thresh_ = 8.0f;

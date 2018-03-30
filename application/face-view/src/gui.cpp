@@ -42,15 +42,18 @@ DEFINE_uint32(cam_h, 0, "camera height");
 
 struct Session{
     ModuleHandle capture_module_;
+    ModuleHandle preprocess_module_;
     ModuleHandle face_module_;
     
     CapQueueHandle capture_queue_;
+    CapQueueHandle preprocess_queue_;
     FaceQueueHandle result_queue_;
     
     CmdQueueHandle capture_control_queue_;
+    CmdQueueHandle preprocess_control_queue_;
     CmdQueueHandle face_control_queue_;
     
-    std::thread capture_thread, face_thread;
+    std::thread capture_thread, preprocess_thread, face_thread;
 };
 
 GUI* GUI::instance = new GUI();
@@ -292,8 +295,10 @@ void GUI::init(int w, int h)
     renderer_.initGL(w, h);
     
     session.capture_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
+    session.preprocess_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
     session.result_queue_ = FaceQueueHandle(new SPSCQueue<FaceResult>(4));
     session.capture_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
+    session.preprocess_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
     if( FLAGS_facemodel.find("pin") != std::string::npos )
@@ -342,6 +347,7 @@ void GUI::init(int w, int h)
     
     p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
     f2f_param_ = F2FParamsPtr(new F2FParams());
+    pp_param_ = PProParamsPtr(new PProParams());
     
     auto frame_loader = EmptyLoader::Create();
     if( FLAGS_loader.find("jpg") != std::string::npos ||
@@ -369,9 +375,13 @@ void GUI::init(int w, int h)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
-    else
-        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_, face_detector,
-                                              session.capture_queue_, session.result_queue_, session.face_control_queue_);
+    else{
+        session.preprocess_module_ = PreprocessModule::Create("face", pp_param_, face_detector, session.capture_queue_, 
+                                                              session.preprocess_queue_, session.preprocess_control_queue_);
+
+        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
+                                                     session.preprocess_queue_, session.result_queue_, session.face_control_queue_);
+    }
     
     GLFWwindow* window = renderer_.windows_[MAIN];
 
@@ -400,6 +410,8 @@ void GUI::loop()
         check_uv(uv_prepare_init(uv_default_loop(), &prep));
     }
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
+    if(!FLAGS_preview)
+        session.preprocess_thread = std::thread([&](){ session.preprocess_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
     
     // this makes sure result has some value
@@ -421,14 +433,12 @@ void GUI::loop()
                 result_.fd = result.fd;
                 result_.c_p2l = result.c_p2l;
                 result_.c_p2p = result.c_p2p;
-                result_.p2d = result.p2d;
                 result_.frame_id = result.frame_id;
-                auto f2f_renderer = renderer_.renderer_["F2F"];
-                std::shared_ptr<F2FRenderer> ahaha = std::static_pointer_cast<F2FRenderer>(f2f_renderer);
-                ahaha->updateSegment(result.seg);
+                
             }
             result_.p2d = result.p2d;
-            
+            result_.seg = result.seg;
+
             session.result_queue_->pop();
             result_.fd.updateAll();
         }
@@ -448,14 +458,14 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            
-            renderer_.updateIMGUI();
-            result_.camera.updateIMGUI();
-            result_.fd.updateIMGUI();
             if(!FLAGS_preview){
+                pp_param_->updateIMGUI();
                 p2d_param_->updateIMGUI();
                 f2f_param_->updateIMGUI();
             }
+            renderer_.updateIMGUI();
+            result_.camera.updateIMGUI();
+            result_.fd.updateIMGUI();
             
             ImGui::End();
             ImGui::Render();

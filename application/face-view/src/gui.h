@@ -12,6 +12,7 @@
 #include <thread>
 
 #include <module/capture_module.h>
+#include <module/preprocess_module.h>
 #include <module/face_module.h>
 #include <module/renderer.h>
 #include <utility/fps.h>
@@ -63,6 +64,7 @@ private:
     FaceModelPtr face_model_;
     P2DFitParamsPtr p2d_param_;
     F2FParamsPtr f2f_param_;
+    PProParamsPtr pp_param_;
     
     std::mutex result_mutex_;
     FaceResult result_;

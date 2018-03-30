@@ -189,7 +189,6 @@ void F2FRenderParams::init(GLProgram& prog, bool _preview)
     prog.createUniform("u_enable_seg", DataType::UINT);
     
     prog.createUniform("u_cull_offset", DataType::FLOAT);
-    prog.createUniform("u_alpha", DataType::FLOAT);
     
     preview = _preview;
     if(preview){
@@ -205,7 +204,6 @@ void F2FRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_enable_seg", (uint)enable_seg);
     
     prog.setUniformData("u_cull_offset", cull_offset);
-    prog.setUniformData("u_alpha", alpha);
     
     if(preview){
         prog.setUniformData("u_tex_mode", (uint)tex_mode);
@@ -262,6 +260,8 @@ void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
          cv::Mat_<cv::Vec3b> tex(100,100,cv::Vec3b(0,0,0));
          prog_f2f.createTexture("u_sample_texture", tex);
      }
+    
+    prog_pl.createUniform("u_alpha", DataType::FLOAT);
 
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     
@@ -288,6 +288,8 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     auto& prog_pl = programs_["plane"];
     
     param_.update(prog_f2f);
+    
+    prog_pl.setUniformData("u_alpha", param_.alpha);
     
     // spherical harmonics update
     std::vector<glm::vec3> sh;
@@ -325,7 +327,7 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     glViewport(0, 0, w, h);
     glDisable(GL_CULL_FACE);
     glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     prog_pl.draw();
 }
@@ -378,6 +380,9 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
 #ifdef FACE_TOOLKIT
 void F2FRenderer::render(const FaceResult& result)
 {
+    if(!result.seg.empty())
+        updateSegment(result.seg);
+    
     if(show_)
         render(result.camera, result.fd);
 }

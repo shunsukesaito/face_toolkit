@@ -56,9 +56,6 @@ bool P2DFitParams::loadParamFromTxt(std::string file)
         if(label.find("robust") != std::string::npos){
             robust_ = bool(std::stoi(val));
         }
-        if(label.find("update_land") != std::string::npos){
-            update_land_ = bool(std::stoi(val));
-        }
         if(label.find("gn_thresh") != std::string::npos){
             gn_thresh_ = std::stof(val);
         }
@@ -99,7 +96,6 @@ bool P2DFitParams::saveParamToTxt(std::string file)
     fout << "run: " << run_ << std::endl;
     fout << "verbose: " << verbose_ << std::endl;
     fout << "robust: " << robust_ << std::endl;
-    fout << "update_land: " << update_land_ << std::endl;
     fout << "gn_thresh: " << gn_thresh_ << std::endl;
     fout << "angle_thresh: " << angle_thresh_ << std::endl;
     fout << "mclose_thresh: " << mclose_thresh_ << std::endl;
@@ -126,7 +122,6 @@ void P2DFitParams::updateIMGUI()
 
         ImGui::Checkbox("Run", &run_);
         ImGui::Checkbox("verbose", &verbose_);
-        ImGui::Checkbox("update land", &update_land_);
         
         ImGui::Checkbox("robust", &robust_);
         ImGui::InputInt("maxIter", &maxIter_);

@@ -88,7 +88,7 @@ void SingleImageLoader::init()
 
 void SingleImageLoader::load_frame(cv::Mat& frame, std::string command)
 {
-    frame = frame_.clone();
+    frame = frame_;
 }
 
 FrameLoaderPtr SingleImageLoader::Create(const std::string &image_path)
@@ -97,6 +97,48 @@ FrameLoaderPtr SingleImageLoader::Create(const std::string &image_path)
     
     return FrameLoaderPtr(loader);
 }
+
+ImageSequenceLoader::ImageSequenceLoader(const std::string &imgseq_fmt, int begin_id, int end_id) : FrameLoader()
+{
+    char file_name[256];
+    file_list_.clear();
+    for (int i = begin_id; i <= end_id; ++i)
+    {
+        sprintf(file_name, imgseq_fmt.c_str(), i);
+        std::ifstream dummy(file_name);
+        if (dummy.good())
+            file_list_.push_back(file_name);
+    }
+    
+    if(file_list_.size() == 0){
+        std::cout << "Error: image sequence does not exist. " << imgseq_fmt << std::endl;
+        throw std::runtime_error("Error: image sequence does not exist. ");
+    }
+}
+
+// default destructor
+ImageSequenceLoader::~ImageSequenceLoader()
+{
+    // nothing to do
+}
+
+void ImageSequenceLoader::init()
+{
+    // nothing to do
+}
+
+void ImageSequenceLoader::load_frame(cv::Mat& frame, std::string command)
+{
+    
+}
+
+FrameLoaderPtr ImageSequenceLoader::Create(const std::string &imgseq_fmt, int begin_id, int end_id)
+{
+    auto loader = new ImageSequenceLoader(imgseq_fmt, begin_id, end_id);
+    
+    return FrameLoaderPtr(loader);
+}
+
 
 
 

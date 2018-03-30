@@ -56,6 +56,75 @@ Face2DDetector::Face2DDetector(std::string data_dir){
     
 }
 
+bool Face2DDetector::GetFaceRect(const cv::Mat &img,
+                                  cv::Rect& rect,
+                                  bool enable_dlib)
+{
+    std::vector<dlib::rectangle> dets;
+    dlib::array2d<dlib::rgb_pixel> img_dlib, img_sml_dlib;
+    cv::Mat img_sml;
+    float scale = 150.0/(float)std::max(img.rows,img.cols);
+    float invscale = 1.0/scale;
+    cv::resize(img, img_sml, cv::Size(),scale,scale);
+    assign_image(img_dlib, dlib::cv_image<dlib::bgr_pixel>(img));
+    assign_image(img_sml_dlib, dlib::cv_image<dlib::bgr_pixel>(img_sml));
+    
+    if(enable_dlib){
+        dets = detector_(img_sml_dlib,-0.2);
+        
+        if(dets.size()!=0){
+            dets[0].set_bottom(invscale*(float)(dets[0].height()+dets[0].top()));
+            dets[0].set_top(invscale*(float)dets[0].top());
+            dets[0].set_left(invscale*(float)dets[0].left());
+            dets[0].set_right(invscale*(float)(dets[0].left()+dets[0].width()));
+        }
+    }
+
+    if(dets.size()==0)
+    {
+        cv::Mat frame_gray;
+        cv::cvtColor( img_sml, frame_gray, cv::COLOR_BGR2GRAY );
+
+        std::vector<float> scores;
+        std::vector<int> index;
+        std::vector<cv::Rect> new_rects;
+        index = gab_detector_.DetectFace(frame_gray,new_rects,scores);
+        
+        std::vector<cv::Rect> rects;
+        for (int i = 0; i < index.size(); i++) {
+            if(scores[index[i]]>9)
+                rects.push_back(new_rects[index[i]]);
+        }
+        
+        dets.resize(rects.size());
+        if(rects.size()==0) return false;
+        if(rects.size()>0)
+        {
+            int face_id = 0;
+            rects[face_id].x = invscale*(float)rects[face_id].x;
+            rects[face_id].y = invscale*(float)rects[face_id].y;
+            rects[face_id].width = invscale*(float)rects[face_id].width;
+            rects[face_id].height = invscale*(float)rects[face_id].height;
+            
+            dets[0].set_bottom(rects[face_id].y+rects[face_id].height);
+            dets[0].set_top(rects[face_id].y);
+            dets[0].set_left(rects[face_id].x);
+            dets[0].set_right(rects[face_id].x + rects[face_id].width);
+        }
+    }
+    
+    if(dets.size() == 0){
+        return false;
+    }
+    
+    rect.x = dets[0].left();
+    rect.y = dets[0].top();
+    rect.width = dets[0].width();
+    rect.height = dets[0].height();
+    
+    return true;
+}
+
 void Face2DDetector::GetFaceRects(const cv::Mat &img,
                                   std::vector<cv::Rect>& rects,
                                   bool enable_dlib,

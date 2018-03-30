@@ -66,8 +66,8 @@ bool F2FParams::loadParamFromTxt(std::string file)
         if(label.find("sym_with_exp") != std::string::npos){
             sym_with_exp_ = bool(std::stoi(val));
         }
-        if(label.find("update_land") != std::string::npos){
-            update_land_ = bool(std::stoi(val));
+        if(label.find("enable_seg") != std::string::npos){
+            enable_seg_ = bool(std::stoi(val));
         }
         if(label.find("smoothLev") != std::string::npos){
             smoothLev_ = std::stoi(val);
@@ -128,7 +128,7 @@ bool F2FParams::saveParamToTxt(std::string file)
     fout << "verbose: " << verbose_ << std::endl;
     fout << "robust: " << robust_ << std::endl;
     fout << "sym_with_exp: " << sym_with_exp_ << std::endl;
-    fout << "update_land: " << update_land_ << std::endl;
+    fout << "enable_seg: " << enable_seg_ << std::endl;
     fout << "smoothLev: " << smoothLev_ << std::endl;
     fout << "gn_thresh: " << gn_thresh_ << std::endl;
     fout << "mclose_thresh: " << mclose_thresh_ << std::endl;
@@ -159,10 +159,11 @@ void F2FParams::updateIMGUI()
 
         ImGui::Checkbox("Run", &run_);
         ImGui::Checkbox("verbose", &verbose_);
-        ImGui::Checkbox("update land", &update_land_);
         
+        ImGui::Checkbox("enable seg", &enable_seg_);
         ImGui::Checkbox("robust", &robust_);
         ImGui::Checkbox("sym including exp", &sym_with_exp_);
+
         ImGui::InputIntn("maxIter", &maxIter_[0], maxIter_.size());
         ImGui::InputInt("DOF ID", &dof.ID);
         ImGui::InputInt("DOF EX", &dof.EX);

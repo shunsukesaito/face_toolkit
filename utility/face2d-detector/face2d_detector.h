@@ -52,6 +52,10 @@ public:
 public:
     Face2DDetector(std::string data_dir);
     
+    bool        GetFaceRect(const cv::Mat &img,
+                            cv::Rect& rect,
+                            bool enable_dlib = false);
+
     void        GetFaceRects(const cv::Mat &img,
                              std::vector<cv::Rect>& rects,
                              bool enable_dlib,

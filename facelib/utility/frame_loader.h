@@ -80,3 +80,22 @@ public:
 private:
     cv::Mat frame_;
 };
+
+class ImageSequenceLoader : public FrameLoader
+{
+public:
+    // initializes a module
+    ImageSequenceLoader(const std::string &imgseq_fmt, int begin_id, int end_id);
+    
+    // destructor
+    ~ImageSequenceLoader();
+    
+    virtual void load_frame(cv::Mat& frame, std::string command);
+    virtual void init();
+    
+    static FrameLoaderPtr Create(const std::string &imgseq_fmt, int begin_id, int end_id);
+    
+private:
+    cv::Mat frame_;
+    std::vector<std::string> file_list_;
+};

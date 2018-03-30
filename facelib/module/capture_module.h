@@ -5,6 +5,7 @@
 #include <string>
 
 #include <opencv2/opencv.hpp>
+#include <Eigen/Core>
 
 #include <utility/frame_loader.h>
 #include <gl_utility/camera.h>
@@ -16,6 +17,11 @@ struct CaptureResult
     int frame_id;
     cv::Mat img;
     Camera camera;
+
+    cv::Mat seg;
+    std::vector<Eigen::Vector3f> p2d;
+
+    int mode = 0; // 0: nothing, 1: p2d, 2: seg, 3: both 
 };
 
 typedef std::shared_ptr<SPSCQueue<CaptureResult>> CapQueueHandle;
@@ -61,4 +67,6 @@ private:
     FrameLoaderPtr frame_loader_;
     Camera camera_;
     int frame_id_;
+
+    bool run_track_ = false;
 };

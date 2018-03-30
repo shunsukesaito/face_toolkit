@@ -5,16 +5,8 @@
 //  Created by Shunsuke Saito on 9/14/17.
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
-
-#include <utility/pts_loader.h>
-
 #include "face_module.h"
 #include "renderer.h"
-
-#include <gflags/gflags.h>
-DEFINE_string(land_type, "cpm", "landmark type");
-DEFINE_string(seg_ip, "csloadbalancer-dev-746798469.us-east-1.elb.amazonaws.com", "IP for hair segmentation net");
-DEFINE_uint32(prob_size, 340, "size of probability map");
 
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
@@ -49,6 +41,9 @@ void FaceOptModule::Process()
             FaceResult result;
             result.img = input_frame_queue_->front()->img;
             result.camera = input_frame_queue_->front()->camera;
+            result.p2d = input_frame_queue_->front()->p2d;
+            result.seg = input_frame_queue_->front()->seg;
+
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
@@ -74,8 +69,7 @@ void FaceOptModule::Stop()
 void FaceOptModule::init(std::string data_dir,
                       FaceModelPtr face_model,
                       P2DFitParamsPtr p2d_param,
-                      F2FParamsPtr f2f_param,
-                      Face2DDetectorPtr face_detector)
+                      F2FParamsPtr f2f_param)
 {
     data_dir_ = data_dir;
     
@@ -85,10 +79,6 @@ void FaceOptModule::init(std::string data_dir,
     
     p2d_param_->loadParamFromTxt("p2d.ini");
     f2f_param_->loadParamFromTxt("f2f.ini");
-
-    seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
-    
-    fdetector_ = face_detector;
     
     p2d_param_->dof.ID = std::min(p2d_param_->dof.ID, face_model->n_id());
     p2d_param_->dof.EX = std::min(p2d_param_->dof.EX, face_model->n_exp());
@@ -114,32 +104,6 @@ void FaceOptModule::update(FaceResult& result)
     {
         c_p2l_[i].v_idx = fd_.cont_idx_[i];
     }
-
-    cv::Rect rect;
-    if(p2d_param_->update_land_ || f2f_param_->update_land_){
-        if(FLAGS_land_type.find("cpm") != std::string::npos){
-            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
-            seg_tcp_->sendImage(result.img, rect, 1.5);
-            seg_tcp_->getSegmentation(result.seg);
-        }
-        else if(FLAGS_land_type.find("dlib") != std::string::npos){
-            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect, false, true);
-            seg_tcp_->sendImage(result.img, rect, 1.5);
-            seg_tcp_->getSegmentation(result.seg);
-        }
-        else if(FLAGS_land_type.find("pts") != std::string::npos){
-            result.p2d = load_pts(FLAGS_land_type);
-            rect = GetBBoxFromLandmarks(result.p2d);
-            seg_tcp_->sendImage(result.img, rect, 2.0);
-            seg_tcp_->getSegmentation(result.seg);
-        }
-        p2d_ = result.p2d;
-        seg_ = result.seg.clone();
-    }
-    else{
-        result.p2d = p2d_;
-        result.seg = seg_.clone();
-    }
     
     if(p2d_param_->run_ || p2d_param_->onetime_run_){
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
@@ -153,6 +117,10 @@ void FaceOptModule::update(FaceResult& result)
     if(f2f_param_->run_ || f2f_param_->onetime_run_){
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
+
+        // update segmentation mask
+        if(!result.seg.empty())
+            f2f_renderer_.updateSegment(result.seg);
         
         if(result.p2d.size() != 0){
             cv::Mat_<cv::Vec4f> inputRGB;
@@ -215,7 +183,6 @@ ModuleHandle FaceOptModule::Create(const std::string &name,
                                 FaceModelPtr face_model,
                                 P2DFitParamsPtr p2d_param,
                                 F2FParamsPtr f2f_param,
-                                Face2DDetectorPtr face_detector,
                                 CapQueueHandle input_frame_queue,
                                 FaceQueueHandle output_result_queue,
                                 CmdQueueHandle command_queue)
@@ -223,7 +190,7 @@ ModuleHandle FaceOptModule::Create(const std::string &name,
     auto module = new FaceOptModule(name);
     // add this module to the global registry
     
-    module->init(data_dir,face_model,p2d_param,f2f_param,face_detector);
+    module->init(data_dir,face_model,p2d_param,f2f_param);
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);
     module->set_command_queue(command_queue);
@@ -265,6 +232,9 @@ void FacePreviewModule::Process()
             result.img = input_frame_queue_->front()->img;
             result.camera = input_frame_queue_->front()->camera;
             result.frame_id = input_frame_queue_->front()->frame_id;
+            result.p2d = input_frame_queue_->front()->p2d;
+            result.seg = input_frame_queue_->front()->seg;
+
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();

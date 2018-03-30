@@ -48,10 +48,15 @@ struct PosMapReconRenderer : public BaseRenderer
 {
     glPlane plane_;
     glMesh mesh_;
+    FramebufferPtr fb_;
 
     int tessInner_ = 1;
     int tessOuter_ = 1;
     float delta_ = 2.e-3;
+    
+    float alpha_ = 1.0;
+    
+    int sub_samp_ = 1;
     
     PosMapReconRenderer(){}
     PosMapReconRenderer(std::string name, bool show) : BaseRenderer(name,show){}
