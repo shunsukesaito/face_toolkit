@@ -94,7 +94,6 @@ void Renderer::addRenderer(std::string name, RendererHandle renderer)
     if(renderer_.find(name) != renderer_.end()){
         throw std::runtime_error("Attempted to create renderer with duplicate name " + name);
     }
-    std::cout << name << std::endl;
     renderer_[name] = renderer;
 }
 

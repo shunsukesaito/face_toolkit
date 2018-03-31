@@ -5,6 +5,7 @@ uniform uint u_enable_texture;
 uniform uint u_enable_mask;
 uniform uint u_enable_seg;
 uniform float u_cull_offset;
+uniform uint u_inv_diffuse;
 
 uniform vec3 u_SHCoeffs[9];
 
@@ -74,11 +75,19 @@ void main()
     frag_shading = vec4(evaluateLightingModel(normal), 1.0f);
 
     if (u_enable_texture != uint(0))
-        frag_color = texture(u_sample_texture, texcoord);
+        frag_color = texture(u_sample_texture, VertexIn.proj_texcoord);
     else
         frag_color = vec4(clamp(VertexIn.color, vec4(0.0), vec4(1.0)));
-    
-    frag_diffuse = vec4(clamp(frag_color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)), frag_color.a);
+
+    if (u_enable_texture != uint(0) && u_inv_diffuse != uint(0)){
+        vec3 inv_dif = clamp(VertexIn.color.xyz, vec3(0.0), vec3(1.0)) + (frag_color.xyz - clamp(VertexIn.color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)));
+        if (frag_shading[0] < 0.1 || frag_shading[1] < 0.1 || frag_shading[2] < 0.1) discard;
+        else frag_diffuse = vec4(inv_dif, frag_color.a);
+        if (frag_diffuse[0] == 1.0 || frag_diffuse[1] == 1.0 || frag_diffuse[2] == 1.0) discard;
+    }
+    else{
+        frag_diffuse = vec4(clamp(frag_color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)), frag_color.a);
+    }
     
     if(dot(normalize(frag_pos.xyz),normalCamera.xyz) > u_cull_offset)
         discard;

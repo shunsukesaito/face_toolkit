@@ -182,7 +182,7 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
     return error;
 }
 
-void F2FRenderParams::init(GLProgram& prog, bool _preview)
+void F2FRenderParams::init(GLProgram& prog)
 {
     prog.createUniform("u_enable_texture", DataType::UINT);
     prog.createUniform("u_enable_mask", DataType::UINT);
@@ -190,11 +190,8 @@ void F2FRenderParams::init(GLProgram& prog, bool _preview)
     
     prog.createUniform("u_cull_offset", DataType::FLOAT);
     
-    preview = _preview;
-    if(preview){
-        prog.createUniform("u_tex_mode", DataType::UINT);
-        prog.createUniform("u_inv_diffuse", DataType::UINT);
-    }
+    prog.createUniform("u_tex_mode", DataType::UINT);
+    prog.createUniform("u_inv_diffuse", DataType::UINT);
 }
 
 void F2FRenderParams::update(GLProgram& prog)
@@ -205,10 +202,8 @@ void F2FRenderParams::update(GLProgram& prog)
     
     prog.setUniformData("u_cull_offset", cull_offset);
     
-    if(preview){
-        prog.setUniformData("u_tex_mode", (uint)tex_mode);
-        prog.setUniformData("u_inv_diffuse", (uint)enable_inv_diffuse);
-    }
+    prog.setUniformData("u_tex_mode", (uint)tex_mode);
+    prog.setUniformData("u_inv_diffuse", (uint)enable_inv_diffuse);
 }
 
 #ifdef WITH_IMGUI
@@ -217,6 +212,8 @@ void F2FRenderParams::updateIMGUI()
     ImGui::Checkbox("mask", &enable_mask);
     ImGui::Checkbox("seg", &enable_seg);
     ImGui::Checkbox("texture", &enable_tex);
+    ImGui::Checkbox("tex view", &tex_mode);
+    ImGui::Checkbox("inv diffuse", &enable_inv_diffuse);
     ImGui::SliderFloat("Transparency", &alpha, 0.0, 1.0);
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     const char* listbox_items[] = { "positions", "normals", "albedo", "texCoords", "diffuse", "shading", "vBarycentric", "vIndices"};
@@ -227,9 +224,7 @@ void F2FRenderParams::updateIMGUI()
 void F2FRenderer::updateSegment(const cv::Mat& seg)
 {
     auto& prog_f2f = programs_["f2f"];
-    cv::Mat seg_flip;
-    cv::flip(seg, seg_flip, 0);
-    prog_f2f.updateTexture("u_sample_seg", seg_flip);
+    prog_f2f.updateTexture("u_sample_seg", seg);
 }
 
 void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
@@ -382,6 +377,8 @@ void F2FRenderer::render(const FaceResult& result)
 {
     if(!result.seg.empty())
         updateSegment(result.seg);
+    if(param_.enable_tex)
+        programs_["f2f"].updateTexture("u_sample_texture", result.img);
     
     if(show_)
         render(result.camera, result.fd);

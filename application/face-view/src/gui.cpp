@@ -149,6 +149,11 @@ void GUI::keyboard(int key, int s, int a, int m)
         renderer_.screenshot(img);
         cv::imwrite("screenshot.png", img);
     }
+    if(key == GLFW_KEY_F2 && a == GLFW_PRESS){
+        cv::Mat img;
+        renderer_.screenshot(img);
+        cv::imwrite("screenshot.png", img);
+    }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(result_mutex_);
         lookat = Eigen::ApplyTransform(result_.fd.RT, getCenter(result_.fd.pts_));

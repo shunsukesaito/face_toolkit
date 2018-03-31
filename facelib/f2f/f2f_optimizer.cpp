@@ -409,7 +409,7 @@ void F2FGaussNewton(FaceData& fd,
         
         if (params.verbose_) logger->info("	Error Evaluation...");
         
-        if (params.verbose_) std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
+        std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
         
         err_cur = err.total();
         //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());

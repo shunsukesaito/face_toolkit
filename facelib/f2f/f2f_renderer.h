@@ -7,8 +7,7 @@
 #include <gl_utility/framebuffer.h>
 #include <shape_model/face_model.h>
 
-
-class FaceResult;
+struct FaceResult;
 
 struct F2FRenderParams{
     bool enable_tex = 0;
@@ -17,15 +16,12 @@ struct F2FRenderParams{
     float cull_offset = 0.0;
     float alpha = 1.0;
     
-    // for preview
     bool tex_mode = 0;
     bool enable_inv_diffuse = 0;
     
     int location = 4;
-    
-    bool preview = false;
-    
-    void init(GLProgram& prog, bool _preview = false);
+
+    void init(GLProgram& prog);
     void update(GLProgram& prog);
     
 #ifdef WITH_IMGUI

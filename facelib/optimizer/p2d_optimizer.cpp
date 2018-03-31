@@ -335,7 +335,7 @@ void P2DGaussNewton(FaceData& fd,
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        if (params.verbose_) std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
+        std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
         
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
@@ -434,7 +434,7 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
             setFaceVector(Xf, rtf[j], fd[j], dof);
         }
         
-        if (params.verbose_) std::cout << "iter " << i << " " << err << std::endl;
+        std::cout << "iter " << i << " " << err << std::endl;
 
         if (dX.norm() < params.gn_thresh_) break;
     }
