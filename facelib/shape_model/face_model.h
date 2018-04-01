@@ -122,9 +122,9 @@ struct BaseFaceModel
     
     void loadContourList(std::string file);
     
-    virtual void updateExpression(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
-    virtual void updateIdentity(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
-    virtual void updateColor(FaceData& data){ throw std::runtime_error( "Error: Base class is called..."); }
+    virtual void updateExpression(FaceData& data){ throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual void updateIdentity(FaceData& data){ throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual void updateColor(FaceData& data){ throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     
     virtual int n_id() const { return 0;}
     virtual int n_exp() const { return 0;}
@@ -132,22 +132,22 @@ struct BaseFaceModel
     
     virtual int n_sym_pair(){ return 0;}
     
-    virtual Eigen::Vector3f computeV(int vidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual Eigen::Ref<const Eigen::MatrixXf> dID(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual Eigen::Ref<const Eigen::MatrixXf> dEX(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual Eigen::Ref<const Eigen::MatrixXf> dCL(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
+    virtual Eigen::Vector3f computeV(int vidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual Eigen::Ref<const Eigen::MatrixXf> dID(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual Eigen::Ref<const Eigen::MatrixXf> dEX(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual Eigen::Ref<const Eigen::MatrixXf> dCL(int vidx, int size, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     
-    virtual const Eigen::Matrix3Xf& dIDEdge(int fidx, int eidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual const Eigen::Matrix3Xf& dEXEdge(int fidx, int eidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class is called..."); }
+    virtual const Eigen::Matrix3Xf& dIDEdge(int fidx, int eidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual const Eigen::Matrix3Xf& dEXEdge(int fidx, int eidx, const FaceData& data) const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     
-    virtual const Eigen::VectorXf& sigmaID() const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual const Eigen::VectorXf& sigmaEX() const { throw std::runtime_error( "Error: Base class is called..."); }
-    virtual const Eigen::VectorXf& sigmaCL() const { throw std::runtime_error( "Error: Base class is called..."); }
+    virtual const Eigen::VectorXf& sigmaID() const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual const Eigen::VectorXf& sigmaEX() const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
+    virtual const Eigen::VectorXf& sigmaCL() const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     
-    virtual const Eigen::VectorXf& meanShape() const { throw std::runtime_error( "Error: Base class is called..."); }
+    virtual const Eigen::VectorXf& meanShape() const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     
     virtual void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv, const FaceData& data)
-    const { throw std::runtime_error( "Error: Base class is called..."); }
+    const { throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
 };
 
 struct LinearFaceModel : public BaseFaceModel

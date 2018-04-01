@@ -28,6 +28,7 @@ struct FaceResult
 {
     bool processed_ = false;
     int frame_id = 0;
+    std::string name = "";
     
     // assume single camera for now
     cv::Mat img;
@@ -43,6 +44,10 @@ struct FaceResult
     
     inline void loadFromTXT(std::string filename){
         std::ifstream infile(filename);
+        if(!infile.is_open()){
+            std::cout << "Warning: failed parsing face data from " << filename << std::endl;
+            return false;
+        }
         std::string line;
         
         std::vector<float> tmp;
@@ -58,30 +63,55 @@ struct FaceResult
         std::getline(infile, line);
         getVectorFromString(line, tmp);
         fd.alCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
-        // rotation
+        // face rotation
         std::getline(infile, line);
         getVectorFromString(line, tmp);
-        camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]).transpose();
-        // translation
+        fd.RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        // face translation
         std::getline(infile, line);
         getVectorFromString(line, tmp);
-        camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
+        fd.RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // spherical hamonics
         std::getline(infile, line);
         getVectorFromString(line, tmp);
         fd.SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],9,3).transpose();
+        // camera rotation
+        std::getline(infile, line);
+        getVectorFromString(line, tmp);
+        camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        // camera translation
+        std::getline(infile, line);
+        getVectorFromString(line, tmp);
+        camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // camera intrinsic
         std::getline(infile, line);
         getVectorFromString(line, tmp);
-        camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]).transpose();
+        camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+    }
+    
+    inline void saveToTXT(std::string filename){
+        std::ofstream fout(filename);
+        if(!fout.is_open()){
+            std::cout << "Warning: failed writing result to " << filename << std::endl;
+            return false;
+        }
         
-//        std::cout << fd.idCoeff.transpose() << std::endl;
-//        std::cout << fd.exCoeff.transpose() << std::endl;
-//        std::cout << fd.alCoeff.transpose() << std::endl;
-//        std::cout << fd.RT << std::endl;
-//        std::cout << fd.SH << std::endl;
-//        std::cout << camera.extrinsic_ << std::endl;
-//        std::cout << camera.intrinsic_ << std::endl;
+        fout << fd.idCoeff.transpose() << std::endl;
+        fout << fd.exCoeff.transpose() << std::endl;
+        fout << fd.alCoeff.transpose() << std::endl;
+        Eigen::Matrix3f Rf = fd.RT.block(0,0,3,3);
+        Eigen::Map<Eigen::RowVectorXf> Rfmap(Rf.data(), Rf.size());
+        fout << Rfmap << std::endl;
+        fout << fd.RT.block(0,3,3,1).transpose() << std::endl;
+        Eigen::Map<Eigen::RowVectorXf> SHmap(fd.SH.data(), fd.SH.size());
+        fout << SHmap << std::endl;
+        Eigen::Matrix3f Rc = camera.extrinsic_.block(0,0,3,3);
+        Eigen::Map<Eigen::RowVectorXf> Rcmap(Rc.data(), Rc.size());
+        fout << Rcmap << std::endl;
+        fout << camera.extrinsic_.block(0,3,3,1).transpose() << std::endl;
+        Eigen::Matrix3f K = camera.intrinsic_.block(0,0,3,3);
+        Eigen::Map<Eigen::RowVectorXf> Kmap(K.data(), K.size());
+        fout << Kmap << std::endl;
     }
 };
 

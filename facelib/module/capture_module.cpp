@@ -31,9 +31,9 @@ void CaptureModule::Process()
     while(command != "stop")
     {
         CaptureResult cap;
-        frame_loader_->load_frame(cap.img, command);
+        frame_loader_->load_frame(cap.img, frame_id_, cap.name, command);
         cap.camera = camera_;
-        cap.frame_id = frame_id_++;
+        cap.frame_id = frame_id_;
         output_frame_queue_->push(cap);
         
         if(command_queue_->front()){
@@ -62,7 +62,7 @@ void CaptureModule::set_command_queue(CmdQueueHandle queue)
 void CaptureModule::set_frame_loader(FrameLoaderPtr loader)
 {
     frame_loader_ = loader;
-    frame_id_ = 0;
+    frame_id_ = -1;
 }
 
 // Factory method for basic module.

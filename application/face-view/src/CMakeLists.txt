@@ -56,12 +56,15 @@ file(GLOB_RECURSE all_headers *.h)
 
 set(BUILD_EXECUTABLE 0 CACHE BOOL "build library if not, it build executable")
 if(BUILD_EXECUTABLE)
-  add_executable(faceview ${all_sources} ${all_headers})
+  add_executable(faceview main.cpp gui.cpp gui.h)
   set_target_properties(faceview PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_custom_target(create-folder
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/cache/"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/logs/faceview/")
   add_dependencies(faceview create-folder)
+  add_executable(batch_f2f main.cpp gui_batch_f2f.cpp gui_batch_f2f.h)
+  set_target_properties(batch_f2f PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(batch_f2f create-folder)
 else(BUILD_EXECUTABLE)
   add_library(faceview STATIC ${all_sources} ${all_headers})
 endif(BUILD_EXECUTABLE)
@@ -81,7 +84,18 @@ target_link_libraries(faceview
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}
-                      PSM::MKL
+                      ${OPENMP_LIB})
+
+target_link_libraries(batch_f2f
+                      PSM::module
+                      PSM::renderer
+                      PSM::utility
+                      PSM::gflags
+                      PSM::OpenCV
+                      PSM::LibUV
+                      ${DLIB_LIBRARIES}
+                      Threads::Threads
+                      ${CMAKE_DL_LIBS}
                       ${OPENMP_LIB})
 
 

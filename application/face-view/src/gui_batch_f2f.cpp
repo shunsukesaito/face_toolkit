@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gui.h"
+#include "gui_batch_f2f.h"
 
 #include <memory>
 
@@ -24,6 +24,7 @@
 
 #include <utility/obj_loader.h>
 #include <utility/trackball.h>
+#include <utility/pts_loader.h>
 
 // constants
 #include <gflags/gflags.h>
@@ -36,6 +37,8 @@ DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
 DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
 DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
+
+DEFINE_double(loader_scale, 1.0, "image loader scale");
 
 DEFINE_uint32(cam_w, 0, "camera width");
 DEFINE_uint32(cam_h, 0, "camera height");
@@ -53,7 +56,7 @@ struct Session{
     CmdQueueHandle preprocess_control_queue_;
     CmdQueueHandle face_control_queue_;
     
-    std::thread capture_thread, preprocess_thread, face_thread;
+    std::thread capture_thread, preprocess_thread, face_thread, tcp_thread;
 };
 
 GUI* GUI::instance = new GUI();
@@ -361,17 +364,22 @@ void GUI::init(int w, int h)
     if( FLAGS_loader.find("jpg") != std::string::npos ||
         FLAGS_loader.find("png") != std::string::npos ||
         FLAGS_loader.find("bmp") != std::string::npos){
-        frame_loader = SingleImageLoader::Create(FLAGS_loader);
+        frame_loader = SingleImageLoader::Create(FLAGS_loader, FLAGS_loader_scale);
     }
     else if( FLAGS_loader.find("avi") != std::string::npos ||
              FLAGS_loader.find("mp4") != std::string::npos ||
              FLAGS_loader.find("mov") != std::string::npos){
-        frame_loader = VideoLoader::Create(FLAGS_loader);
+        frame_loader = VideoLoader::Create(FLAGS_loader, FLAGS_loader_scale);
+    }
+    else if( FLAGS_loader.find("txt") != std::string::npos){
+        std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
+        std::cout << root_dir << std::endl;
+        frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, FLAGS_loader_scale);
     }
     else if( !FLAGS_loader.empty() ){
         int vid;
         std::istringstream( FLAGS_loader ) >> vid;
-        frame_loader = VideoLoader::Create(vid);
+        frame_loader = VideoLoader::Create(vid, FLAGS_loader_scale);
     }
     
     auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
@@ -410,6 +418,11 @@ void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
+    pp_param_->update_land_ = true;
+    pp_param_->update_seg_ = true;
+    p2d_param_->run_ = true;
+    f2f_param_->run_ = true;
+    
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     if(!FLAGS_preview)
         session.preprocess_thread = std::thread([&](){ session.preprocess_module_->Process(); });
@@ -419,6 +432,46 @@ void GUI::loop()
     while(!session.result_queue_->front())
         ;
     result_ = *session.result_queue_->front();
+    result_.fd.updateAll();
+    
+    if(result_.processed_){
+        std::cout << result_.name << std::endl;
+        std::string filename = result_.name;
+        result_.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result_.seg);
+        write_pts(filename.substr(0,filename.size()-4) + ".png", result_.p2d);
+        auto r = renderer_.renderer_["F2F"];
+        auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
+        std::vector<cv::Mat_<cv::Vec4f>> outs;
+        f2f_r->param_.tex_mode = 1;
+        f2f_r->param_.enable_seg = 1;
+        f2f_r->param_.enable_tex = 1;
+        f2f_r->param_.cull_offset = -0.25;
+        f2f_r->updateSegment(result_.seg);
+        f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result_.img);
+        f2f_r->render(1024,1024,result_.camera, result_.fd, outs);
+        cv::Mat_<cv::Vec4f> tmp;
+        cv::cvtColor(outs[2],tmp,CV_RGBA2BGRA);
+        for(int h = 0; h < tmp.rows; ++h)
+        {
+            for(int w = 0; w < tmp.cols; ++w)
+            {
+                if(tmp(h,w)[3] == 0)
+                    tmp(h, w) = cv::Vec4f(0,1,0,1.0);
+            }
+        }
+        cv::Mat out;
+        cv::cvtColor(tmp, out, CV_BGRA2BGR);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", 255.0*out);
+        
+        f2f_r->param_.tex_mode = 0;
+        f2f_r->param_.enable_seg = 1;
+        f2f_r->param_.enable_tex = 0;
+        f2f_r->param_.cull_offset = 0.0;
+        
+        result_.saveToTXT(filename.substr(0,filename.size()-4) + "_params.txt");
+    }
+    
     session.result_queue_->pop();
     lookat = Eigen::ApplyTransform(result_.fd.RT,getCenter(result_.fd.pts_));
 
@@ -435,13 +488,55 @@ void GUI::loop()
                 result_.c_p2l = result.c_p2l;
                 result_.c_p2p = result.c_p2p;
                 result_.frame_id = result.frame_id;
+                result_.name = result.name;
                 
+                oriRT = result_.camera.extrinsic_;
             }
             result_.p2d = result.p2d;
             result_.seg = result.seg;
 
             session.result_queue_->pop();
             result_.fd.updateAll();
+            
+            if(result.processed_){
+                if(result.frame_id == 0) break;
+                
+                std::cout << result.name << std::endl;
+                std::string filename = result_.name;
+                result_.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
+                cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result_.seg);
+                write_pts(filename.substr(0,filename.size()-4) + ".png", result_.p2d);
+                auto r = renderer_.renderer_["F2F"];
+                auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
+                std::vector<cv::Mat_<cv::Vec4f>> outs;
+                f2f_r->param_.tex_mode = 1;
+                f2f_r->param_.enable_seg = 1;
+                f2f_r->param_.enable_tex = 1;
+                f2f_r->param_.cull_offset = -0.25;
+                f2f_r->updateSegment(result_.seg);
+                f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result_.img);
+                f2f_r->render(1024,1024,result_.camera, result_.fd, outs);
+                cv::Mat_<cv::Vec4f> tmp;
+                cv::cvtColor(outs[2],tmp,CV_RGBA2BGRA);
+                for(int h = 0; h < tmp.rows; ++h)
+                {
+                    for(int w = 0; w < tmp.cols; ++w)
+                    {
+                        if(tmp(h,w)[3] == 0)
+                            tmp(h, w) = cv::Vec4f(0,1,0,1.0);
+                    }
+                }
+                cv::Mat out;
+                cv::cvtColor(tmp, out, CV_BGRA2BGR);
+                cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", 255.0*out);
+                
+                f2f_r->param_.tex_mode = 0;
+                f2f_r->param_.enable_seg = 1;
+                f2f_r->param_.enable_tex = 0;
+                f2f_r->param_.cull_offset = 0.0;
+                
+                result_.saveToTXT(filename.substr(0,filename.size()-4) + "_params.txt");
+            }
         }
         
         char title[256];
@@ -473,6 +568,8 @@ void GUI::loop()
         }
 #endif        
         renderer_.flush();
+
+
         
         if(FLAGS_fd_record){
             cv::Mat img;

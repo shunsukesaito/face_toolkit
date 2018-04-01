@@ -36,7 +36,7 @@ class Face2DDetector;
 typedef std::shared_ptr<Face2DDetector> Face2DDetectorPtr;
 
 cv::Rect ScaleRect(const cv::Rect& rect,float scale);
-void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector2f>& p2d);
+void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector3f>& p2d);
 cv::Rect GetBBoxFromLandmarks(std::vector<Eigen::Vector3f>& shape);
 
 class Face2DDetector

@@ -50,6 +50,7 @@ void PreprocessModule::Process()
             result.img = input_frame_queue_->front()->img;
             result.camera = input_frame_queue_->front()->camera;
             result.frame_id = input_frame_queue_->front()->frame_id;
+            result.name = input_frame_queue_->front()->name;
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
@@ -95,7 +96,9 @@ void PreprocessModule::update(CaptureResult& result)
             rect_ = GetBBoxFromLandmarks(result.p2d);
         }
         p2d_ = result.p2d;
-        
+        cv::Mat tmp;
+        crop_image(result.img, tmp, rect_);
+        cv::imwrite("rect.png", tmp);
         if(param_->onetime_land_) param_->onetime_land_ = false;
     }
     else{

@@ -14,6 +14,7 @@
 
 struct CaptureResult
 {
+    std::string name;
     int frame_id;
     cv::Mat img;
     Camera camera;

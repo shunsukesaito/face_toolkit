@@ -9,13 +9,13 @@
 #include "frame_loader.h"
 
 // initializes this module and the basic module
-VideoLoader::VideoLoader(const std::string &video_path) : FrameLoader(), video_path_(video_path)
+VideoLoader::VideoLoader(const std::string &video_path, float scale) : FrameLoader(), video_path_(video_path), scale_(scale)
 {
     // nothing to do
 }
 
 // initializes this module and the basic module
-VideoLoader::VideoLoader(int device_id) : FrameLoader(), device_id_(device_id)
+VideoLoader::VideoLoader(int device_id, float scale) : FrameLoader(), device_id_(device_id), scale_(scale)
 {
     // nothing to do
 }
@@ -42,33 +42,40 @@ void VideoLoader::init()
     }
 }
 
-void VideoLoader::load_frame(cv::Mat& frame, std::string command)
+void VideoLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
 {
     if(command != "pause"){
         video_capture_ >> frame;
+        if(scale_ != 1.0)
+            cv::resize(frame, frame, cv::Size(), scale_, scale_);
+        frame_id++;
         // flip image if it's streaming
         if(device_id_ != -1)
             cv::flip(frame, frame, 1);
     }
 }
 
-FrameLoaderPtr VideoLoader::Create(const std::string &video_path)
+FrameLoaderPtr VideoLoader::Create(const std::string &video_path, float scale)
 {
-    auto loader = new VideoLoader(video_path);
+    auto loader = new VideoLoader(video_path,scale);
     
     return FrameLoaderPtr(loader);
 }
 
-FrameLoaderPtr VideoLoader::Create(int device_id)
+FrameLoaderPtr VideoLoader::Create(int device_id, float scale)
 {
-    auto loader = new VideoLoader(device_id);
+    auto loader = new VideoLoader(device_id,scale);
     
     return FrameLoaderPtr(loader);
 }
 
-SingleImageLoader::SingleImageLoader(const std::string &image_path) : FrameLoader()
+SingleImageLoader::SingleImageLoader(const std::string &image_path, float scale) : FrameLoader()
 {
+    image_path_ = image_path;
+    scale_ = scale;
     frame_ = cv::imread(image_path);
+    if(scale_ != 1.0)
+        cv::resize(frame_, frame_, cv::Size(), scale_, scale_);
     if(frame_.empty()){
         std::cout << "Error: image file does not exist. " << image_path << std::endl;
         throw std::runtime_error("Error: image file does not exist. ");
@@ -86,20 +93,24 @@ void SingleImageLoader::init()
     // nothing to do
 }
 
-void SingleImageLoader::load_frame(cv::Mat& frame, std::string command)
+void SingleImageLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
 {
     frame = frame_;
+    name = image_path_;
+    frame_id = 0;
 }
 
-FrameLoaderPtr SingleImageLoader::Create(const std::string &image_path)
+FrameLoaderPtr SingleImageLoader::Create(const std::string &image_path, float scale)
 {
-    auto loader = new SingleImageLoader(image_path);
+    auto loader = new SingleImageLoader(image_path, scale);
     
     return FrameLoaderPtr(loader);
 }
 
-ImageSequenceLoader::ImageSequenceLoader(const std::string &imgseq_fmt, int begin_id, int end_id) : FrameLoader()
+ImageSequenceLoader::ImageSequenceLoader(const std::string &root_dir, const std::string &imgseq_fmt, int begin_id, int end_id, float scale) : FrameLoader()
 {
+    root_dir_ = root_dir;
+    scale_ = scale;
     char file_name[256];
     file_list_.clear();
     for (int i = begin_id; i <= end_id; ++i)
@@ -116,6 +127,33 @@ ImageSequenceLoader::ImageSequenceLoader(const std::string &imgseq_fmt, int begi
     }
 }
 
+ImageSequenceLoader::ImageSequenceLoader(const std::string &root_dir, const std::string &list_file, float scale) : FrameLoader()
+{
+    root_dir_ = root_dir;
+    scale_ = scale;
+    file_list_.clear();
+    std::ifstream fin(list_file);
+    if(!fin.is_open()){
+        std::cout << "Warning: failed parsing p2dfit params from " << list_file << std::endl;
+        throw std::runtime_error("Error: image sequence does not exist. ");
+    }
+    
+    std::string f;
+    while(std::getline(fin, f))
+    {
+        if (f.empty())
+            continue;
+        std::ifstream dummy(root_dir_ + "/" + f);
+        if (dummy.good())
+            file_list_.push_back(f);
+    }
+    
+    if(file_list_.size() == 0){
+        std::cout << "Error: image sequence does not exist. " << root_dir << std::endl;
+        throw std::runtime_error("Error: image sequence does not exist. ");
+    }
+}
+
 // default destructor
 ImageSequenceLoader::~ImageSequenceLoader()
 {
@@ -127,18 +165,36 @@ void ImageSequenceLoader::init()
     // nothing to do
 }
 
-void ImageSequenceLoader::load_frame(cv::Mat& frame, std::string command)
+void ImageSequenceLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
 {
+    if(++frame_id >= file_list_.size() || frame_id < 0)
+        frame_id = 0;
+    
+    frame_ = cv::imread(root_dir_ + "/" + file_list_[frame_id]);
+    if(scale_ != 1.0)
+        cv::resize(frame_, frame_, cv::Size(), scale_, scale_);
+    name = root_dir_ + "/" + file_list_[frame_id];
+    if(frame_.empty()){
+        std::cout << "Error: image file does not exist. " << root_dir_ + "/" + file_list_[frame_id] << std::endl;
+        throw std::runtime_error("Error: image file does not exist. ");
+    }
+    frame = frame_;
     
 }
 
-FrameLoaderPtr ImageSequenceLoader::Create(const std::string &imgseq_fmt, int begin_id, int end_id)
+FrameLoaderPtr ImageSequenceLoader::Create(const std::string &root_dir, const std::string &imgseq_fmt, int begin_id, int end_id, float scale)
 {
-    auto loader = new ImageSequenceLoader(imgseq_fmt, begin_id, end_id);
+    auto loader = new ImageSequenceLoader(root_dir, imgseq_fmt, begin_id, end_id, scale);
     
     return FrameLoaderPtr(loader);
 }
 
+FrameLoaderPtr ImageSequenceLoader::Create(const std::string &root_dir, const std::string &list_file, float scale)
+{
+    auto loader = new ImageSequenceLoader(root_dir, list_file, scale);
+    
+    return FrameLoaderPtr(loader);
+}
 
 
 

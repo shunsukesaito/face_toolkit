@@ -7,7 +7,7 @@
 
 #include "tcp_stream.h"
 
-struct LandmarkCpmTCPStream : public TCPStream {
+struct LandmarkCpmTCPStream : public TCPStreamSync {
     const int map_size;
     const int cpm_num;
     const int precrop_size;
@@ -22,7 +22,7 @@ struct LandmarkCpmTCPStream : public TCPStream {
                          int cpm_crop_width = 500,
                          int cpm_crop_pos = 0,
                          int cpm_num = 68) :
-            TCPStream(ip, 2233,
+            TCPStreamSync(ip, 2233,
                       cpm_width * cpm_width * 3,
                       3 * cpm_num * sizeof(float)),
             map_size(cpm_width),
@@ -71,15 +71,6 @@ struct LandmarkCpmTCPStream : public TCPStream {
 
     inline void sendImage(const cv::Mat& img, const cv::Rect& rect){
         face_rect = rect;
-        if(rect.width != rect.height){
-            int len = 1.1*std::max(rect.width,rect.height);
-            int cx = rect.x + rect.width/2;
-            int cy = rect.y + rect.height/2;
-            face_rect.x = cx - len/2;
-            face_rect.y = cy - len/2;
-            face_rect.width = len;
-            face_rect.height = len;
-        }
         cv::Mat img_crop;
         cv::Rect inter = (face_rect & cv::Rect(0, 0, img.cols, img.rows));
         if( inter != face_rect)
@@ -94,10 +85,16 @@ struct LandmarkCpmTCPStream : public TCPStream {
         
         auto ret = std::make_shared<ImageFrame>();
         ret->image = img_crop;
+        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
         setInput(ret);
+        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
     }
     inline std::vector<Eigen::Vector3f> getLandmarks(){
-        auto frame = getOutput(100000);
+        auto frame = getOutput(10000);
+        while(frame == nullptr){
+            std::cout << "frame null? " << (frame == nullptr) << std::endl;
+            frame = getOutput(10000);
+        }
         auto ret = std::static_pointer_cast<LandmarkFrame>(frame);
         return ret->lands;
     }

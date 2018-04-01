@@ -9,14 +9,14 @@
 
 #include "cv_utils.h"
 
-struct SegmentationTCPStream : public TCPStream {
+struct SegmentationTCPStream : public TCPStreamSync {
     const int map_size;
     cv::Size img_size;
     cv::Mat img;
     cv::Rect img_rect;
     SegmentationTCPStream(std::string ip,
                          int probmap_size = 256) :
-        TCPStream(ip, 1153,
+        TCPStreamSync(ip, 1153,
               probmap_size * probmap_size * 3,
               probmap_size * probmap_size),
         map_size(probmap_size) {
@@ -36,7 +36,7 @@ struct SegmentationTCPStream : public TCPStream {
         cv::Mat seg(map_size, map_size, CV_8UC1, buffer.data());
         ImageFramePtr ret = std::make_shared<ImageFrame>();
         seg = seg*255;
-        cv::resize(seg, seg, img.size());
+        cv::resize(seg, seg, img.size(), cv::INTER_NEAREST);
         
         ret->image = cv::Mat(img_size.height,img_size.width,CV_8UC1,cv::Scalar(0));
         insert_image(seg, ret->image, img_rect);

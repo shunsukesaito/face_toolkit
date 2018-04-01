@@ -8,6 +8,8 @@
 #include "face_module.h"
 #include "renderer.h"
 
+#include <face2d-detector/face2d_detector.h>
+
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
 : Module(name)
@@ -43,6 +45,8 @@ void FaceOptModule::Process()
             result.camera = input_frame_queue_->front()->camera;
             result.p2d = input_frame_queue_->front()->p2d;
             result.seg = input_frame_queue_->front()->seg;
+            result.name = input_frame_queue_->front()->name;
+            result.frame_id = input_frame_queue_->front()->frame_id;
 
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
@@ -98,14 +102,13 @@ void FaceOptModule::init(std::string data_dir,
 
 void FaceOptModule::update(FaceResult& result)
 {
-    // update contour
-    fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
-    for(int i = 0; i < fd_.cont_idx_.size(); ++i)
-    {
-        c_p2l_[i].v_idx = fd_.cont_idx_[i];
-    }
-    
     if(p2d_param_->run_ || p2d_param_->onetime_run_){
+        // update contour
+        fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
+        for(int i = 0; i < fd_.cont_idx_.size(); ++i)
+        {
+            c_p2l_[i].v_idx = fd_.cont_idx_[i];
+        }
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
         if(result.p2d.size() != 0){
@@ -115,6 +118,13 @@ void FaceOptModule::update(FaceResult& result)
         if(p2d_param_->onetime_run_) p2d_param_->onetime_run_ = false;
     }
     if(f2f_param_->run_ || f2f_param_->onetime_run_){
+        // update contour
+        fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
+        for(int i = 0; i < fd_.cont_idx_.size(); ++i)
+        {
+            c_p2l_[i].v_idx = fd_.cont_idx_[i];
+        }
+        
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
 
@@ -133,6 +143,12 @@ void FaceOptModule::update(FaceResult& result)
         }
         if(f2f_param_->onetime_run_) f2f_param_->onetime_run_ = false;
     }
+    {
+        cv::Mat tmp = result.img.clone();
+        DrawLandmarks(tmp, result.p2d);
+        cv::imwrite("land.png", tmp);
+    }
+
     
 //    std::ifstream infile("/Users/shunsuke/Documents/contour_index.txt");
 //    std::string line;

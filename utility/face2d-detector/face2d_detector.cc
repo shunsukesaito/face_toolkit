@@ -20,9 +20,9 @@ cv::Rect ScaleRect(const cv::Rect& rect,float scale)
     return cv::Rect(cx - scale*length,cy - scale*length,2.0*scale*length,2.0*scale*length);
 }
 
-void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector2f>& p2d)
+void DrawLandmarks(cv::Mat& img, const std::vector<Eigen::Vector3f>& p2d)
 {
-    for(const Eigen::Vector2f& p : p2d)
+    for(const Eigen::Vector3f& p : p2d)
     {
         cv::circle(img, cv::Point(p[0],p[1]), 2, cv::Scalar(0,255,0), -1);
     }
@@ -270,6 +270,15 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     rect.height = dets[0].height();
     
     if(enable_cpm){
+        if(rect.width != rect.height){
+            int len = 1.3*std::max(rect.width,rect.height);
+            int cx = rect.x + rect.width/2;
+            int cy = rect.y + rect.height/2;
+            rect.x = cx - len/2;
+            rect.y = cy - len/2;
+            rect.width = len;
+            rect.height = len;
+        }
         cpm_tcp_->sendImage(img, rect);
         p2d = cpm_tcp_->getLandmarks();
         return true;

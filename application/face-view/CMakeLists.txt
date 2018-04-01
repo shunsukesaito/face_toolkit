@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
 PinscreenModuleBegin(faceview DEPENDS 
-					library/MKL 
 					library/Eigen3 
 					library/GLEW 
 					library/glfw3 

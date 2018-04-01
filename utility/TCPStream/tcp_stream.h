@@ -19,6 +19,8 @@
 
 #include <uv.h>
 
+#include "tcp_client.h"
+
 #define check_uv(status) \
     do { \
         int code = (status); \
@@ -45,6 +47,69 @@ struct ImageFrame : public Frame {
 typedef std::shared_ptr<Frame> FramePtr;
 typedef std::shared_ptr<ImageFrame> ImageFramePtr;
 typedef std::shared_ptr<LandmarkFrame> LandmarkFramePtr;
+
+struct TCPStreamSync {
+    std::shared_ptr<TCPClient> tcp_client;
+    const size_t sf_size;
+    const size_t rf_size;
+    std::vector<char> send_buffer;
+    std::vector<char> recv_buffer;
+    std::queue<FramePtr> result;
+    
+    std::string address;
+    int port;
+    
+    TCPStreamSync(std::string _address, int _port, size_t send_frame_size, size_t recv_frame_size)
+    : sf_size(send_frame_size), rf_size(recv_frame_size), address(_address), port(_port) {
+        tcp_client = std::make_shared<TCPClient>(_address, _port);
+        recv_buffer.resize(rf_size);
+        tcp_client->Connect(10);
+    }
+    
+    ~TCPStreamSync() {
+        std::cout << "tcp stream destructed" << std::endl;
+    }
+    
+    void write(std::vector<char> buffer) {
+        if (buffer.empty()) {
+            return;
+        }
+        else {
+            send_buffer = buffer;
+            int n_try = 0;
+            while(!tcp_client->Send(&send_buffer[0], sf_size)){
+                tcp_client = std::make_shared<TCPClient>(address, port);
+                tcp_client->Connect(10);
+                if(++n_try > 10){
+                    throw std::runtime_error("tcp connection cannot be established...");
+                }
+            }
+        }
+    }
+    
+    virtual void setInput(FramePtr frame) {
+        write(encode(frame));
+    }
+    
+    virtual FramePtr getOutput(int wait_time = 1000) {
+        int n_try = 0;
+        while(!tcp_client->RcvImage(&recv_buffer[0], rf_size)){
+            tcp_client = std::make_shared<TCPClient>(address, port);
+            tcp_client->Connect(10);
+            write(send_buffer);
+            if(++n_try > 10){
+                throw std::runtime_error("tcp connection cannot be established...");
+            }
+        }
+        return decode(recv_buffer);
+    }
+
+    /// stream design end
+    
+    /// export interface begin
+    virtual std::vector<char> encode(FramePtr frame) = 0;
+    virtual FramePtr decode(std::vector<char> buffer) = 0;
+};
 
 struct TCPStream {
     /// LibUV design begin
@@ -158,7 +223,7 @@ struct TCPStream {
         if (uv_stream == nullptr || send_buffer.empty())
             return;
         
-        //std::cout << "send buffer" << std::endl;
+        std::cout << "send buffer" << std::endl;
         uv_buf_t buffer = {.base = send_buffer.data(), .len = send_buffer.size()};
         
         uv_write(&request, uv_stream, &buffer, 1, on_write);
@@ -169,7 +234,7 @@ struct TCPStream {
         
         cur_idx += nread;
         
-        //std::cout << "get " << cur_idx << " bytes" << std::endl;
+        std::cout << "get " << cur_idx << " bytes" << std::endl;
         if (cur_idx == recv_buffer.size()) {
             FramePtr frame = decode(recv_buffer);
             result.push(frame);
