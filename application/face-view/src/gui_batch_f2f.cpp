@@ -10,8 +10,6 @@
 
 #include <memory>
 
-#include <uv.h>
-
 #include <renderer/bg_renderer.h>
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>

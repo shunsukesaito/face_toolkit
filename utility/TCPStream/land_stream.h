@@ -85,9 +85,7 @@ struct LandmarkCpmTCPStream : public TCPStreamSync {
         
         auto ret = std::make_shared<ImageFrame>();
         ret->image = img_crop;
-        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
         setInput(ret);
-        check_uv(uv_run(uv_default_loop(), UV_RUN_NOWAIT));
     }
     inline std::vector<Eigen::Vector3f> getLandmarks(){
         auto frame = getOutput(10000);

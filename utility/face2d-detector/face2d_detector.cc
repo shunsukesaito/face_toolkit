@@ -271,7 +271,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     
     if(enable_cpm){
         if(rect.width != rect.height){
-            int len = 1.3*std::max(rect.width,rect.height);
+            int len = 1.4*std::max(rect.width,rect.height);
             int cx = rect.x + rect.width/2;
             int cy = rect.y + rect.height/2;
             rect.x = cx - len/2;

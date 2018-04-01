@@ -103,6 +103,14 @@ void FaceOptModule::init(std::string data_dir,
 void FaceOptModule::update(FaceResult& result)
 {
     if(p2d_param_->run_ || p2d_param_->onetime_run_){
+        if(std::isnan(fd_.idCoeff.sum()) ||
+           std::isnan(fd_.exCoeff.sum()) ||
+           std::isnan(fd_.alCoeff.sum()) ||
+           std::isnan(fd_.RT.sum()) ||
+           std::isnan(fd_.SH.sum())){
+            std::cout << "Warning: face gets nan..." << std::endl;
+            fd_.init();
+        }
         // update contour
         fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
         for(int i = 0; i < fd_.cont_idx_.size(); ++i)

@@ -80,7 +80,6 @@ target_link_libraries(faceview
                       PSM::utility
                       PSM::gflags
                       PSM::OpenCV
-                      PSM::LibUV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}
@@ -92,7 +91,6 @@ target_link_libraries(batch_f2f
                       PSM::utility
                       PSM::gflags
                       PSM::OpenCV
-                      PSM::LibUV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}
