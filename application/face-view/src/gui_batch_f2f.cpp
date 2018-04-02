@@ -460,7 +460,9 @@ void GUI::loop()
         }
         cv::Mat out;
         cv::cvtColor(tmp, out, CV_BGRA2BGR);
-        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", 255.0*out);
+        out = 255.0 * out;
+        out.convertTo(out, CV_8UC3);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
         
         f2f_r->param_.tex_mode = 0;
         f2f_r->param_.enable_seg = 1;
@@ -526,7 +528,9 @@ void GUI::loop()
                 }
                 cv::Mat out;
                 cv::cvtColor(tmp, out, CV_BGRA2BGR);
-                cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", 255.0*out);
+                out = 255.0 * out;
+                out.convertTo(out, CV_8UC3);
+                cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
                 
                 f2f_r->param_.tex_mode = 0;
                 f2f_r->param_.enable_seg = 1;
