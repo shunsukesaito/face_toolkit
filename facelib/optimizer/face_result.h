@@ -46,7 +46,7 @@ struct FaceResult
         std::ifstream infile(filename);
         if(!infile.is_open()){
             std::cout << "Warning: failed parsing face data from " << filename << std::endl;
-            return false;
+            return;
         }
         std::string line;
         
@@ -93,7 +93,7 @@ struct FaceResult
         std::ofstream fout(filename);
         if(!fout.is_open()){
             std::cout << "Warning: failed writing result to " << filename << std::endl;
-            return false;
+            return;
         }
         
         fout << fd.idCoeff.transpose() << std::endl;

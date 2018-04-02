@@ -11,7 +11,8 @@ PinscreenModuleBegin(faceview DEPENDS
 					utility/spdlog 
 					utility/glm 
 					utility/cereal 
-					utility/face2d-detector 
+					utility/tcpstream
+                    utility/face2d-detector 
 					utility/minitrace
 					utility/tiny_obj_loader
 					utility/SPSCQueue
