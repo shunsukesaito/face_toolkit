@@ -437,7 +437,7 @@ void GUI::loop()
         std::string filename = result_.name;
         result_.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
         cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result_.seg);
-        write_pts(filename.substr(0,filename.size()-4) + ".png", result_.p2d);
+        write_pts(filename.substr(0,filename.size()-4) + ".pts", result_.p2d);
         auto r = renderer_.renderer_["F2F"];
         auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
         std::vector<cv::Mat_<cv::Vec4f>> outs;
@@ -503,7 +503,7 @@ void GUI::loop()
                 std::string filename = result_.name;
                 result_.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
                 cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result_.seg);
-                write_pts(filename.substr(0,filename.size()-4) + ".png", result_.p2d);
+                write_pts(filename.substr(0,filename.size()-4) + ".pts", result_.p2d);
                 auto r = renderer_.renderer_["F2F"];
                 auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
                 std::vector<cv::Mat_<cv::Vec4f>> outs;
