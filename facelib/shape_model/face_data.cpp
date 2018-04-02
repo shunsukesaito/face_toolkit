@@ -20,7 +20,7 @@ DEFINE_uint32(fw_cont_size, 15, "number of contour vertices on FW");
 
 std::vector<int> sampleUniformContour(int n_sample, std::vector<int>& cont_indices, const Eigen::VectorXf& pts, const Eigen::Matrix4f& KRT)
 {
-    if(n_sample < 1) return;
+    if(n_sample < 1) return std::vector<int>();
     
     std::vector<Eigen::Vector2f> p2d;
     Eigen::Vector4f v;

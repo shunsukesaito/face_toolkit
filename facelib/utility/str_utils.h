@@ -8,6 +8,7 @@
 #pragma once
 
 #include <iostream>
+#include <iterator>
 #include <fstream>
 #include <vector>
 
