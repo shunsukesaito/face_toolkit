@@ -8,21 +8,14 @@
 
 #include "mesh_renderer.h"
 
-void MeshRenderer::init(std::string data_dir,
+void MeshRenderer::init(std::string shader_dir,
                         const Eigen::MatrixX3i& tri)
 {
-    programs_["mesh"] = GLProgram(data_dir + "shaders/mesh.vert",
-                                  data_dir + "shaders/mesh.tc",
-                                  data_dir + "shaders/mesh.te",
-                                  "",
-                                  data_dir + "shaders/mesh.frag",
-                                  DrawMode::PATCHES_IDX);
+    programs_["mesh"] = GLProgram(shader_dir, "mesh.vert", "mesh.tc", "mesh.te", "", "mesh.frag", DrawMode::PATCHES_IDX);
     //    programs_["mesh"] = GLProgram(data_dir + "shaders/mesh.vert",
     //                                  data_dir + "shaders/mesh.frag",
     //                                  DrawMode::TRIANGLES_IDX);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog = programs_["mesh"];
     auto& prog_pl = programs_["plane"];
@@ -138,9 +131,9 @@ void MeshRenderer::render(const Camera& camera,
 }
 
 #ifdef FACE_TOOLKIT
-void MeshRenderer::init(std::string data_dir, FaceModelPtr fm)
+void MeshRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(data_dir,fm->tri_pts_);
+    init(shader_dir,fm->tri_pts_);
 }
 
 void MeshRenderer::render(const FaceResult& result)

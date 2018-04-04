@@ -35,7 +35,7 @@ struct BaseRenderer
     BaseRenderer(std::string name, bool show, bool wire = false) : name_(name), show_(show), wire_(wire){}
     
 #ifdef FACE_TOOLKIT
-    virtual void init(std::string data_dir, FaceModelPtr fm){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
     virtual void render(const FaceResult& result){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
 #endif
     

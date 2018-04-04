@@ -227,17 +227,14 @@ void F2FRenderer::updateSegment(const cv::Mat& seg)
     prog_f2f.updateTexture("u_sample_seg", seg);
 }
 
-void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
+void F2FRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr model)
 {
-    programs_["f2f"] = GLProgram(data_dir + "shaders/face2face.vert",
-                                 data_dir + "shaders/face2face.geom",
-                                 data_dir + "shaders/face2face.frag",
-                                 DrawMode::TRIANGLES_IDX);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["f2f"] = GLProgram(shader_dir, "face2face.vert", "face2face.geom", "face2face.frag", DrawMode::TRIANGLES_IDX);
+    programs_["depth"] = GLProgram(shader_dir, "depthmap.vert", "depthmap.frag", DrawMode::TRIANGLES_IDX);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog_f2f = programs_["f2f"];
+    auto& prog_depth = programs_["depth"];
     auto& prog_pl = programs_["plane"];
     
     param_.init(prog_f2f);
@@ -259,11 +256,14 @@ void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
     prog_pl.createUniform("u_alpha", DataType::FLOAT);
 
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
+    fb_depth_ = Framebuffer::Create(1, 1, 0);
     
-    Camera::initializeUniforms(prog_f2f, U_CAMERA_MVP | U_CAMERA_MV);
+    Camera::initializeUniforms(prog_f2f, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
+    Camera::initializeUniforms(prog_depth, U_CAMERA_MVP);
     
     mesh_.update_tri(model->tri_pts_);
     mesh_.init(prog_f2f, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TRI);
+    mesh_.init(prog_depth, AT_POSITION | AT_TRI);
     
     mesh_.update_position(model->meanShape());
     mesh_.update_uv(model->uvs_, model->tri_uv_, model->tri_pts_);
@@ -271,15 +271,19 @@ void F2FRenderer::init(std::string data_dir, FaceModelPtr model)
     
     plane_.init(prog_pl,0.01);
     prog_pl.createTexture("u_texture", fb_->color(RT_NAMES::diffuse), fb_->width(), fb_->height());
+    prog_f2f.createTexture("u_sample_depth", fb_depth_->depth(), fb_depth_->width(), fb_depth_->height());
 }
 
 void F2FRenderer::render(const Camera& camera, const FaceData& fd)
 {
-    if(camera.width_ != fb_->width() || camera.height_ != fb_->height())
+    if(camera.width_ != fb_->width() || camera.height_ != fb_->height()){
         fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
+        fb_depth_->Resize(camera.width_, camera.height_, 0);
+    }
     
     // render parameters update
     auto& prog_f2f = programs_["f2f"];
+    auto& prog_depth = programs_["depth"];
     auto& prog_pl = programs_["plane"];
     
     param_.update(prog_f2f);
@@ -295,7 +299,7 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
     
     // update mesh attributes
     mesh_.update_position(fd.pts_);
@@ -303,6 +307,18 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     mesh_.update_normal(fd.nml_);
     
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
+    
+    if(param_.tex_mode){
+        camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
+        mesh_.update(prog_depth, AT_POSITION);
+        
+        // NOTE: need to make sure the viewport size matches the framebuffer size
+        fb_depth_->Bind();
+        glViewport(0, 0, fb_depth_->width(), fb_depth_->height());
+        clearBuffer(COLOR::COLOR_ALPHA);
+        prog_depth.draw();
+        fb_depth_->Unbind();
+    }
     
     fb_->Bind();
     
@@ -329,10 +345,13 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
 
 void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
-    if(camera.width_ != fb_->width() || camera.height_ != fb_->height())
+    if(camera.width_ != fb_->width() || camera.height_ != fb_->height()){
         fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
+        fb_depth_->Resize(camera.width_, camera.height_, 0);
+    }
     
     auto& prog_f2f = programs_["f2f"];
+    auto& prog_depth = programs_["depth"];
     
     // render parameters update
     param_.update(prog_f2f);
@@ -346,7 +365,7 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
     
     // update mesh attributes
     mesh_.update_position(fd.pts_);
@@ -354,6 +373,18 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     mesh_.update_normal(fd.nml_);
     
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
+    
+    if(param_.tex_mode){
+        camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
+        mesh_.update(prog_depth, AT_POSITION);
+        
+        // NOTE: need to make sure the viewport size matches the framebuffer size
+        fb_depth_->Bind();
+        glViewport(0, 0, fb_depth_->width(), fb_depth_->height());
+        clearBuffer(COLOR::COLOR_ALPHA);
+        prog_depth.draw();
+        fb_depth_->Unbind();
+    }
     
     // binding framebuffer
     fb_->Bind();

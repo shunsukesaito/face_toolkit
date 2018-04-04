@@ -20,16 +20,16 @@ struct BGRenderer : public BaseRenderer
     BGRenderer(){}
     BGRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    void init(std::string data_dir,
+    void init(std::string shader_dir,
               std::string img_path);
     
-    void init(std::string data_dir,
+    void init(std::string shader_dir,
               const cv::Mat& img = cv::Mat());
 
     void render(const cv::Mat& img = cv::Mat(), bool mirror = false);
     
 #ifdef FACE_TOOLKIT
-    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);
     virtual void render(const FaceResult& result);
 #endif
     

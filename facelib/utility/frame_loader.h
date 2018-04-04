@@ -57,6 +57,7 @@ public:
     static FrameLoaderPtr Create(int device_id, float scale = 1.0);
     
 private:
+    cv::Mat frame_;
     std::string video_path_ = "";
     int device_id_ = -1;
     float scale_ = 1.0;

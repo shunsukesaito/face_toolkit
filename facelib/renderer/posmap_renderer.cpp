@@ -18,25 +18,14 @@ DEFINE_uint32(pm_tessout, 3, "number of tessellation in outer loop");
 DEFINE_string(pmrec_file, "", "pos map file name under asset folder");
 
 void PosMapRenderer::init(std::string data_dir,
+                          std::string shader_dir,
                           FaceModelPtr model)
 {
-    programs_["main"] = GLProgram(data_dir + "shaders/subdiv.vert",
-                                  data_dir + "shaders/subdiv.tc",
-                                  data_dir + "shaders/subdiv.te",
-                                  "",
-                                  data_dir + "shaders/subdiv.frag",
-                                  DrawMode::PATCHES);
+    programs_["main"] = GLProgram(shader_dir, "subdiv.vert", "subdiv.tc", "subdiv.te", "", "subdiv.frag", DrawMode::PATCHES);
     
-    programs_["recon"] = GLProgram(data_dir + "shaders/posmap_recon.vert",
-                                   data_dir + "shaders/posmap_recon.tc",
-                                   data_dir + "shaders/posmap_recon.te",
-                                   "",
-                                   data_dir + "shaders/posmap_recon.frag",
-                                   DrawMode::PATCHES);
+    programs_["recon"] = GLProgram(shader_dir, "posmap_recon.vert", "posmap_recon.tc", "posmap_recon.te", "", "posmap_recon.frag", DrawMode::PATCHES);
     
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog = programs_["main"];
     auto& prog_rec = programs_["recon"];
@@ -219,17 +208,11 @@ RendererHandle PosMapRenderer::Create(std::string name, bool show)
 }
 
 void PosMapReconRenderer::init(std::string data_dir,
+                               std::string shader_dir,
                                FaceModelPtr model)
 {
-    programs_["main"] = GLProgram(data_dir + "shaders/posmap_recon.vert",
-                                  data_dir + "shaders/posmap_recon.tc",
-                                  data_dir + "shaders/posmap_recon.te",
-                                  "",
-                                  data_dir + "shaders/posmap_recon.frag",
-                                  DrawMode::PATCHES);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["main"] = GLProgram(shader_dir,"posmap_recon.vert", "posmap_recon.tc", "posmap_recon.te", "", "posmap_recon.frag", DrawMode::PATCHES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     fb_ = Framebuffer::Create(1, 1, 1); // will be resized based on frame size
     

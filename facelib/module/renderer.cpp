@@ -86,7 +86,7 @@ void Renderer::init(FaceModelPtr fm, std::string data_dir)
     face_model_ = fm;
     
     for(auto&& r : renderer_)
-        r.second->init(data_dir_, face_model_);
+        r.second->init(data_dir_, data_dir_ + "shaders", face_model_);
 }
 
 void Renderer::addRenderer(std::string name, RendererHandle renderer)

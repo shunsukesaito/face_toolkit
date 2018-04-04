@@ -27,7 +27,7 @@ struct MeshRenderer : public BaseRenderer
     MeshRenderer(){}
     MeshRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    void init(std::string data_dir,
+    void init(std::string shader_dir,
               const Eigen::MatrixX3i& tri);
     
     void render(const Camera& camera,
@@ -40,7 +40,7 @@ struct MeshRenderer : public BaseRenderer
                 const Eigen::MatrixX3f& nml);
     
 #ifdef FACE_TOOLKIT
-    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);
     virtual void render(const FaceResult& result);
 #endif
     

@@ -6,22 +6,19 @@
 #include <shape_model/face_model.h>
 
 #include "base_renderer.h"
+#include "LS_renderer.h"
 
-struct LSRenderParams{
-    
-    bool use_pointlight = 0;
+struct LSGeoRenderParams{
     bool enable_mask = 0;
     bool enable_cull_occlusion = 0;
     float cull_offset = 0.0;
-    float light_rot = 0.0;
-    glm::vec3 light_pos = glm::vec3(1.0,0.0,0.0);
-    float diff_scale = 1.0;
-    float spec_scale = 1.0;
+    float mesomap_size = 2048.0;
     
-    float mesomap_size = 6000.0;
-    
+    glm::vec3 light_pos1 = glm::vec3(-52,-2,146);
+    glm::vec3 light_pos2 = glm::vec3(48, -2, 126);
+    glm::vec3 light_pos3 = glm::vec3(-23, 25, 148);
+
     float alpha = 1.0;
-    
     bool uv_view = 0;
     
     int env_id = 0;
@@ -39,17 +36,11 @@ struct LSRenderParams{
 #endif
 };
 
-struct LSRenderer : public BaseRenderer
+struct LSGeoRenderer : public BaseRenderer
 {
     enum RT_NAMES
     {        
-        all = 0,
-        diff,
-        spec,
-        diff_albedo,
-        spec_albedo,
-        spec_normal,
-        diff_normal,
+        color = 0,
         count
     };
 
@@ -57,14 +48,10 @@ struct LSRenderer : public BaseRenderer
     glPlane plane_;
     FramebufferPtr fb_;
     FramebufferPtr fb_depth_;
-    LSRenderParams param_;
-    
-    std::vector<GLuint> diff_env_locations_;
-    std::vector<GLuint> spec_env1_locations_;
-    std::vector<GLuint> spec_env2_locations_;
-    
-    LSRenderer(){}
-    LSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    LSGeoRenderParams param_;
+        
+    LSGeoRenderer(){}
+    LSGeoRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr model);
     void render(const Camera& camera,

@@ -35,7 +35,7 @@ void FaceOptModule::Process()
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     
-    f2f_renderer_.init(data_dir_, face_model_);
+    f2f_renderer_.init(data_dir_, data_dir_ + "shaders", face_model_);
     
     while(command != "stop")
     {

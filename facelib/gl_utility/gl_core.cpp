@@ -8,6 +8,8 @@
 
 #include "gl_core.h"
 
+#include <utility/str_utils.h>
+
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -48,7 +50,36 @@ static char* textFileRead(const char* fileName)
     return text;
 }
 
-void printShaderInfoLog(GLuint shaderHandle)
+static std::string readShaderFile(std::string root_dir, std::string name, int &additionalLines)
+{
+    additionalLines = 0;
+    std::string text;
+    std::ifstream fin(root_dir + "/" + name);
+    if(fin.is_open()){
+        std::string line;
+        while(std::getline(fin, line))
+        {
+            if (line.empty())
+                continue;
+            
+            if (line.find("#include ") != std::string::npos){
+                std::string inc_name = split_str(line, " ")[1];
+                find_erase_all(inc_name, "\"");
+                int throwaway;
+                line = readShaderFile(root_dir, inc_name, throwaway);
+                additionalLines += split_str(line, "\n").size() - 1;
+            }
+            text += line + "\n";
+        }
+    }
+    else {
+        std::cout << "Could not open file: " << root_dir + "/" + name << std::endl;
+        exit(1);
+    }
+    return text;
+}
+
+void printShaderInfoLog(GLuint shaderHandle, std::string shaderName)
 {
     int logLen = 0;
     int chars = 0;
@@ -61,13 +92,13 @@ void printShaderInfoLog(GLuint shaderHandle)
     if(isCompiled == GL_FALSE){
         log = (char *)malloc(logLen);
         glGetShaderInfoLog(shaderHandle, logLen, &chars, log);
-        printf("Shader info log:\n%s\n", log);
+        printf("Shader (%s) info log:\n%s\n", shaderName.c_str(), log);
         free(log);
         throw std::runtime_error("Shader compilation failed");
     }
 }
 
-void printProgramInfoLog(GLuint handle)
+void printProgramInfoLog(GLuint handle, std::string progName)
 {
     int logLen = 0;
     int chars = 0;
@@ -80,62 +111,71 @@ void printProgramInfoLog(GLuint handle)
     if(validate == GL_FALSE){
         log = (char *)malloc(logLen);
         glGetProgramInfoLog(handle, logLen, &chars, log);
-        printf("Program info log:\n%s\n", log);
+        printf("Program (%s) info log:\n%s\n", progName.c_str(), log);
         free(log);
     }
 }
 
-GLProgram::GLProgram(std::string vertShader, std::string fragShader, DrawMode drawMode_)
-: GLProgram(vertShader, "", "", "", fragShader, drawMode_)
+GLProgram::GLProgram(std::string root_dir, std::string vertShader, std::string fragShader, DrawMode drawMode_)
+: GLProgram(root_dir, vertShader, "", "", "", fragShader, drawMode_)
 {
 }
 
 
-GLProgram::GLProgram(std::string vertShader, std::string geomShader, std::string fragShader, DrawMode drawMode_)
-: GLProgram(vertShader, "", "", geomShader, fragShader, drawMode_)
+GLProgram::GLProgram(std::string root_dir, std::string vertShader, std::string geomShader, std::string fragShader, DrawMode drawMode_)
+: GLProgram(root_dir, vertShader, "", "", geomShader, fragShader, drawMode_)
 {
 }
 
-GLProgram::GLProgram(std::string vertShader, std::string tcShader, std::string teShader,std::string geomShader, std::string fragShader, DrawMode drawMode_)
+GLProgram::GLProgram(std::string root_dir, std::string vertShader, std::string tcShader, std::string teShader,std::string geomShader, std::string fragShader, DrawMode drawMode_)
 : drawMode(drawMode_)
 {
     vsHandle = glCreateShader(GL_VERTEX_SHADER);
     fsHandle = glCreateShader(GL_FRAGMENT_SHADER);
     CHECK_GL_ERROR();
     
-    const char *vertShaderTmp = textFileRead(vertShader.c_str());
+    int n_line;
+    std::string vertTmp = readShaderFile(root_dir, vertShader, n_line);
+    const char *vertShaderTmp = vertTmp.c_str();
     glShaderSource(vsHandle, 1, &vertShaderTmp, nullptr);
     glCompileShader(vsHandle);
-    printShaderInfoLog(vsHandle);
+    printShaderInfoLog(vsHandle, vertShader);
     
     if(!tcShader.empty()){
         tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
-        const char *tcShaderTmp = textFileRead(tcShader.c_str());
+        std::string tcTmp = readShaderFile(root_dir, tcShader, n_line);
+        const char *tcShaderTmp = tcTmp.c_str();
+        //const char *tcShaderTmp = textFileRead(tcShader.c_str());
         glShaderSource(tcsHandle, 1, &tcShaderTmp, nullptr);
         glCompileShader(tcsHandle);
-        printShaderInfoLog(tcsHandle);
+        printShaderInfoLog(tcsHandle, tcShader);
     }
     
     if(!teShader.empty()){
         tesHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
-        const char *teShaderTmp = textFileRead(teShader.c_str());
+        std::string teTmp = readShaderFile(root_dir, teShader, n_line);
+        const char *teShaderTmp = teTmp.c_str();
+        //const char *teShaderTmp = textFileRead(teShader.c_str());
         glShaderSource(tesHandle, 1, &teShaderTmp, nullptr);
         glCompileShader(tesHandle);
-        printShaderInfoLog(tesHandle);
+        printShaderInfoLog(tesHandle, teShader);
     }
     
     if(!geomShader.empty()){
         gsHandle = glCreateShader(GL_GEOMETRY_SHADER);
-        const char *geomShaderTmp = textFileRead(geomShader.c_str());
+        std::string geoTmp = readShaderFile(root_dir, geomShader, n_line);
+        const char *geomShaderTmp = geoTmp.c_str();
+        //const char *geomShaderTmp = textFileRead(geomShader.c_str());
         glShaderSource(gsHandle, 1, &geomShaderTmp, nullptr);
         glCompileShader(gsHandle);
-        printShaderInfoLog(gsHandle);
+        printShaderInfoLog(gsHandle, geomShader);
     }
     
-    const char *fragShaderTmp = textFileRead(fragShader.c_str());
+    std::string fragTmp = readShaderFile(root_dir, fragShader, n_line);
+    const char *fragShaderTmp = fragTmp.c_str();
     glShaderSource(fsHandle, 1, &fragShaderTmp, nullptr);
     glCompileShader(fsHandle);
-    printShaderInfoLog(fsHandle);
+    printShaderInfoLog(fsHandle, fragShader);
     
     programHandle = glCreateProgram();
     glAttachShader(programHandle, vsHandle);
@@ -155,7 +195,7 @@ GLProgram::GLProgram(std::string vertShader, std::string tcShader, std::string t
     GLint linked;
     glGetProgramiv(programHandle, GL_LINK_STATUS, &linked);
     if(!linked)
-        printProgramInfoLog(programHandle);
+        printProgramInfoLog(programHandle, vertShader);
     glUseProgram(programHandle);
     
     // create a VAO for use with all buffers

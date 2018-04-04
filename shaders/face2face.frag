@@ -7,17 +7,21 @@ uniform uint u_enable_seg;
 uniform float u_cull_offset;
 uniform uint u_inv_diffuse;
 
+uniform	uint u_tex_mode;
+
 uniform vec3 u_SHCoeffs[9];
 
 uniform sampler2D u_sample_mask;
 uniform sampler2D u_sample_seg;
 uniform sampler2D u_sample_texture;
+uniform sampler2D u_sample_depth;
 
 in VertexData {
     vec4 color;
     vec4 normal;
     vec4 normalCamera;
     vec4 pos;
+    vec4 pos_shadow_mvp;
     vec2 proj_texcoord;
     vec2 texcoord;
     vec4 barycentric;
@@ -66,6 +70,7 @@ void main()
     vec3 normal = normalize(VertexIn.normal.xyz);
     vec3 normalCamera = normalize(VertexIn.normalCamera.xyz);
     vec2 texcoord = VertexIn.texcoord;
+    vec3 view = normalize(VertexIn.pos.xyz);
     
     frag_normal = vec4(normal, 1.0);
     frag_texcoord = vec4(texcoord, 0.0, 1.0);
@@ -79,6 +84,14 @@ void main()
     else
         frag_color = vec4(clamp(VertexIn.color, vec4(0.0), vec4(1.0)));
 
+    if (u_tex_mode != uint(0)){
+        vec3 ShadowMapTexCoord = VertexIn.pos_shadow_mvp.xyz / VertexIn.pos_shadow_mvp.w;
+        float bias = 0.005*tan(acos(clamp(dot(normalCamera.xyz, view),0.0,1.0)));
+        bias = clamp(bias, 0,0.01);
+        if(texture(u_sample_depth, ShadowMapTexCoord.xy).r <= ShadowMapTexCoord.z-bias)
+            discard;
+    }
+
     if (u_enable_texture != uint(0) && u_inv_diffuse != uint(0)){
         vec3 inv_dif = clamp(VertexIn.color.xyz, vec3(0.0), vec3(1.0)) + (frag_color.xyz - clamp(VertexIn.color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)));
         if (frag_shading[0] < 0.1 || frag_shading[1] < 0.1 || frag_shading[2] < 0.1) discard;
@@ -89,7 +102,7 @@ void main()
         frag_diffuse = vec4(clamp(frag_color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)), frag_color.a);
     }
     
-    if(dot(normalize(frag_pos.xyz),normalCamera.xyz) > u_cull_offset)
+    if(dot(view,normalCamera.xyz) > u_cull_offset)
         discard;
    
     if (u_enable_mask != uint(0)){

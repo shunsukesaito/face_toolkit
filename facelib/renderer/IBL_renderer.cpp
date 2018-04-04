@@ -43,17 +43,11 @@ void IBLRenderParams::updateIMGUI()
 }
 #endif
 
-void IBLRenderer::init(std::string data_dir, FaceModelPtr model)
+void IBLRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr model)
 {
-    programs_["IBL"] = GLProgram(data_dir + "shaders/IBL.vert",
-                                 data_dir + "shaders/IBL.frag",
-                                 DrawMode::TRIANGLES);
-    programs_["depth"] = GLProgram(data_dir + "shaders/depthmap.vert",
-                                   data_dir + "shaders/depthmap.frag",
-                                   DrawMode::TRIANGLES);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["IBL"] = GLProgram(shader_dir, "IBL.vert", "IBL.frag", DrawMode::TRIANGLES);
+    programs_["depth"] = GLProgram(shader_dir, "depthmap.vert", "depthmap.frag", DrawMode::TRIANGLES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog_IBL = programs_["IBL"];
     auto& prog_depth = programs_["depth"];

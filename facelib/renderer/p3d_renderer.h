@@ -16,7 +16,7 @@ struct P3DRenderer : public BaseRenderer
     P3DRenderer(){}
     P3DRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    void init(std::string data_dir);
+    void init(std::string shader_dir);
     
     void render(const Camera& camera,
                 const std::vector<Eigen::Vector3f>& pts);
@@ -27,7 +27,7 @@ struct P3DRenderer : public BaseRenderer
                 const Eigen::Vector4f& color = Eigen::Vector4f(0,0,1,1));
     
 #ifdef FACE_TOOLKIT
-    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);
     virtual void render(const FaceResult& result);
 #endif
     

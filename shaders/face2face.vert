@@ -2,6 +2,7 @@
 
 uniform mat4 u_mvp;
 uniform mat4 u_modelview;
+uniform mat4 u_shadow_mvp;
 
 uniform	uint u_tex_mode;
 
@@ -15,6 +16,7 @@ out VertexData {
     vec4 normal;
     vec4 normalCamera;
     vec4 pos;
+    vec4 pos_shadow_mvp;
     vec2 proj_texcoord;
     vec2 texcoord;
     uint index;
@@ -30,7 +32,7 @@ void main()
     vec4 posWorld = u_mvp * vec4(v_position, 1.0);
 
     VertexOut.pos = u_modelview * vec4(v_position, 1.0);;
-
+    VertexOut.pos_shadow_mvp = u_shadow_mvp * vec4(v_position, 1.0);
     VertexOut.proj_texcoord[0] = 0.5*(posWorld[0] / posWorld[3]) + 0.5;
     VertexOut.proj_texcoord[1] = -0.5*(posWorld[1] / posWorld[3]) + 0.5;
     

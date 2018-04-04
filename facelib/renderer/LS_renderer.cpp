@@ -17,6 +17,8 @@ void LSRenderParams::init(GLProgram& prog)
     prog.createUniform("u_specscale", DataType::FLOAT);
     
     prog.createUniform("u_uv_view", DataType::UINT);
+    
+    prog.createUniform("u_mesomap_size", DataType::FLOAT);
 }
 
 void LSRenderParams::update(GLProgram& prog)
@@ -33,6 +35,8 @@ void LSRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_specscale", spec_scale);
     
     prog.setUniformData("u_uv_view", (uint)uv_view);
+    
+    prog.setUniformData("u_mesomap_size", mesomap_size);
 }
 
 #ifdef WITH_IMGUI
@@ -46,7 +50,6 @@ void LSRenderParams::updateIMGUI()
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     ImGui::SliderFloat("specScale", &spec_scale, 0.0, 1.0);
     ImGui::SliderFloat("diffScale", &diff_scale, 0.0, 1.0);
-    ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
     ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
     ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
@@ -56,17 +59,11 @@ void LSRenderParams::updateIMGUI()
 }
 #endif
 
-void LSRenderer::init(std::string data_dir, FaceModelPtr model)
+void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr model)
 {
-    programs_["main"] = GLProgram(data_dir + "shaders/lightstage.vert",
-                                 data_dir + "shaders/lightstage.frag",
-                                 DrawMode::TRIANGLES);
-    programs_["depth"] = GLProgram(data_dir + "shaders/depthmap.vert",
-                                   data_dir + "shaders/depthmap.frag",
-                                   DrawMode::TRIANGLES);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["main"] = GLProgram(shader_dir, "lightstage.vert", "lightstage.frag", DrawMode::TRIANGLES);
+    programs_["depth"] = GLProgram(shader_dir, "depthmap.vert", "depthmap.frag", DrawMode::TRIANGLES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog_main = programs_["main"];
     auto& prog_depth = programs_["depth"];
@@ -210,10 +207,11 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     
     const auto& maps = fd.maps();
     assert(maps.size() != 0);
-    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[0]);
+    prog_main.updateTexture("u_sample_disp", (GLuint)maps[0]);
+    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[1]);
     prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[2]);
-    prog_main.updateTexture("u_sample_diff_normal", (GLuint)maps[1]);
-    prog_main.updateTexture("u_sample_disp", (GLuint)maps[4]);
+    prog_main.updateTexture("u_sample_diff_normal", (GLuint)maps[3]);
+    
     
     prog_pl.setUniformData("u_alpha", param_.alpha);
 

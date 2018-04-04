@@ -16,13 +16,13 @@ struct P2DRenderer : public BaseRenderer
     P2DRenderer(){}
     P2DRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    void init(std::string data_dir);
+    void init(std::string shader_dir);
     
     void render(int w, int h, const std::vector<Eigen::Vector2f>& pts);
     void render(int w, int h, const std::vector<Eigen::Vector3f>& pts);
 
 #ifdef FACE_TOOLKIT
-    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);
     virtual void render(const FaceResult& result);
 #endif
     

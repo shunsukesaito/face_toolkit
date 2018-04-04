@@ -5,18 +5,13 @@
 
 #include <gflags/gflags.h>
 DEFINE_double(dls_spec_scale, 0.26, "default specular scale for deepLS");
+DEFINE_double(dsl_mesomap_size, 2048.0, "mesomap size");
 
-void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
+void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr model)
 {
-    programs_["main"] = GLProgram(data_dir + "shaders/deep_ls.vert",
-                                 data_dir + "shaders/deep_ls.frag",
-                                 DrawMode::TRIANGLES);
-    programs_["depth"] = GLProgram(data_dir + "shaders/depthmap.vert",
-                                   data_dir + "shaders/depthmap.frag",
-                                   DrawMode::TRIANGLES);
-    programs_["plane"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                   data_dir + "shaders/full_texture_bgr.frag",
-                                   DrawMode::TRIANGLES);
+    programs_["main"] = GLProgram(shader_dir, "lightstage.vert", "deep_ls.frag", DrawMode::TRIANGLES);
+    programs_["depth"] = GLProgram(shader_dir, "depthmap.vert", "depthmap.frag", DrawMode::TRIANGLES);
+    programs_["plane"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     auto& prog_main = programs_["main"];
     auto& prog_depth = programs_["depth"];
@@ -24,6 +19,8 @@ void DeepLSRenderer::init(std::string data_dir, FaceModelPtr model)
     
     param_.enable_mask = true;
     param_.spec_scale = FLAGS_dls_spec_scale;
+    param_.mesomap_size = FLAGS_dsl_mesomap_size;
+    
     param_.init(prog_main);
     prog_main.createTexture("u_sample_mask", data_dir + "deepls_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
@@ -162,9 +159,9 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     
     const auto& maps = fd.maps();
     assert(maps.size() != 0);
-    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[0]);
-    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[1]);
-    prog_main.updateTexture("u_sample_disp", (GLuint)maps[2]);
+    prog_main.updateTexture("u_sample_disp", (GLuint)maps[0]);
+    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[1]);
+    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[2]);
     
     prog_pl.setUniformData("u_alpha", param_.alpha);
 

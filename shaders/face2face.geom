@@ -8,6 +8,7 @@ in VertexData {
     vec4 normal;
     vec4 normalCamera;
     vec4 pos;
+    vec4 pos_shadow_mvp;
     vec2 proj_texcoord;
     vec2 texcoord;
     uint index;
@@ -18,6 +19,7 @@ out VertexData {
     vec4 normal;
     vec4 normalCamera;
     vec4 pos;
+    vec4 pos_shadow_mvp;
     vec2 proj_texcoord;
     vec2 texcoord;
     vec4 barycentric;
@@ -37,6 +39,7 @@ void main()
         VertexOut.normal = VertexIn[i].normal;
         VertexOut.normalCamera = VertexIn[i].normalCamera;
         VertexOut.pos = VertexIn[i].pos;
+        VertexOut.pos_shadow_mvp = VertexIn[i].pos_shadow_mvp;
         VertexOut.proj_texcoord = VertexIn[i].proj_texcoord;
         VertexOut.texcoord = VertexIn[i].texcoord;
 

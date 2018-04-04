@@ -45,14 +45,15 @@ void VideoLoader::init()
 void VideoLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
 {
     if(command != "pause"){
-        video_capture_ >> frame;
+        video_capture_ >> frame_;
         if(scale_ != 1.0)
-            cv::resize(frame, frame, cv::Size(), scale_, scale_);
+            cv::resize(frame_, frame_, cv::Size(), scale_, scale_);
         frame_id++;
         // flip image if it's streaming
         if(device_id_ != -1)
-            cv::flip(frame, frame, 1);
+            cv::flip(frame_, frame_, 1);
     }
+    frame = frame_;
 }
 
 FrameLoaderPtr VideoLoader::Create(const std::string &video_path, float scale)
@@ -167,19 +168,20 @@ void ImageSequenceLoader::init()
 
 void ImageSequenceLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
 {
-    if(++frame_id >= file_list_.size() || frame_id < 0)
-        frame_id = 0;
-    
-    frame_ = cv::imread(root_dir_ + "/" + file_list_[frame_id]);
-    if(scale_ != 1.0)
-        cv::resize(frame_, frame_, cv::Size(), scale_, scale_);
-    name = root_dir_ + "/" + file_list_[frame_id];
-    if(frame_.empty()){
-        std::cout << "Error: image file does not exist. " << root_dir_ + "/" + file_list_[frame_id] << std::endl;
-        throw std::runtime_error("Error: image file does not exist. ");
+    if(command != "pause"){
+        if(++frame_id >= file_list_.size() || frame_id < 0)
+            frame_id = 0;
+        
+        frame_ = cv::imread(root_dir_ + "/" + file_list_[frame_id]);
+        if(scale_ != 1.0)
+            cv::resize(frame_, frame_, cv::Size(), scale_, scale_);
+        name = root_dir_ + "/" + file_list_[frame_id];
+        if(frame_.empty()){
+            std::cout << "Error: image file does not exist. " << root_dir_ + "/" + file_list_[frame_id] << std::endl;
+            throw std::runtime_error("Error: image file does not exist. ");
+        }
     }
     frame = frame_;
-    
 }
 
 FrameLoaderPtr ImageSequenceLoader::Create(const std::string &root_dir, const std::string &imgseq_fmt, int begin_id, int end_id, float scale)

@@ -54,15 +54,15 @@ void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
     loadObjFile(files[0], mu_id_, nml, uvs_, tri_pts_, tri_uv_);
     maps_.resize(3);
     
-    cv::Mat_<cv::Vec3b> diff = cv::imread(files[1]);
-    cv::flip(diff,diff,0);
-    maps_[0] = GLTexture::CreateTexture(diff);
-    cv::Mat_<cv::Vec3b> spec = cv::imread(files[2]);
-    cv::flip(spec,spec,0);
-    maps_[1] = GLTexture::CreateTexture(spec);
     cv::Mat_<cv::Vec4f> disp;
-    loadEXRToCV(files[3], disp);
-    maps_[2] = GLTexture::CreateTexture(disp);
+    loadEXRToCV(files[1], disp);
+    maps_[0] = GLTexture::CreateTexture(disp);
+    cv::Mat_<cv::Vec3b> diff = cv::imread(files[2]);
+    cv::flip(diff,diff,0);
+    maps_[1] = GLTexture::CreateTexture(diff);
+    cv::Mat_<cv::Vec3b> spec = cv::imread(files[3]);
+    cv::flip(spec,spec,0);
+    maps_[2] = GLTexture::CreateTexture(spec);
 }
 
 FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir, bool deep)

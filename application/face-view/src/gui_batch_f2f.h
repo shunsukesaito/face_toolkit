@@ -69,6 +69,8 @@ private:
     std::mutex result_mutex_;
     FaceResult result_;
     
+    bool pause_ = false;
+    
 #ifdef WITH_IMGUI
     bool show_control_panel_ = true;
 #endif

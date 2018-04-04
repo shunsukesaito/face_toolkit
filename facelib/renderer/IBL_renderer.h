@@ -47,7 +47,7 @@ struct IBLRenderer : public BaseRenderer
     IBLRenderer(){}
     IBLRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    virtual void init(std::string data_dir, FaceModelPtr model);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr model);
     void render(const Camera& camera,
                 const FaceData& fd,
                 bool draw_sphere = false);

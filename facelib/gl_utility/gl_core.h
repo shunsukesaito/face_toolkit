@@ -118,17 +118,20 @@ class GLProgram {
     
 public:
     GLProgram() {}
-    GLProgram(std::string vertShader,
+    GLProgram(std::string root_dir,
+              std::string vertShader,
               std::string tcShader,
               std::string teShader,
               std::string geomShader,
               std::string fragShader,
               DrawMode drawMode_);
-    GLProgram(std::string vertShader,
+    GLProgram(std::string root_dir,
+              std::string vertShader,
               std::string geomShader,
               std::string fragShader,
               DrawMode drawMode_);
-    GLProgram(std::string vertShader,
+    GLProgram(std::string root_dir,
+              std::string vertShader,
               std::string fragShader,
               DrawMode drawMode_);
     

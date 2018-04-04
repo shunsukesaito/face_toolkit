@@ -36,7 +36,12 @@ struct SegmentationTCPStream : public TCPStreamSync {
         cv::Mat seg(map_size, map_size, CV_8UC1, buffer.data());
         ImageFramePtr ret = std::make_shared<ImageFrame>();
         seg = seg*255;
-        cv::resize(seg, seg, img.size(), cv::INTER_NEAREST);
+        int dilation_size = 3;
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                    cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                                    cv::Point( dilation_size, dilation_size ) );
+        cv::dilate(seg, seg, element);
+        cv::resize(seg, seg, img.size(), 0, 0, cv::INTER_NEAREST);
         
         ret->image = cv::Mat(img_size.height,img_size.width,CV_8UC1,cv::Scalar(0));
         insert_image(seg, ret->image, img_rect);

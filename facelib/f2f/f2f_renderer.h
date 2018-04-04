@@ -47,12 +47,13 @@ struct F2FRenderer : public BaseRenderer
     glMesh mesh_;
     glPlane plane_;
     FramebufferPtr fb_;
+    FramebufferPtr fb_depth_;
     F2FRenderParams param_;
     
     F2FRenderer(){}
     F2FRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
-    virtual void init(std::string data_dir, FaceModelPtr model);
+    virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr model);
     
     void updateSegment(const cv::Mat& seg);
     

@@ -8,11 +8,9 @@
 
 #include "p3d_renderer.h"
 
-void P3DRenderer::init(std::string data_dir)
+void P3DRenderer::init(std::string shader_dir)
 {
-    programs_["p3d"] = GLProgram(data_dir + "shaders/point3d.vert",
-                                  data_dir + "shaders/point3d.frag",
-                                  DrawMode::POINTS);
+    programs_["p3d"] = GLProgram(shader_dir, "point3d.vert", "point3d.frag", DrawMode::POINTS);
     auto& prog = programs_["p3d"];
     
     Camera::initializeUniforms(prog, U_CAMERA_MVP);
@@ -69,9 +67,9 @@ void P3DRenderer::render(const Camera& camera,
 }
 
 #ifdef FACE_TOOLKIT
-void P3DRenderer::init(std::string data_dir, FaceModelPtr fm)
+void P3DRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(data_dir);
+    init(shader_dir);
 }
 
 void P3DRenderer::render(const FaceResult& result)

@@ -8,11 +8,9 @@
 
 #include "p2d_renderer.h"
 
-void P2DRenderer::init(std::string data_dir)
+void P2DRenderer::init(std::string shader_dir)
 {
-    programs_["p2d"] = GLProgram(data_dir + "shaders/point2d.vert",
-                                 data_dir + "shaders/point2d.frag",
-                                 DrawMode::POINTS);
+    programs_["p2d"] = GLProgram(shader_dir, "point2d.vert", "point2d.frag", DrawMode::POINTS);
     auto& prog = programs_["p2d"];
     
     p2d_.init(prog);
@@ -45,9 +43,9 @@ void P2DRenderer::render(int w, int h, const std::vector<Eigen::Vector3f>& pts)
 }
 
 #ifdef FACE_TOOLKIT
-void P2DRenderer::init(std::string data_dir, FaceModelPtr fm)
+void P2DRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(data_dir);
+    init(shader_dir);
 }
 
 void P2DRenderer::render(const FaceResult& result)

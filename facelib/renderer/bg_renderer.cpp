@@ -8,12 +8,10 @@
 
 #include "bg_renderer.h"
 
-void BGRenderer::init(std::string data_dir,
+void BGRenderer::init(std::string shader_dir,
                       std::string img_path)
 {
-    programs_["bg"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                data_dir + "shaders/full_texture_bgr.frag",
-                                DrawMode::TRIANGLES);
+    programs_["bg"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
 
     plane_.init(programs_["bg"],0.99999);
     programs_["bg"].createTexture("u_texture", img_path);
@@ -24,12 +22,10 @@ void BGRenderer::init(std::string data_dir,
     programs_["bg"].createUniform("u_alpha", DataType::FLOAT);
 }
 
-void BGRenderer::init(std::string data_dir,
+void BGRenderer::init(std::string shader_dir, 
                       const cv::Mat& img)
 {
-    programs_["bg"] = GLProgram(data_dir + "shaders/full_texture_bgr.vert",
-                                data_dir + "shaders/full_texture_bgr.frag",
-                                DrawMode::TRIANGLES);
+    programs_["bg"] = GLProgram(shader_dir, "full_texture_bgr.vert", "full_texture_bgr.frag", DrawMode::TRIANGLES);
     
     plane_.init(programs_["bg"],0.99999);
     if(img.empty())
@@ -59,9 +55,9 @@ void BGRenderer::render(const cv::Mat& img, bool mirror)
 }
 
 #ifdef FACE_TOOLKIT
-void BGRenderer::init(std::string data_dir, FaceModelPtr fm)
+void BGRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(data_dir);
+    init(shader_dir);
 }
 
 void BGRenderer::render(const FaceResult& result)

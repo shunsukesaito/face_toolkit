@@ -14,12 +14,14 @@
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>
 #include <renderer/LS_renderer.h>
+#include <renderer/LSGeo_renderer.h>
 #include <renderer/DeepLS_renderer.h>
 #include <renderer/p3d_renderer.h>
 #include <renderer/p2d_renderer.h>
 #include <renderer/posmap_renderer.h>
 #include <f2f/f2f_renderer.h>
 
+#include <utility/str_utils.h>
 #include <utility/obj_loader.h>
 #include <utility/trackball.h>
 
@@ -34,6 +36,8 @@ DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
 DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
 DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
+
+DEFINE_double(loader_scale, 1.0, "image loader scale");
 
 DEFINE_uint32(cam_w, 0, "camera width");
 DEFINE_uint32(cam_h, 0, "camera height");
@@ -166,6 +170,15 @@ void GUI::keyboard(int key, int s, int a, int m)
         result_.fd.init();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
+        if(!pause_)
+            session.capture_control_queue_->push("pause");
+        else
+            session.capture_control_queue_->push("");
+        pause_ = !pause_;
+    }
+    if(key == GLFW_KEY_P && a == GLFW_PRESS){
+        session.capture_control_queue_->push("pause");
+        session.capture_control_queue_->push("");
         session.capture_control_queue_->push("pause");
     }
 }
@@ -314,9 +327,7 @@ void GUI::init(int w, int h)
     else if(FLAGS_facemodel.find("deepls") != std::string::npos ){
         int start = FLAGS_facemodel.find("deepls") + 6;
         int len = FLAGS_facemodel.size()-6;
-        std::string fm_name =  FLAGS_facemodel.substr(start,
-                                                      len);
-        std::cout << fm_name << std::endl;
+        std::string fm_name =  FLAGS_facemodel.substr(start,len);
         face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" , true);
     }
     else if(FLAGS_facemodel.find("ls") != std::string::npos ){
@@ -328,25 +339,29 @@ void GUI::init(int w, int h)
     else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
         face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
 
-    if( FLAGS_renderer.find("bg") != std::string::npos )
+    auto renderers = vector2map(split_str(FLAGS_renderer, "/"));
+    
+    if( renderers.find("bg") != renderers.end() )
         renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
-    if( FLAGS_renderer.find("geo") != std::string::npos )
+    if( renderers.find("geo") != renderers.end() )
         renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
-    if( FLAGS_renderer.find("ibl") != std::string::npos )
+    if( renderers.find("ibl") != renderers.end() )
         renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
-    if( FLAGS_renderer.find("deepls") != std::string::npos )
+    if( renderers.find("deepls") != renderers.end() )
         renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
-    else if( FLAGS_renderer.find("ls") != std::string::npos )
+    if( renderers.find("ls") != renderers.end() )
         renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
-    if( FLAGS_renderer.find("pmrec") != std::string::npos )
+    if( renderers.find("lsgeo") != renderers.end() )
+        renderer_.addRenderer("LSGeo", LSGeoRenderer::Create("LSGeo Rendering", true));
+    if( renderers.find("pmrec") != renderers.end() )
         renderer_.addRenderer("PMRec", PosMapReconRenderer::Create("PosMapRecon Rendering", true));
-    else if( FLAGS_renderer.find("pm") != std::string::npos )
+    if( renderers.find("pm") != renderers.end() )
         renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
-    if( FLAGS_renderer.find("f2f") != std::string::npos )
+    if( renderers.find("f2f") != renderers.end() )
         renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", true));
-    if( FLAGS_renderer.find("p3d") != std::string::npos )
+    if( renderers.find("p3d") != renderers.end() )
         renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", true));
-    if( FLAGS_renderer.find("p2d") != std::string::npos )
+    if( renderers.find("p2d") != renderers.end() )
         renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
     
     renderer_.init(face_model_, data_dir);
@@ -357,22 +372,26 @@ void GUI::init(int w, int h)
     
     auto frame_loader = EmptyLoader::Create();
     if( FLAGS_loader.find("jpg") != std::string::npos ||
-        FLAGS_loader.find("png") != std::string::npos ||
-        FLAGS_loader.find("bmp") != std::string::npos){
-        frame_loader = SingleImageLoader::Create(FLAGS_loader);
+       FLAGS_loader.find("png") != std::string::npos ||
+       FLAGS_loader.find("bmp") != std::string::npos){
+        frame_loader = SingleImageLoader::Create(FLAGS_loader, FLAGS_loader_scale);
     }
     else if( FLAGS_loader.find("avi") != std::string::npos ||
-             FLAGS_loader.find("mp4") != std::string::npos ||
-             FLAGS_loader.find("mov") != std::string::npos){
-        frame_loader = VideoLoader::Create(FLAGS_loader);
+            FLAGS_loader.find("mp4") != std::string::npos ||
+            FLAGS_loader.find("mov") != std::string::npos){
+        frame_loader = VideoLoader::Create(FLAGS_loader, FLAGS_loader_scale);
+    }
+    else if( FLAGS_loader.find("txt") != std::string::npos){
+        std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
+        std::cout << root_dir << std::endl;
+        frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, FLAGS_loader_scale);
     }
     else if( !FLAGS_loader.empty() ){
         int vid;
         std::istringstream( FLAGS_loader ) >> vid;
-        frame_loader = VideoLoader::Create(vid);
+        frame_loader = VideoLoader::Create(vid, FLAGS_loader_scale);
     }
     
-    auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
     int cam_w = FLAGS_cam_w != 0 ? FLAGS_cam_w : w;
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
@@ -382,6 +401,8 @@ void GUI::init(int w, int h)
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
     else{
+        auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
+
         session.preprocess_module_ = PreprocessModule::Create("face", pp_param_, face_detector, session.capture_queue_, 
                                                               session.preprocess_queue_, session.preprocess_control_queue_);
 
@@ -433,7 +454,9 @@ void GUI::loop()
                 result_.c_p2l = result.c_p2l;
                 result_.c_p2p = result.c_p2p;
                 result_.frame_id = result.frame_id;
+                result_.name = result.name;
                 
+                oriRT = result_.camera.extrinsic_;
             }
             result_.p2d = result.p2d;
             result_.seg = result.seg;
