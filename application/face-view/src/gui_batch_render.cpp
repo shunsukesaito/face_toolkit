@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gui_batch_f2f.h"
+#include "gui_batch_render.h"
 
 #include <memory>
 
@@ -14,12 +14,14 @@
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>
 #include <renderer/LS_renderer.h>
+#include <renderer/LSGeo_renderer.h>
 #include <renderer/DeepLS_renderer.h>
 #include <renderer/p3d_renderer.h>
 #include <renderer/p2d_renderer.h>
 #include <renderer/posmap_renderer.h>
 #include <f2f/f2f_renderer.h>
 
+#include <utility/exr_loader.h>
 #include <utility/str_utils.h>
 #include <utility/obj_loader.h>
 #include <utility/trackball.h>
@@ -27,11 +29,12 @@
 
 // constants
 #include <gflags/gflags.h>
+DEFINE_bool(center_cam, false, "batch rendering with center camera");
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
-DEFINE_bool(close_after_opt, false, "close program after optimization");
-DEFINE_string(mode, "opt", "view mode");
-DEFINE_string(facemodel, "pin", "FaceModel to use");
+DEFINE_bool(close_after_render, false, "close program after batch rendering");
+DEFINE_string(mode, "brender", "view mode");
+DEFINE_string(facemodel, "bv", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
@@ -354,6 +357,8 @@ void GUI::init(int w, int h)
         renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
     if( renderers.find("ls") != renderers.end() )
         renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+    if( renderers.find("lsgeo") != renderers.end() )
+        renderer_.addRenderer("LSGeo", LSGeoRenderer::Create("LSGeo Rendering", true));
     if( renderers.find("pmrec") != renderers.end() )
         renderer_.addRenderer("PMRec", PosMapReconRenderer::Create("PosMapRecon Rendering", true));
     if( renderers.find("pm") != renderers.end() )
@@ -384,7 +389,6 @@ void GUI::init(int w, int h)
     }
     else if( FLAGS_loader.find("txt") != std::string::npos){
         std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
-        std::cout << root_dir << std::endl;
         frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, FLAGS_loader_scale);
     }
     else if( !FLAGS_loader.empty() ){
@@ -397,11 +401,16 @@ void GUI::init(int w, int h)
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
-    
-    if(FLAGS_mode.find("opt") != std::string::npos)
+    if(FLAGS_mode.find("preview") != std::string::npos)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
+    else if(FLAGS_mode.find("brender") != std::string::npos){
+        std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_,
+                                                         root_dir, FLAGS_loader );
+    }
     else{
         auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
 
@@ -427,55 +436,62 @@ void GUI::init(int w, int h)
     glfwSetDropCallback(window,drop_callback);
 }
 
-void GUI::save_result(FaceResult& result)
+void GUI::save_render(FaceResult& result)
 {
-    std::cout << result.name << std::endl;
-    std::string filename = result.name;
-    result.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result.seg);
-    write_pts(filename.substr(0,filename.size()-4) + ".pts", result.p2d);
-    auto r = renderer_.renderer_["F2F"];
-    auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
-    std::vector<cv::Mat_<cv::Vec4f>> outs;
-    f2f_r->param_.tex_mode = 1;
-    f2f_r->param_.enable_seg = 1;
-    f2f_r->param_.enable_tex = 1;
-    f2f_r->param_.cull_offset = -0.25;
-    f2f_r->updateSegment(result_.seg);
-    f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result.img);
-    f2f_r->render(1024,1024,result_.camera, result.fd, outs);
-    cv::Mat_<cv::Vec4f> tmp;
-    cv::cvtColor(outs[2],tmp,CV_RGBA2BGRA);
-    for(int h = 0; h < tmp.rows; ++h)
-    {
-        for(int w = 0; w < tmp.cols; ++w)
-        {
-            if(tmp(h,w)[3] == 0)
-                tmp(h, w) = cv::Vec4f(0,1,0,1.0);
-        }
+    std::cout << result_.name << std::endl;
+    std::string filename = result_.name;
+    face_model_->maps_.resize(3);
+    cv::Mat_<cv::Vec4f> disp;
+    loadEXRToCV(filename.substr(0,filename.size()-4) + "_tex_disp.exr", disp);
+    face_model_->maps_[0] = GLTexture::CreateTexture(disp);
+    cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.size()-4) + "_tex_diffuse.png");
+    cv::flip(diff,diff,0);
+    face_model_->maps_[1] = GLTexture::CreateTexture(diff);
+    cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.size()-4) + "_tex_specular.png");
+    cv::flip(spec,spec,0);
+    face_model_->maps_[2] = GLTexture::CreateTexture(spec);
+    
+    if (FLAGS_center_cam){
+        Eigen::Matrix4f RT;
+        RT << 1, 0, 0, 0,
+        0, -1, 0, 0,
+        0, 0, -1, 40.0,
+        0, 0, 0, 1;
+        result.camera.extrinsic_ = RT;
+        result.fd.RT = Eigen::Matrix4f::Identity();
+        result.fd.updateAll();
     }
+    
+    auto r1 = renderer_.renderer_["DeepLS"];
+    auto dls_r = std::static_pointer_cast<DeepLSRenderer>(r1);
+    auto r2 = renderer_.renderer_["LSGeo"];
+    auto lsg_r = std::static_pointer_cast<LSGeoRenderer>(r2);
+
+    std::vector<cv::Mat_<cv::Vec4f>> outs;
     cv::Mat out;
-    cv::cvtColor(tmp, out, CV_BGRA2BGR);
-    out = 255.0 * out;
-    out.convertTo(out, CV_8UC3);
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
-    
-    f2f_r->param_.tex_mode = 0;
-    f2f_r->param_.enable_seg = 1;
-    f2f_r->param_.enable_tex = 0;
-    f2f_r->param_.cull_offset = 0.0;
-    
-    result.saveToTXT(filename.substr(0,filename.size()-4) + "_params.txt");
+    dls_r->render(result);
+    dls_r->fb_->RetrieveFBO(outs);
+    cv::cvtColor(outs[3],outs[3],CV_RGBA2BGRA);
+    cv::cvtColor(outs[4],outs[4],CV_RGBA2BGRA);
+    outs[3] = 255.0*outs[3];
+    outs[4] = 255.0*outs[4];
+    outs[3].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_diff.png", out);
+    outs[4].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_spec.png", out);
+
+    outs.clear();
+    lsg_r->render(result);
+    lsg_r->fb_->RetrieveFBO(outs);
+    cv::cvtColor(outs[0],outs[0],CV_RGBA2BGRA);
+    outs[0] = 255.0*outs[0];
+    outs[0].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_disp.png", out);
 }
 
 void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-    pp_param_->update_land_ = true;
-    pp_param_->update_seg_ = true;
-    p2d_param_->run_ = true;
-    f2f_param_->run_ = true;
     
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     if(FLAGS_mode.find("opt") != std::string::npos)
@@ -489,7 +505,7 @@ void GUI::loop()
     result_.fd.updateAll();
     
     if(result_.processed_)
-        save_result(result_);
+        save_render(result_);
     
     session.result_queue_->pop();
     lookat = Eigen::ApplyTransform(result_.fd.RT,getCenter(result_.fd.pts_));
@@ -519,15 +535,11 @@ void GUI::loop()
             
             if(result.processed_){
                 if(result.frame_id == 0){
-                    if(FLAGS_close_after_opt)
+                    if(FLAGS_close_after_render)
                         break;
-                    pp_param_->update_land_ = false;
-                    pp_param_->update_seg_ = false;
-                    p2d_param_->run_ = false;
-                    f2f_param_->run_ = false;
                     session.capture_control_queue_->push("pause");
                 }
-                save_result(result_);
+                save_render(result_);
             }
         }
         
@@ -546,7 +558,7 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            if(!FLAGS_preview){
+            if(FLAGS_mode.find("opt") != std::string::npos){
                 pp_param_->updateIMGUI();
                 p2d_param_->updateIMGUI();
                 f2f_param_->updateIMGUI();

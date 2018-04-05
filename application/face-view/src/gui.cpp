@@ -27,9 +27,9 @@
 
 // constants
 #include <gflags/gflags.h>
-DEFINE_bool(preview, false, "preview mode");
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
+DEFINE_string(mode, "opt", "view mode");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
@@ -396,7 +396,7 @@ void GUI::init(int w, int h)
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
-    if(FLAGS_preview)
+    if(FLAGS_mode.find("opt") != std::string::npos)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
@@ -430,7 +430,7 @@ void GUI::loop()
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
-    if(!FLAGS_preview)
+    if(FLAGS_mode.find("opt") != std::string::npos)
         session.preprocess_thread = std::thread([&](){ session.preprocess_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
     

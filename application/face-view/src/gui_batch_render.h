@@ -55,8 +55,8 @@ public:
     void initGL();
     void init(int w, int h);
     void loop();
-    
-    void save_result(FaceResult& result);
+
+    void save_render(FaceResult& result);
     
 private:
     FPSCounter fps_;

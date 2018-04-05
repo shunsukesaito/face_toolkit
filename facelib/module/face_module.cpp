@@ -10,6 +10,9 @@
 
 #include <face2d-detector/face2d_detector.h>
 
+#include <gflags/gflags.h>
+DEFINE_bool(fm_preview_ls, false, "preview lightstage data");
+
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
 : Module(name)
@@ -258,7 +261,8 @@ void FacePreviewModule::Process()
             result.frame_id = input_frame_queue_->front()->frame_id;
             result.p2d = input_frame_queue_->front()->p2d;
             result.seg = input_frame_queue_->front()->seg;
-
+            result.name = input_frame_queue_->front()->name;
+            
             if(result.img.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
@@ -354,3 +358,48 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
     return handle;
 }
 
+ModuleHandle FacePreviewModule::Create(const std::string &name,
+                                       const std::string &data_dir,
+                                       FaceModelPtr face_model,
+                                       CapQueueHandle input_frame_queue,
+                                       FaceQueueHandle output_result_queue,
+                                       CmdQueueHandle command_queue,
+                                       const std::string &root_dir,
+                                       const std::string &list_file)
+{
+    auto module = new FacePreviewModule(name);
+    // add this module to the global registry
+    
+    std::vector<std::string> file_list;
+    std::ifstream fin(list_file);
+    if(!fin.is_open()){
+        std::cout << "Warning: failed parsing image sequence from " << list_file << std::endl;
+        throw std::runtime_error("Error: image sequence does not exist. ");
+    }
+    
+    std::string f;
+    while(std::getline(fin, f))
+    {
+        if (f.empty())
+            continue;
+        std::ifstream dummy(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
+        
+        if (dummy.good())
+            file_list.push_back(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
+    }
+    
+    if(file_list.size() == 0){
+        std::cout << "Error: image sequence does not exist. " << root_dir << std::endl;
+        throw std::runtime_error("Error: image sequence does not exist. ");
+    }
+
+    module->init(data_dir,face_model,file_list);
+    
+    module->set_input_queue(input_frame_queue);
+    module->set_output_queue(output_result_queue);
+    module->set_command_queue(command_queue);
+    
+    ModuleHandle handle(module);
+    ModuleRegistry::RegisterModule(handle);
+    return handle;
+}

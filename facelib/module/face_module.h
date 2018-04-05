@@ -134,6 +134,17 @@ public:
                                const std::string &file_fmt = "",
                                int begin_frame = 0,
                                int end_frame = 0);
+    
+    // construct a default module
+    static ModuleHandle Create(const std::string &name,
+                               const std::string &data_dir,
+                               FaceModelPtr face_model,
+                               CapQueueHandle input_frame_queue,
+                               FaceQueueHandle output_result_queue,
+                               CmdQueueHandle command_queue,
+                               const std::string &root_dir,
+                               const std::string &list_file);
+    
 private:
     std::string data_dir_;
     

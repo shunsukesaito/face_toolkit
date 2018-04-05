@@ -135,7 +135,7 @@ ImageSequenceLoader::ImageSequenceLoader(const std::string &root_dir, const std:
     file_list_.clear();
     std::ifstream fin(list_file);
     if(!fin.is_open()){
-        std::cout << "Warning: failed parsing p2dfit params from " << list_file << std::endl;
+        std::cout << "Warning: failed parsing image sequence from " << list_file << std::endl;
         throw std::runtime_error("Error: image sequence does not exist. ");
     }
     
