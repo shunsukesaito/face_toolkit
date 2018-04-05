@@ -26,7 +26,7 @@ struct LSGeoRenderParams{
     
     int location = 0;
     
-    int sub_samp = 2; // subsampling rate for depth map (higher, more accurate, but maybe slower)
+    int sub_samp = 1; // subsampling rate for depth map (higher, more accurate, but maybe slower)
     
     void init(GLProgram& prog);
     void update(GLProgram& prog);

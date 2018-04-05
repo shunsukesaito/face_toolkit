@@ -526,6 +526,10 @@ void GUI::loop()
     // this makes sure result has some value
     while(!session.result_queue_->front())
         ;
+    result_ = *session.result_queue_->front();
+    session.result_queue_->pop();
+    result_.fd.updateAll();
+    
     // update lookat
     {
         Eigen::Vector3f c = getCenter(session.result_queue_->front()->fd.pts_);
