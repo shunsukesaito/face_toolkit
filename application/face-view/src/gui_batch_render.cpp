@@ -501,34 +501,27 @@ void GUI::loop()
     // this makes sure result has some value
     while(!session.result_queue_->front())
         ;
-    result_ = *session.result_queue_->front();
-    result_.fd.updateAll();
+    // update lookat
+    {
+        Eigen::Vector3f c = getCenter(session.result_queue_->front()->fd.pts_);
+        lookat = Eigen::ApplyTransform(session.result_queue_->front()->fd.RT,c);
+    }
     
-    if(result_.processed_)
-        save_render(result_);
-    
-    session.result_queue_->pop();
-    lookat = Eigen::ApplyTransform(result_.fd.RT,getCenter(result_.fd.pts_));
-
     while(!glfwWindowShouldClose(renderer_.windows_[MAIN]))
     {
         if(session.result_queue_->front()){
             std::lock_guard<std::mutex> lock(result_mutex_);
             auto& result = *session.result_queue_->front();
             
-            result_.img = result.img;
             if(result.processed_){
-                result_.camera = result.camera;
-                result_.fd = result.fd;
-                result_.c_p2l = result.c_p2l;
-                result_.c_p2p = result.c_p2p;
-                result_.frame_id = result.frame_id;
-                result_.name = result.name;
-                
+                result_ = result;
                 oriRT = result_.camera.extrinsic_;
             }
-            result_.p2d = result.p2d;
-            result_.seg = result.seg;
+            else{
+                result_.p2d = result.p2d;
+                result_.seg = result.seg;
+                result_.img = result.img;
+            }
 
             session.result_queue_->pop();
             result_.fd.updateAll();
