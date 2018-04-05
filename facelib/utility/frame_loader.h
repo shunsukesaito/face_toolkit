@@ -32,12 +32,15 @@ public:
     EmptyLoader(){}
     ~EmptyLoader(){}
     
-    virtual inline void load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command){frame = cv::Mat_<cv::Vec3b>(1,1);}
+    virtual void load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command);
     virtual void init(){}
     
     static FrameLoaderPtr Create(){
         return FrameLoaderPtr(new EmptyLoader());
     }
+
+private:
+    cv::Mat frame_ = cv::Mat(1,1,CV_8UC3,cv::Vec3b(0,0,0));
 };
 
 class VideoLoader : public FrameLoader

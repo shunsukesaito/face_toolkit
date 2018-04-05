@@ -296,7 +296,7 @@ void FacePreviewModule::init(std::string data_dir,
 void FacePreviewModule::update(FaceResult& result)
 {
     result.fd = fd_;
-    if(flist_.size() != 0){
+    if(flist_.size() != 0 && result.frame_id >= 0){
         result.loadFromTXT(flist_[result.frame_id%(int)flist_.size()]);
         result.processed_ = true;
     }

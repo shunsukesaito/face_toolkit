@@ -70,6 +70,14 @@ FrameLoaderPtr VideoLoader::Create(int device_id, float scale)
     return FrameLoaderPtr(loader);
 }
 
+void EmptyLoader::load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command)
+{
+    if(command != "pause"){
+        frame_id++;
+    }
+    frame = frame_;
+}
+
 SingleImageLoader::SingleImageLoader(const std::string &image_path, float scale) : FrameLoader()
 {
     image_path_ = image_path;
