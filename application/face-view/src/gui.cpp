@@ -396,7 +396,7 @@ void GUI::init(int w, int h)
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
-    if(FLAGS_mode.find("opt") != std::string::npos)
+    if(FLAGS_mode.find("preview") != std::string::npos)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
@@ -480,7 +480,7 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            if(!FLAGS_preview){
+            if(FLAGS_mode.find("opt") != std::string::npos){
                 pp_param_->updateIMGUI();
                 p2d_param_->updateIMGUI();
                 f2f_param_->updateIMGUI();

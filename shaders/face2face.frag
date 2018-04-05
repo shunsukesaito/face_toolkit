@@ -4,6 +4,7 @@
 uniform uint u_enable_texture;
 uniform uint u_enable_mask;
 uniform uint u_enable_seg;
+uniform uint u_enable_cull;
 uniform float u_cull_offset;
 uniform uint u_inv_diffuse;
 
@@ -84,7 +85,7 @@ void main()
     else
         frag_color = vec4(clamp(VertexIn.color, vec4(0.0), vec4(1.0)));
 
-    if (u_tex_mode != uint(0)){
+    if (u_enable_cull != uint(0) && u_tex_mode != uint(0)){
         vec3 ShadowMapTexCoord = VertexIn.pos_shadow_mvp.xyz / VertexIn.pos_shadow_mvp.w;
         float bias = 0.005*tan(acos(clamp(dot(normalCamera.xyz, view),0.0,1.0)));
         bias = clamp(bias, 0,0.01);
@@ -102,7 +103,7 @@ void main()
         frag_diffuse = vec4(clamp(frag_color.xyz*frag_shading.xyz, vec3(0.0), vec3(1.0)), frag_color.a);
     }
     
-    if(dot(view,normalCamera.xyz) > u_cull_offset)
+    if(u_enable_cull != uint(0) && dot(view,normalCamera.xyz) > u_cull_offset)
         discard;
    
     if (u_enable_mask != uint(0)){

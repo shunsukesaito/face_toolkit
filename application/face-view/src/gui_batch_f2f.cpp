@@ -30,6 +30,7 @@
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
 DEFINE_bool(close_after_opt, false, "close program after optimization");
+DEFINE_bool(dump_pca, false, "dumping out pca and inv diffuse");
 DEFINE_string(mode, "opt", "view mode");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
@@ -398,7 +399,7 @@ void GUI::init(int w, int h)
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
     
-    if(FLAGS_mode.find("opt") != std::string::npos)
+    if(FLAGS_mode.find("preview") != std::string::npos)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
@@ -440,6 +441,9 @@ void GUI::save_result(FaceResult& result)
     f2f_r->param_.tex_mode = 1;
     f2f_r->param_.enable_seg = 1;
     f2f_r->param_.enable_tex = 1;
+    f2f_r->param_.enable_mask = 1;
+    f2f_r->param_.enable_inv_diffuse = 1;
+    f2f_r->param_.enable_cull = 1;
     f2f_r->param_.cull_offset = -0.25;
     f2f_r->updateSegment(result_.seg);
     f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result.img);
@@ -459,8 +463,45 @@ void GUI::save_result(FaceResult& result)
     out = 255.0 * out;
     out.convertTo(out, CV_8UC3);
     cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
+    if (FLAGS_dump_pca){
+        cv::cvtColor(outs[4],tmp,CV_RGBA2BGRA);
+        for(int h = 0; h < tmp.rows; ++h)
+        {
+            for(int w = 0; w < tmp.cols; ++w)
+            {
+                if(tmp(h,w)[3] == 0)
+                    tmp(h, w) = cv::Vec4f(0,1,0,1.0);
+            }
+        }
+        cv::cvtColor(tmp, out, CV_BGRA2BGR);
+        out = 255.0 * out;
+        out.convertTo(out, CV_8UC3);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_inv.png", out);
+        f2f_r->param_.tex_mode = 1;
+        f2f_r->param_.enable_mask = 0;
+        f2f_r->param_.enable_seg = 0;
+        f2f_r->param_.enable_tex = 0;
+        f2f_r->param_.enable_inv_diffuse = 0;
+        f2f_r->param_.enable_cull = 0;
+        f2f_r->render(1024,1024,result_.camera, result.fd, outs);
+        // mixChannels: split [rgba] image to [bgr] and [a]
+        cv::Mat bgr( 1024, 1024, CV_32FC3 );
+        cv::Mat alpha( 1024, 1024, CV_32FC1 );
+        cv::Mat_<uchar> mask(1024,1024,uchar(255));
+        cv::Mat comp[] = { bgr, alpha };
+        // rgba[0] -> bgr[2], rgba[1] -> bgr[1],
+        // rgba[2] -> bgr[0], rgba[3] -> alpha[0]
+        int from_to[] = { 0,2, 1,1, 2,0, 3,3 };
+        mixChannels( &outs[2], 1, comp, 2, from_to, 4 );
+        mask.setTo(0,alpha != 0.0f);
+        bgr = 255.0*bgr;
+        bgr.convertTo(bgr, CV_8UC3);
+        cv::inpaint(bgr, mask, bgr, 3.0, cv::INPAINT_TELEA);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_pca.png", bgr);
+    }
     
     f2f_r->param_.tex_mode = 0;
+    f2f_r->param_.enable_mask = 1;
     f2f_r->param_.enable_seg = 1;
     f2f_r->param_.enable_tex = 0;
     f2f_r->param_.cull_offset = 0.0;
@@ -546,7 +587,7 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            if(!FLAGS_preview){
+            if(FLAGS_mode.find("opt") != std::string::npos){
                 pp_param_->updateIMGUI();
                 p2d_param_->updateIMGUI();
                 f2f_param_->updateIMGUI();

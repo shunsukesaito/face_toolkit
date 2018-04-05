@@ -187,6 +187,7 @@ void F2FRenderParams::init(GLProgram& prog)
     prog.createUniform("u_enable_texture", DataType::UINT);
     prog.createUniform("u_enable_mask", DataType::UINT);
     prog.createUniform("u_enable_seg", DataType::UINT);
+    prog.createUniform("u_enable_cull", DataType::UINT);
     
     prog.createUniform("u_cull_offset", DataType::FLOAT);
     
@@ -199,6 +200,7 @@ void F2FRenderParams::update(GLProgram& prog)
     prog.setUniformData("u_enable_texture", (uint)enable_tex);
     prog.setUniformData("u_enable_mask", (uint)enable_mask);
     prog.setUniformData("u_enable_seg", (uint)enable_seg);
+    prog.setUniformData("u_enable_cull", (uint)enable_cull);
     
     prog.setUniformData("u_cull_offset", cull_offset);
     
@@ -211,6 +213,7 @@ void F2FRenderParams::updateIMGUI()
 {
     ImGui::Checkbox("mask", &enable_mask);
     ImGui::Checkbox("seg", &enable_seg);
+    ImGui::Checkbox("cull", &enable_cull);
     ImGui::Checkbox("texture", &enable_tex);
     ImGui::Checkbox("tex view", &tex_mode);
     ImGui::Checkbox("inv diffuse", &enable_inv_diffuse);
