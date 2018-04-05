@@ -344,10 +344,17 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
         for(int i = begin_frame; i <= end_frame; ++i)
         {
             sprintf(tmp, file_fmt.c_str(), i);
-            file_list.push_back(std::string(tmp));
+            std::ifstream dummy(tmp);
+            if (dummy.good())
+                file_list.push_back(tmp);
+        }
+        if(file_list.size() == 0){
+            std::cout << "Error: image sequence does not exist. " << file_fmt << std::endl;
+            throw std::runtime_error("Error: image sequence does not exist. ");
         }
         module->init(data_dir,face_model,file_list);
     }
+    
     
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);
