@@ -48,8 +48,8 @@ TCPClient::TCPClient(const std::string &address, const short port)
     char abuf[INET_ADDRSTRLEN];
     const char* addr = inet_ntop(AF_INET, &servaddr_->sin_addr, abuf,
                      INET_ADDRSTRLEN);
-    printf("address:\t%s\n", addr?addr:"unknown"), printf("\t");
-    printf("\n port:\t%d\n", ntohs(servaddr_->sin_port)), printf("\t");
+//    printf("address:\t%s\n", addr?addr:"unknown"), printf("\t");
+//    printf("port:\t%d\n", ntohs(servaddr_->sin_port)), printf("\t");
 
 //    memset((char*)&servaddr_, 0, sizeof(servaddr_));
 //    servaddr_.sin_family = AF_INET;
