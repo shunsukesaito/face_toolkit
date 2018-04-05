@@ -125,7 +125,7 @@ ImageSequenceLoader::ImageSequenceLoader(const std::string &root_dir, const std:
     for (int i = begin_id; i <= end_id; ++i)
     {
         sprintf(file_name, imgseq_fmt.c_str(), i);
-        std::ifstream dummy(file_name);
+        std::ifstream dummy(root_dir_ + "/" + file_name);
         if (dummy.good())
             file_list_.push_back(file_name);
     }

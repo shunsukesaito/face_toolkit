@@ -376,7 +376,9 @@ void GUI::init(int w, int h)
        (FLAGS_loader.find("jpg") != std::string::npos ||
         FLAGS_loader.find("png") != std::string::npos ||
         FLAGS_loader.find("bmp") != std::string::npos)){
-        frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, 0, 5000);
+        std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
+        std::string img_fmt = FLAGS_loader.substr(FLAGS_loader.find_last_of("/")+1,FLAGS_loader.size()-FLAGS_loader.find_last_of("/")-1);
+        frame_loader = ImageSequenceLoader::Create(root_dir, img_fmt, 0, 5000);
     }
     else if( FLAGS_loader.find("jpg") != std::string::npos ||
        FLAGS_loader.find("png") != std::string::npos ||
