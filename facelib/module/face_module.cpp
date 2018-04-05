@@ -10,9 +10,6 @@
 
 #include <face2d-detector/face2d_detector.h>
 
-#include <gflags/gflags.h>
-DEFINE_bool(fm_preview_ls, false, "preview lightstage data");
-
 // initializes this module and the basic module
 FaceOptModule::FaceOptModule(const std::string &name)
 : Module(name)
@@ -354,7 +351,6 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
         }
         module->init(data_dir,face_model,file_list);
     }
-    
     
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);

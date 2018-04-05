@@ -371,7 +371,14 @@ void GUI::init(int w, int h)
     pp_param_ = PProParamsPtr(new PProParams());
     
     auto frame_loader = EmptyLoader::Create();
-    if( FLAGS_loader.find("jpg") != std::string::npos ||
+    
+    if( FLAGS_loader.find("%") != std::string::npos &&
+       (FLAGS_loader.find("jpg") != std::string::npos ||
+        FLAGS_loader.find("png") != std::string::npos ||
+        FLAGS_loader.find("bmp") != std::string::npos)){
+        frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, 0, 5000);
+    }
+    else if( FLAGS_loader.find("jpg") != std::string::npos ||
        FLAGS_loader.find("png") != std::string::npos ||
        FLAGS_loader.find("bmp") != std::string::npos){
         frame_loader = SingleImageLoader::Create(FLAGS_loader, FLAGS_loader_scale);
@@ -383,7 +390,6 @@ void GUI::init(int w, int h)
     }
     else if( FLAGS_loader.find("txt") != std::string::npos){
         std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
-        std::cout << root_dir << std::endl;
         frame_loader = ImageSequenceLoader::Create(root_dir, FLAGS_loader, FLAGS_loader_scale);
     }
     else if( !FLAGS_loader.empty() ){
