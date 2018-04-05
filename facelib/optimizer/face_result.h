@@ -9,20 +9,10 @@
 
 #include <fstream>
 #include <gl_utility/camera.h>
+#include <utility/str_utils.h>
 
 #include <shape_model/face_model.h>
 #include "constraints.h"
-
-inline void getVectorFromString(const std::string &line, std::vector<float>& vec)
-{
-    std::istringstream iss(line);
-    float tmp_f;
-    vec.clear();
-    while (iss >> tmp_f)
-    {
-        vec.push_back(tmp_f);
-    }
-}
 
 struct FaceResult
 {
@@ -53,39 +43,39 @@ struct FaceResult
         std::vector<float> tmp;
         // identity
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         fd.idCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // expression
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         fd.exCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // albedo
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         fd.alCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // face rotation
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         fd.RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
         // face translation
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         fd.RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // spherical hamonics
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
-        fd.SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],9,3).transpose();
+        tmp = string2arrayf(line);
+        fd.SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],3,9);
         // camera rotation
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
         // camera translation
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // camera intrinsic
         std::getline(infile, line);
-        getVectorFromString(line, tmp);
+        tmp = string2arrayf(line);
         camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
     }
     

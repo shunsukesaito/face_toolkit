@@ -39,7 +39,7 @@ bool P2DFitParams::loadParamFromTxt(std::string file)
             continue;
         std::getline(fin, val);
         if(label.find("DOF") != std::string::npos){
-            std::vector<int> da = string2array(val);
+            std::vector<int> da = string2arrayi(val);
             if(da.size() != 9)
                 continue;
             dof = DOF(da[0],da[1],da[2],da[3],da[4],da[5],da[6],da[7],da[8]);
