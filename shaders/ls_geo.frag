@@ -69,6 +69,9 @@ void main(void)
             discard;
     }
 
+    if(dot(vieww,specNormal) < 0.0)
+        specNormal = -specNormal;
+
     /***************************
 	* CookñTorrance: http://www.codinglabs.net/article_physically_based_rendering_cook_torrance.aspx
 	****************************/
@@ -115,5 +118,6 @@ void main(void)
 		specular = specular + (ks * specular_reflection);	
 	}
 	frag_color = diffuse + specular;
+    frag_color.a = 1.0;
     frag_color = gammaCorrection(frag_color, 2.2);
 }
