@@ -446,10 +446,8 @@ void GUI::loop()
     while(!session.result_queue_->front())
         ;
     // update lookat
-    {
-        Eigen::Vector3f c = getCenter(session.result_queue_->front()->fd.pts_);
-        lookat = Eigen::ApplyTransform(session.result_queue_->front()->fd.RT,c);
-    }
+    result_ = *session.result_queue_->front();
+    lookat = Eigen::ApplyTransform(result_.fd.RT,getCenter(result_.fd.pts_));
 
     while(!glfwWindowShouldClose(renderer_.windows_[MAIN]))
     {
