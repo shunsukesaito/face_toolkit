@@ -346,8 +346,8 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
                 file_list.push_back(tmp);
         }
         if(file_list.size() == 0){
-            std::cout << "Error: image sequence does not exist. " << file_fmt << std::endl;
-            throw std::runtime_error("Error: image sequence does not exist. ");
+            std::cout << "Error: face parameters does not exist. " << file_fmt << std::endl;
+            throw std::runtime_error("Error: face parameters does not exist. ");
         }
         module->init(data_dir,face_model,file_list);
     }
@@ -377,7 +377,7 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
     std::ifstream fin(list_file);
     if(!fin.is_open()){
         std::cout << "Warning: failed parsing image sequence from " << list_file << std::endl;
-        throw std::runtime_error("Error: image sequence does not exist. ");
+        throw std::runtime_error("Error: face parameters does not exist. ");
     }
     
     std::string f;
@@ -385,15 +385,19 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
     {
         if (f.empty())
             continue;
-        std::ifstream dummy(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
-        
-        if (dummy.good())
-            file_list.push_back(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
+        std::ifstream dummy(root_dir + "/" + f.substr(0,f.find_last_of("/")) + "/params.txt");
+    
+            if (dummy.good())
+                file_list.push_back(root_dir + "/" + f.substr(0,f.find_last_of("/")) + "/params.txt");
+//        std::ifstream dummy(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
+//
+//        if (dummy.good())
+//            file_list.push_back(root_dir + "/" + f.substr(0,f.size()-4) + "_params.txt");
     }
     
     if(file_list.size() == 0){
-        std::cout << "Error: image sequence does not exist. " << root_dir << std::endl;
-        throw std::runtime_error("Error: image sequence does not exist. ");
+        std::cout << "Error: face parameters does not exist. " << root_dir + "/" + f.substr(0,f.find_last_of("/")) + "/params.txt" << std::endl;
+        throw std::runtime_error("Error: face parameters does not exist. ");
     }
 
     module->init(data_dir,face_model,file_list);

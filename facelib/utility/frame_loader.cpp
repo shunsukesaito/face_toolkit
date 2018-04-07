@@ -153,8 +153,10 @@ ImageSequenceLoader::ImageSequenceLoader(const std::string &root_dir, const std:
         if (f.empty())
             continue;
         std::ifstream dummy(root_dir_ + "/" + f);
+        std::cout <<root_dir_ + "/" + f << std::endl;
         if (dummy.good())
             file_list_.push_back(f);
+        std::cout << file_list_.size() << std::endl;
     }
     
     if(file_list_.size() == 0){

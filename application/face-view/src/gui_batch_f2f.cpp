@@ -529,6 +529,7 @@ void GUI::loop()
     result_ = *session.result_queue_->front();
     session.result_queue_->pop();
     result_.fd.updateAll();
+    save_result(result_);
     
     // update lookat
     {

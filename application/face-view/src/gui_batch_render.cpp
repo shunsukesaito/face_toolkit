@@ -442,16 +442,17 @@ void GUI::save_render(FaceResult& result)
     std::string filename = result_.name;
     face_model_->maps_.resize(3);
     cv::Mat_<cv::Vec4f> disp;
-    loadEXRToCV(filename.substr(0,filename.size()-4) + "_tex_disp.exr", disp);
+    loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
     face_model_->maps_[0] = GLTexture::CreateTexture(disp);
-    cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.size()-4) + "_tex_diffuse.png");
+    cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
     cv::flip(diff,diff,0);
     face_model_->maps_[1] = GLTexture::CreateTexture(diff);
-    cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.size()-4) + "_tex_specular.png");
+    cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
     cv::flip(spec,spec,0);
     face_model_->maps_[2] = GLTexture::CreateTexture(spec);
     
     if (FLAGS_center_cam){
+        result.camera = Camera::craeteFromFOV(1024, 1024, 40);
         Eigen::Matrix4f RT;
         RT << 1, 0, 0, 0,
         0, -1, 0, 0,
@@ -476,9 +477,9 @@ void GUI::save_render(FaceResult& result)
     outs[3] = 255.0*outs[3];
     outs[4] = 255.0*outs[4];
     outs[3].convertTo(out, CV_8UC4);
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_diff.png", out);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_diff.png", out);
     outs[4].convertTo(out, CV_8UC4);
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_spec.png", out);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_spec.png", out);
 
     outs.clear();
     lsg_r->render(result);
@@ -486,7 +487,7 @@ void GUI::save_render(FaceResult& result)
     cv::cvtColor(outs[0],outs[0],CV_RGBA2BGRA);
     outs[0] = 255.0*outs[0];
     outs[0].convertTo(out, CV_8UC4);
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_render_disp.png", out);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_disp.png", out);
 }
 
 void GUI::loop()
@@ -504,6 +505,7 @@ void GUI::loop()
     result_ = *session.result_queue_->front();
     session.result_queue_->pop();
     result_.fd.updateAll();
+    save_render(result_);
     
     // update lookat
     {
