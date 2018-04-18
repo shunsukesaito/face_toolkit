@@ -22,12 +22,12 @@ if(ENABLE_CUDA)
   set(CUDA_DRIVER_LIB "")
   set(CUDA_NVML_LIB "")
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=sm_30")
-  if(PINSCREEN_OS_SUFFIX STREQUAL "linux")
+  if(FACETOOLKIT_OS_SUFFIX STREQUAL "linux")
     set(CUDA_DRIVER_LIB "${CUDA_TOOLKIT_ROOT_DIR}/lib64/stubs/libcuda.so")
     set(CUDA_NVML_LIB "${CUDA_TOOLKIT_ROOT_DIR}/lib64/stubs/libnvidia-ml.so")
   endif()
 
-  if(PINSCREEN_OS_SUFFIX STREQUAL "mac")
+  if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
     #set(CMAKE_CUDA_DEVICE_LINK_EXECUTABLE "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
     set(CUDA_DRIVER_LIB "${CUDA_TOOLKIT_ROOT_DIR}/lib/libcuda.dylib")
   endif()
@@ -76,38 +76,38 @@ else(BUILD_EXECUTABLE)
 endif(BUILD_EXECUTABLE)
 
 set(OPENMP_LIB "")
-if(PINSCREEN_OS_SUFFIX STREQUAL "mac")
+if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
   set(OPENMP_LIB "/usr/local/opt/llvm/lib/libiomp5.dylib")
 endif()
 
 target_link_libraries(faceview
-                      PSM::module
-                      PSM::renderer
-                      PSM::utility
-                      PSM::gflags
-                      PSM::OpenCV
+                      FTM::module
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}
                       ${OPENMP_LIB})
 
 target_link_libraries(batch_f2f
-                      PSM::module
-                      PSM::renderer
-                      PSM::utility
-                      PSM::gflags
-                      PSM::OpenCV
+                      FTM::module
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}
                       ${OPENMP_LIB})
 
 target_link_libraries(batch_render
-                      PSM::module
-                      PSM::renderer
-                      PSM::utility
-                      PSM::gflags
-                      PSM::OpenCV
+                      FTM::module
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
                       ${DLIB_LIBRARIES}
                       Threads::Threads
                       ${CMAKE_DL_LIBS}

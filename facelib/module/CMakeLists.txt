@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
-PinscreenModuleBegin(module DEPENDS 
+FaceToolkitModuleBegin(module DEPENDS 
                     library/Eigen3 
                     library/OpenCV
                     library/gflags
@@ -19,14 +19,14 @@ file(GLOB_RECURSE all_sources *.cpp)
 file(GLOB_RECURSE all_headers *.h)
 add_library(module ${all_sources} ${all_headers})
 
-target_link_libraries(module PSM::OpenCV PSM::Eigen3 PSM::gflags PSM::minitrace PSM::face2d-detector PSM::SPSCQueue PSM::utility PSM::gl_utility PSM::shape_model PSM::optimizer PSM::renderer PSM::f2f)
+target_link_libraries(module FTM::OpenCV FTM::Eigen3 FTM::gflags FTM::minitrace FTM::face2d-detector FTM::SPSCQueue FTM::utility FTM::gl_utility FTM::shape_model FTM::optimizer FTM::renderer FTM::f2f)
 
 if(WITH_IMGUI)
-    target_link_libraries(module PSM::imgui)
+    target_link_libraries(module FTM::imgui)
     target_compile_definitions(module PUBLIC "WITH_IMGUI")
 endif()
 
 target_include_directories(module PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   $<INSTALL_INTERFACE:include/module>)
 install(FILES ${all_headers} DESTINATION include/module)
-PinscreenModuleEnd(module)
+FaceToolkitModuleEnd(module)
