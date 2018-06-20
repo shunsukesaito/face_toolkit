@@ -9,6 +9,7 @@
 #include <gflags/gflags.h>
 DEFINE_string(camera_file, "", "camera file name");
 DEFINE_uint32(camera_fov, 60, "default camera fov");
+DEFINE_bool(weak_persp, false, "use weak perspective model");
 
 // initializes this module and the basic module
 CaptureModule::CaptureModule(const std::string &name)
@@ -85,6 +86,8 @@ ModuleHandle CaptureModule::Create(const std::string &name,
         module->camera_ = Camera::craeteFromFOV(w, h, FLAGS_camera_fov);
     else
         module->camera_ = Camera::parseCameraParams(data_dir + FLAGS_camera_file);
+    
+    module->camera_.weakPersp_ = FLAGS_weak_persp;
     
     std::cout << "Camera Info:" << std::endl;
     std::cout << "Intrinsic:" << std::endl;

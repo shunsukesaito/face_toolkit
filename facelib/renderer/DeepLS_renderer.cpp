@@ -166,8 +166,8 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_pl.setUniformData("u_alpha", param_.alpha);
 
     // camera parameters update
-    camera.updateUniforms(prog_main, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
-    camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
+    camera.updateUniforms(prog_main, fd.getRT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
+    camera.updateUniforms(prog_depth, fd.getRT(), U_CAMERA_MVP);
     
     // update mesh attributes
     Eigen::MatrixX3f tan, btan;

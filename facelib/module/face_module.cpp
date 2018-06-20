@@ -268,6 +268,7 @@ void FacePreviewModule::Process()
             update(result);
             output_result_queue_->push(result);
             input_frame_queue_->pop();
+            usleep(30000);
         }
         if(command_queue_->front()){
             command = *command_queue_->front();

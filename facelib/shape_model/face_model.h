@@ -47,6 +47,8 @@ struct FaceData
     Eigen::VectorXf exCoeff;
     Eigen::VectorXf alCoeff;
     
+    float scale = 1.0f;
+    
     Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
     Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);
     
@@ -79,6 +81,8 @@ struct FaceData
     void updateContourBV(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
     void updateContourPIN(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
     void updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
+    
+    Eigen::Matrix4f getRT() const;
     
     Eigen::Vector3f computeV(int vidx) const;
     Eigen::Ref<const Eigen::MatrixXf> dID(int vidx, int size) const;
@@ -177,6 +181,8 @@ struct LinearFaceModel : public BaseFaceModel
     
     void saveBinaryModel(const std::string& file);
     void loadBinaryModel(const std::string& file);
+    
+    void loadModelFromObj(const std::string& obj_dir, int id_size, int ex_size);
     
     void loadOldBinaryModel(const std::string& modelfile, const std::string& meshfile);
     void loadMMBinaryModel(const std::string& modelfile);

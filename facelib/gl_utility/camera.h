@@ -43,6 +43,8 @@ struct Camera
     int width_;
     int height_;
     
+    bool weakPersp_ = false;
+    
     Camera() {}
     Camera(const Eigen::Matrix4f& RT, const Eigen::Matrix4f& K, int w, int h, float zN, float zF, bool c2w = false);
     Camera(const Camera&);

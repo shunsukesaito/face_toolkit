@@ -139,7 +139,7 @@ void MeshRenderer::init(std::string data_dir, std::string shader_dir, FaceModelP
 void MeshRenderer::render(const FaceResult& result)
 {
     if(show_)
-        render(result.camera, result.fd.RT, result.fd.pts_, result.fd.nml_);
+        render(result.camera, result.fd.getRT(), result.fd.pts_, result.fd.nml_);
 }
 #endif
 

@@ -29,7 +29,7 @@
 #include <gflags/gflags.h>
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
-DEFINE_string(mode, "opt", "view mode");
+DEFINE_string(mode, "opt", "view mode (opt/preview)");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
@@ -320,8 +320,10 @@ void GUI::init(int w, int h)
     session.preprocess_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    if( FLAGS_facemodel.find("pin") != std::string::npos )
-        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin", "pin");
+    if( FLAGS_facemodel.find("pinpca") != std::string::npos )
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelPCA.bin", "pin_pca");
+    else if( FLAGS_facemodel.find("pinfacs") != std::string::npos )
+        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelFACS.bin", "pin_facs");
     else if( FLAGS_facemodel.find("bv") != std::string::npos )
         face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
     else if(FLAGS_facemodel.find("deepls") != std::string::npos ){

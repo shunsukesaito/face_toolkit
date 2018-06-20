@@ -1,3 +1,10 @@
+//
+//  regularizer.h
+//  face_toolkit
+//
+//  Created by Shunsuke Saito on 8/25/17.
+//  Copyright © 2017 Shunsuke Saito. All rights reserved.
+//
 #pragma once
 
 #include <iostream>

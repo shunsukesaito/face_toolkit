@@ -164,3 +164,20 @@ static Mat4f PerspectiveFromVision(const Mat4f& K, unsigned int width, unsigned 
     
     return ortho * tp;
 }
+
+static Mat4f OrthogonalProjection(unsigned int width, unsigned int height, float zNear, float zFar) {
+    const float L = 0.f;   // left
+    const float R = static_cast<float>(width); // right
+    const float B = 0.f;   // bottom
+    const float T = static_cast<float>(height);// top
+    
+    // orthographic projection
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205347(v=vs.85).aspx
+    Mat4f ortho = Mat4f::Zero();
+    ortho(0, 0) = 2.0f / (R - L); ortho(0, 3) = -(R + L) / (R - L);
+    ortho(1, 1) = -2.0f / (T - B); ortho(1, 3) = (T + B) / (T - B);
+    ortho(2, 2) = 2.0f / (zFar - zNear); ortho(2, 3) = (zNear + zFar) / (zNear - zFar);
+    ortho(3, 3) = 1.f;
+
+    return ortho;
+}

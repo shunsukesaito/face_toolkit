@@ -530,13 +530,49 @@ void LinearFaceModel::loadMMBinaryModel(const std::string& modelfile)
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }
 
+void LinearFaceModel::loadModelFromObj(const std::string& obj_dir, int id_size, int ex_size)
+{
+    Eigen::MatrixX3f nml;
+    loadObjFile(obj_dir + "/neutral.obj", mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    
+    Eigen::MatrixXf w_id(mu_id_.size(),id_size);
+    Eigen::MatrixXf w_ex(mu_id_.size(),ex_size);
+    
+    Eigen::VectorXf pts;
+    Eigen::MatrixX2f uvs;
+    Eigen::MatrixX3i tri_pts;
+    Eigen::MatrixX3i tri_uv;
+    for(int i = 0; i < id_size; ++i)
+    {
+        char tmp[256];
+        sprintf(tmp, "/id%03d.obj", i);
+        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_uv);
+        w_id.col(i) = pts - mu_id_;
+    }
+    
+    for(int i = 0; i < ex_size; ++i)
+    {
+        char tmp[256];
+        sprintf(tmp, "/ex%03d.obj", i);
+        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_uv);
+        w_ex.col(i) = pts - mu_id_;
+    }
+    
+    w_id_ = w_id;
+    w_ex_ = w_ex;
+    sigma_ex_.resize(ex_size);
+    sigma_ex_.setOnes();
+    sigma_id_.resize(id_size);
+    sigma_id_.setOnes();
+}
+
 FaceModelPtr LinearFaceModel::LoadModel(const std::string& file, const std::string& fm_type)
 {
     auto model = new LinearFaceModel();
     
     model->fm_type_ = fm_type;
     model->loadBinaryModel(file);
-    
+        
     std::cout << "Face Model Info:" << std::endl;
     std::cout << "#Vert: " << model->mu_id_.size()/3 << " #Tri: " << model->tri_pts_.rows() << std::endl;
 

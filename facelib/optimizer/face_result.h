@@ -14,6 +14,41 @@
 #include <shape_model/face_model.h>
 #include "constraints.h"
 
+struct BaseCaptureData
+{
+    int type = 0; // 0: single frame, 1: multi-frame, 2: multi-view, 3: multi-view + multi-frame
+};
+
+// single frame capture data
+struct CaptureData : public BaseCaptureData
+{
+    Camera camera_;
+    std::vector<Eigen::Vector3f> q2V_;
+    std::vector<Eigen::Vector4f> q3V_;
+    cv::Mat_<cv::Vec4f> img_;
+};
+
+// multi-frame capture data
+struct MFCaptureData : public BaseCaptureData
+{
+    Camera camera_;
+    std::vector<std::vector<Eigen::Vector3f>> q2Vs_;
+    std::vector<std::vector<Eigen::Vector4f>> q3Vs_;
+    std::vector<cv::Mat_<cv::Vec4f>> imgs_;
+};
+
+// multi-view capture data
+struct MVCaptureData : public BaseCaptureData
+{
+    std::vector<CaptureData> frames_;
+};
+
+// multi-view + multi-frame capture data
+struct MVMFCaptureData : public BaseCaptureData
+{
+    std::vector<MFCaptureData> frames_;
+};
+
 struct FaceResult
 {
     bool processed_ = false;

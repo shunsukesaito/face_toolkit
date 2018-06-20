@@ -49,10 +49,11 @@ cv::Rect GetBBoxFromLandmarks(std::vector<Eigen::Vector3f>& shape)
 Face2DDetector::Face2DDetector(std::string data_dir){
     cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
 
-    detector_ = dlib::get_frontal_face_detector();
     dlib::deserialize(data_dir + DLIB_68_FACEALIGNMENT_MODEL) >> sp_;
     gab_detector_.LoadModel(data_dir + NPD_MODEL);
     gab_detector_.DetectSize = 200;
+    
+    detector_ = dlib::get_frontal_face_detector();
     
 }
 

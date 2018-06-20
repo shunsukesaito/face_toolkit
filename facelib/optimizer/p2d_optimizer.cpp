@@ -251,14 +251,6 @@ static void computeP2DJacobian(Eigen::VectorXf& Jtr,
     std::vector<int> idx_p2p;
     std::vector<int> idx_p2l;
     
-    // TODO:
-    //faceModel.UpdateFaceContour(cameras[j]);
-    
-    // TODO:
-    //if ((land[61] - land[67]).norm() < params.mc_thresh_ &&
-    //    (land[62] - land[66]).norm() < params.mc_thresh_ &&
-    //    (land[63] - land[65]).norm() < params.mc_thresh_)
-    //    computeJacobianMouthClose(Jtr, JtJ, faceModel, dof, params.w_mc_);
     P2P2DC::getIndexList(CP2P, idx_p2p);
     P2L2DC::getIndexList(CP2L, idx_p2l);
     
