@@ -114,6 +114,68 @@ struct FaceResult
         camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
     }
     
+    inline void loadFromVec(const std::vector<std::pair<std::string, int>>& dof, const std::vector<float>& val){
+        std::vector<float> val_ = val;
+        float* p = &val_[0];
+        int total_dof = 0;
+        for(auto itr = dof.begin(); itr != dof.end(); ++itr)
+        {
+            std::string label = itr->first;
+            int dim = itr->second;
+            if(dim <= 0)
+                continue;
+            
+            if(label.find("id") != std::string::npos){
+                //fd.idCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                p += dim;
+            }
+            if(label.find("ex") != std::string::npos){
+                fd.exCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                p += dim;
+            }
+            if(label.find("al") != std::string::npos){
+                fd.alCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                p += dim;
+            }
+            if(label.find("rf") != std::string::npos){
+                assert(dim == 9);
+                fd.RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                p += dim;
+            }
+            if(label.find("tf") != std::string::npos){
+                assert(dim == 3);
+                fd.RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
+                p += dim;
+            }
+            if(label.find("sh") != std::string::npos){
+                assert(dim == 27);
+                fd.SH = Eigen::Map<Eigen::MatrixXf>(p,3,9);
+                p += dim;
+            }
+            if(label.find("rc") != std::string::npos){
+                assert(dim == 9);
+                camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                p += dim;
+            }
+            if(label.find("tc") != std::string::npos){
+                assert(dim == 3);
+                camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
+                p += dim;
+            }
+            if(label.find("k") != std::string::npos){
+                assert(dim == 9);
+                camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                p += dim;
+            }
+            total_dof += dim;
+            if(total_dof > val.size())
+                break;
+        }
+        if(total_dof != val.size()){
+            std::cout << "Warning: dof and value dimension doesn't match." << std::endl;
+        }
+    }
+    
     inline void saveToTXT(std::string filename){
         std::ofstream fout(filename);
         if(!fout.is_open()){

@@ -24,6 +24,65 @@
 struct BaseRenderer;
 typedef std::shared_ptr<BaseRenderer> RendererHandle;
 
+enum WINDOW { MAIN, WINDOW_COUNT};
+
+struct Window {
+    bool valid = false;
+    GLFWwindow* window_ = NULL;
+    int width_;
+    int height_;
+    int supsample_scale_;
+    
+    int swidth() { return width_ * supsample_scale_; }
+    int sheight() { return height_ * supsample_scale_; }
+    
+    Window(int supsample_scale = 0, int width = 0, int height = 0, const char* title = "")
+    : width_(width)
+    , height_(height)
+    , supsample_scale_(supsample_scale)
+    {
+        int w = swidth();
+        int h = sheight();
+        
+        window_ = glfwCreateWindow(w, h, title, NULL, NULL);
+        if (!window_) {
+            glfwTerminate();
+            exit(EXIT_FAILURE);
+        }
+        
+        glfwGetFramebufferSize(window_, &w, &h);
+        glViewport(0, 0, w, h);
+        valid = true;
+    }
+    ~Window() {
+    }
+    void resize(int supsample_scale, int width, int height) {
+        supsample_scale_ = supsample_scale;
+        width_ = width;
+        height_ = height;
+        
+        int w = swidth();
+        int h = sheight();
+        
+        glfwGetFramebufferSize(window_, &w, &h);
+        glViewport(0, 0, w, h);
+    }
+    void launch(void (*func)(void)) {
+        GLFWwindow* prev = glfwGetCurrentContext();
+        if(prev != window_)
+            glfwMakeContextCurrent(window_);
+        func();
+        if(prev != window_)
+            glfwMakeContextCurrent(prev);
+    }
+    inline void flush(){glfwSwapBuffers(window_);}
+    
+    operator GLFWwindow*() const {return window_;}
+};
+
+void initializeGL(int w, int h, std::map<WINDOW, Window>& windows);
+void screenshot(cv::Mat& img, Window& window);
+
 struct BaseRenderer
 {
     std::unordered_map<std::string, GLProgram> programs_;

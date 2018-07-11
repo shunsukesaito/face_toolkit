@@ -68,13 +68,15 @@ void Camera::updateUniforms(GLProgram& program, int flag) const
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
     
-    Eigen::Matrix4f MVP;
+    Eigen::Matrix4f MVP, MV;
     Eigen::Matrix4f perspective;
-    if(weakPersp_)
+    if(weakPersp_){
         perspective = OrthogonalProjection(width_, height_, zNear_, zFar_);
+    }
     else
         perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    Eigen::Matrix4f MV = extrinsic_;
+    
+    MV = extrinsic_;
     MVP = perspective * MV;
     
     Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
@@ -94,18 +96,23 @@ void Camera::updateUniforms(GLProgram& program, int flag) const
         program.setUniformData("u_camera_pos", pos);
 }
 
-void Camera::updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const
+void Camera::updateUniforms(GLProgram& program, Eigen::Matrix4f RT, int flag) const
 {
     static const Eigen::Matrix4f biasMatrix =
     (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
 
-    Eigen::Matrix4f MVP;
+    Eigen::Matrix4f MVP, MV;
     Eigen::Matrix4f perspective;
-    if(weakPersp_)
+    if(weakPersp_){
         perspective = OrthogonalProjection(width_, height_, zNear_, zFar_);
-    else
+        RT.block(0,0,3,3) *= RT(2,3);
+        RT(2,3) = 500.0;
+        MV = RT;
+    }
+    else{
         perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    Eigen::Matrix4f MV = extrinsic_ * RT;
+        MV = extrinsic_ * RT;
+    }
     MVP = perspective * MV;
     
     Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();

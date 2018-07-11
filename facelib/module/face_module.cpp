@@ -6,7 +6,7 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 #include "face_module.h"
-#include "renderer.h"
+#include "face_renderer.h"
 
 #include <face2d-detector/face2d_detector.h>
 
@@ -294,11 +294,40 @@ void FacePreviewModule::init(std::string data_dir,
     fd_.setFaceModel(face_model_);
 }
 
+void FacePreviewModule::init(std::string data_dir,
+                             FaceModelPtr face_model,
+                             const std::string& ip,
+                             int port,
+                             const std::vector<std::pair<std::string, int>>& dof,
+                             int input_img_size,
+                             bool sendImage)
+{
+    data_dir_ = data_dir;
+    
+    flist_ = std::vector<std::string>();
+    face_model_ = face_model;
+    fd_.setFaceModel(face_model_);
+    
+    send_image_ = sendImage;
+    
+    int total_dof = 0;
+    for(auto iter = dof.begin(); iter != dof.end(); ++iter)
+    {
+        total_dof += iter->second;
+    }
+    param_tcp_ = std::make_shared<ParamTCPStream>(ip,port,total_dof,input_img_size,dof);
+}
+
 void FacePreviewModule::update(FaceResult& result)
 {
     result.fd = fd_;
     if(flist_.size() != 0 && result.frame_id >= 0){
         result.loadFromTXT(flist_[result.frame_id%(int)flist_.size()]);
+        result.processed_ = true;
+    }
+    if(param_tcp_ != NULL){
+        auto ret = param_tcp_->getParams();
+        result.loadFromVec(ret->dof, ret->param);
         result.processed_ = true;
     }
     result.c_p2p = c_p2p_;
@@ -402,6 +431,31 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
     }
 
     module->init(data_dir,face_model,file_list);
+    
+    module->set_input_queue(input_frame_queue);
+    module->set_output_queue(output_result_queue);
+    module->set_command_queue(command_queue);
+    
+    ModuleHandle handle(module);
+    ModuleRegistry::RegisterModule(handle);
+    return handle;
+}
+
+ModuleHandle FacePreviewModule::Create(const std::string &name,
+                                       const std::string &data_dir,
+                                       FaceModelPtr face_model,
+                                       CapQueueHandle input_frame_queue,
+                                       FaceQueueHandle output_result_queue,
+                                       CmdQueueHandle command_queue,
+                                       const std::string& ip, int port,
+                                       const std::vector<std::pair<std::string, int>>& dof,
+                                       int input_img_size,
+                                       bool sendImage)
+{
+    auto module = new FacePreviewModule(name);
+    // add this module to the global registry
+    
+    module->init(data_dir, face_model, ip, port, dof, input_img_size, sendImage);
     
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);

@@ -6,7 +6,8 @@ FaceToolkitModuleBegin(faceview DEPENDS
 					library/GLEW 
 					library/glfw3 
 					library/gflags 
-					library/OpenCV 
+					library/OpenCV
+					library/OpenMesh 
 					library/dlib 
 					utility/spdlog 
 					utility/glm 

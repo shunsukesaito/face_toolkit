@@ -219,10 +219,7 @@ const Eigen::MatrixX3i& FaceData::triuv() const
 
 Eigen::Matrix4f FaceData::getRT() const
 {
-    Eigen::Matrix4f _RT = RT;
-    _RT.block(0,0,3,3) *= scale;
-    
-    return _RT;
+    return RT;
 }
 
 void FaceData::init()
@@ -457,7 +454,7 @@ void FaceData::updateIMGUI()
                 ImGui::SliderFloat(("al" + std::to_string(i)).c_str(), &alCoeff[i], -2.0, 2.0);
             ImGui::TreePop();
         }
-        ImGui::InputFloat("Scale", &scale);
+//        ImGui::InputFloat("Scale", &scale);
         ImGui::InputFloat3("Rot", &euler(0), -1, ImGuiInputTextFlags_ReadOnly);
         ImGui::InputFloat3("Tr", &RT(0,3));
         if (ImGui::TreeNode("SH")){

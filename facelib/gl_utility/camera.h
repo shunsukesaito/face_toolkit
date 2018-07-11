@@ -38,8 +38,8 @@ struct Camera
     
     Eigen::VectorXf distCoeff_;
     
-    float zNear_ = 10.f;
-    float zFar_ = 100.f;
+    float zNear_ = 1.f;
+    float zFar_ = 400.f;
     int width_;
     int height_;
     
@@ -51,7 +51,7 @@ struct Camera
     
     static void initializeUniforms(GLProgram& programs, int flag);
     void updateUniforms(GLProgram& program, int flag) const;
-    void updateUniforms(GLProgram& program, const Eigen::Matrix4f& RT, int flag) const;
+    void updateUniforms(GLProgram& program, Eigen::Matrix4f RT, int flag) const;
     
     void updateUniforms4Sphere(GLProgram& program, int flag) const;
     

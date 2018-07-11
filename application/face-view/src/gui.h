@@ -11,16 +11,12 @@
 #include <stdio.h>
 #include <thread>
 
-#include <module/capture_module.h>
-#include <module/preprocess_module.h>
-#include <module/face_module.h>
-#include <module/renderer.h>
-#include <utility/fps.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
-#ifdef WITH_IMGUI
-#include <imgui.h>
-#include <imgui_impl_glfw_gl3.h>
-#endif
+#include <Eigen/Dense>
+
+#include <utility/fps.h>
 
 class GUI
 {
@@ -58,16 +54,6 @@ public:
     
 private:
     FPSCounter fps_;
-    
-    Renderer renderer_;
-    
-    FaceModelPtr face_model_;
-    P2DFitParamsPtr p2d_param_;
-    F2FParamsPtr f2f_param_;
-    PProParamsPtr pp_param_;
-    
-    std::mutex result_mutex_;
-    FaceResult result_;
     
     bool pause_ = false;
     

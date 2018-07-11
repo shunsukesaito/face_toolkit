@@ -6,14 +6,21 @@
 //  Copyright © 2017 Shunsuke Saito. All rights reserved.
 //
 
-#include "gui_batch_f2f.h"
+#include "gui.h"
 
 #include <memory>
 
+#include <module/capture_module.h>
+#include <module/preprocess_module.h>
+#include <module/face_module.h>
+#include <module/face_renderer.h>
+
+#include <renderer/base_renderer.h>
 #include <renderer/bg_renderer.h>
 #include <renderer/mesh_renderer.h>
 #include <renderer/IBL_renderer.h>
 #include <renderer/LS_renderer.h>
+#include <renderer/LSGeo_renderer.h>
 #include <renderer/DeepLS_renderer.h>
 #include <renderer/p3d_renderer.h>
 #include <renderer/p2d_renderer.h>
@@ -23,21 +30,34 @@
 #include <utility/str_utils.h>
 #include <utility/obj_loader.h>
 #include <utility/trackball.h>
-#include <utility/pts_loader.h>
+
+#ifdef WITH_IMGUI
+#include <imgui.h>
+#include <imgui_impl_glfw_gl3.h>
+#endif
 
 // constants
 #include <gflags/gflags.h>
+DEFINE_string(data_dir, "../assets/", "data directory");
+
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
-DEFINE_bool(close_after_opt, false, "close program after optimization");
-DEFINE_bool(dump_pca, false, "dumping out pca and inv diffuse");
-DEFINE_string(mode, "opt", "view mode");
+DEFINE_string(mode, "opt", "view mode (opt/preview)");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
 DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
 DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
+
+DEFINE_string(fd_ip, "127.0.0.1", "IP for face parameters");
+DEFINE_int32(fd_port, 19820, "port number for face parameters");
+DEFINE_int32(fd_dof_id, 40, "FaceData TCP dof of ID");
+DEFINE_int32(fd_dof_ex, 51, "FaceData TCP dof of EX");
+DEFINE_int32(fd_dof_al, 40, "FaceData TCP dof of AL");
+DEFINE_int32(fd_dof_rf, 9, "FaceData TCP dof of ROT");
+DEFINE_int32(fd_dof_tf, 3, "FaceData TCP dof of TR");
+DEFINE_int32(fd_dof_sh, 27, "FaceData TCP dof of SH");
 
 DEFINE_double(loader_scale, 1.0, "image loader scale");
 
@@ -57,7 +77,19 @@ struct Session{
     CmdQueueHandle preprocess_control_queue_;
     CmdQueueHandle face_control_queue_;
     
-    std::thread capture_thread, preprocess_thread, face_thread, tcp_thread;
+    
+    std::thread capture_thread, preprocess_thread, face_thread;
+    
+    FaceRenderer renderer_;
+    std::map<WINDOW, Window> windows_;
+    
+    FaceModelPtr face_model_;
+    P2DFitParamsPtr p2d_param_;
+    F2FParamsPtr f2f_param_;
+    PProParamsPtr pp_param_;
+    
+    std::mutex result_mutex_;
+    FaceResult result_;
 };
 
 GUI* GUI::instance = new GUI();
@@ -135,41 +167,41 @@ void GUI::resize(int w, int h)
 {
     width_ = w;
     height_ = h;
-
-    renderer_.resize(1, w, h);
+    
+    session.windows_[WINDOW::MAIN].resize(1, w, h);
 }
 
 void GUI::keyboard(int key, int s, int a, int m)
 {
-    Camera& cam = result_.camera;
+    Camera& cam = session.result_.camera;
     Eigen::Matrix4f& RT = cam.extrinsic_;
     
     if(key == GLFW_KEY_F1 && a == GLFW_PRESS){
-        std::lock_guard<std::mutex> lock(result_mutex_);
-        result_.fd.saveObj("cur_mesh.obj");
+        std::lock_guard<std::mutex> lock(session.result_mutex_);
+        session.result_.fd.saveObj("cur_mesh.obj");
     }
     if(key == GLFW_KEY_F2 && a == GLFW_PRESS){
         cv::Mat img;
-        renderer_.screenshot(img);
+        screenshot(img, session.windows_[WINDOW::MAIN]);
         cv::imwrite("screenshot.png", img);
     }
     if(key == GLFW_KEY_F2 && a == GLFW_PRESS){
         cv::Mat img;
-        renderer_.screenshot(img);
+        screenshot(img, session.windows_[WINDOW::MAIN]);
         cv::imwrite("screenshot.png", img);
     }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
-        std::lock_guard<std::mutex> lock(result_mutex_);
-        lookat = Eigen::ApplyTransform(result_.fd.RT, getCenter(result_.fd.pts_));
+        std::lock_guard<std::mutex> lock(session.result_mutex_);
+        lookat = Eigen::ApplyTransform(session.result_.fd.RT, getCenter(session.result_.fd.pts_));
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_R && a == GLFW_PRESS){
-        std::lock_guard<std::mutex> lock(result_mutex_);
-        result_.camera.extrinsic_ = oriRT;
+        std::lock_guard<std::mutex> lock(session.result_mutex_);
+        session.result_.camera.extrinsic_ = oriRT;
     }
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
-        result_.fd.init();
+        session.result_.fd.init();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
         if(!pause_)
@@ -197,7 +229,7 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_x = x;
     current_mouse_y = y;
     
-    Camera& cam = result_.camera;
+    Camera& cam = session.result_.camera;
     
     switch (mouse_mode)
     {
@@ -255,12 +287,12 @@ void GUI::mousePressed(int button, int s, int m)
         mouseUp(mb,m);
     }
 }
-    
+
 void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = result_.camera.extrinsic_.inverse();
+    curRT = session.result_.camera.extrinsic_.inverse();
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
     right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
@@ -283,7 +315,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 
 void GUI::mouseUp(MouseButton mb, int m)
 {
-    Camera& cam = result_.camera;
+    Camera& cam = session.result_.camera;
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
     
     if(mb == MouseButton::Right)
@@ -293,9 +325,9 @@ void GUI::mouseUp(MouseButton mb, int m)
 
 void GUI::mouseScroll(double x, double y)
 {
-    Camera& cam = result_.camera;
+    Camera& cam = session.result_.camera;
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
-
+    
     float scale = 0.01;
     Eigen::Vector3f t = RT.block<3,1>(0,3) - lookat;
     
@@ -311,10 +343,10 @@ void GUI::init(int w, int h)
     width_ = w;
     height_ = h;
     
-    std::string data_dir = "../assets/";
+    std::string data_dir = FLAGS_data_dir;
     
-    renderer_.initGL(w, h);
-    
+    initializeGL(w, h, session.windows_);
+
     session.capture_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
     session.preprocess_queue_ = CapQueueHandle(new SPSCQueue<CaptureResult>(4));
     session.result_queue_ = FaceQueueHandle(new SPSCQueue<FaceResult>(4));
@@ -322,55 +354,57 @@ void GUI::init(int w, int h)
     session.preprocess_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
-    if( FLAGS_facemodel.find("pin") != std::string::npos )
-        face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModel.bin", "pin");
+    if( FLAGS_facemodel.find("pinpca") != std::string::npos )
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelPCA.bin", "pin_pca");
+    else if( FLAGS_facemodel.find("pinfacs") != std::string::npos )
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelFACS.bin", "pin_facs");
     else if( FLAGS_facemodel.find("bv") != std::string::npos )
-        face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
     else if(FLAGS_facemodel.find("deepls") != std::string::npos ){
         int start = FLAGS_facemodel.find("deepls") + 6;
         int len = FLAGS_facemodel.size()-6;
-        std::string fm_name =  FLAGS_facemodel.substr(start,
-                                                      len);
-        std::cout << fm_name << std::endl;
-        face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" , true);
+        std::string fm_name =  FLAGS_facemodel.substr(start,len);
+        session.face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" , true);
     }
     else if(FLAGS_facemodel.find("ls") != std::string::npos ){
         int start = FLAGS_facemodel.find("ls") + 2;
         int len = FLAGS_facemodel.size()-2;
         std::string fm_name = FLAGS_facemodel.substr(start, len);
-        face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" );
+        session.face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" );
     }
     else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
-        face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
-
+        session.face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
+    
     auto renderers = vector2map(split_str(FLAGS_renderer, "/"));
     
     if( renderers.find("bg") != renderers.end() )
-        renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
+        session.renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
     if( renderers.find("geo") != renderers.end() )
-        renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
+        session.renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
     if( renderers.find("ibl") != renderers.end() )
-        renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
+        session.renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
     if( renderers.find("deepls") != renderers.end() )
-        renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
+        session.renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
     if( renderers.find("ls") != renderers.end() )
-        renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+        session.renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+    if( renderers.find("lsgeo") != renderers.end() )
+        session.renderer_.addRenderer("LSGeo", LSGeoRenderer::Create("LSGeo Rendering", true));
     if( renderers.find("pmrec") != renderers.end() )
-        renderer_.addRenderer("PMRec", PosMapReconRenderer::Create("PosMapRecon Rendering", true));
+        session.renderer_.addRenderer("PMRec", PosMapReconRenderer::Create("PosMapRecon Rendering", true));
     if( renderers.find("pm") != renderers.end() )
-        renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
+        session.renderer_.addRenderer("PM", PosMapRenderer::Create("PosMap Rendering", true));
     if( renderers.find("f2f") != renderers.end() )
-        renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", true));
+        session.renderer_.addRenderer("F2F", F2FRenderer::Create("F2F Rendering", true));
     if( renderers.find("p3d") != renderers.end() )
-        renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", true));
+        session.renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", true));
     if( renderers.find("p2d") != renderers.end() )
-        renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
+        session.renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
     
-    renderer_.init(face_model_, data_dir);
+    session.renderer_.init(session.face_model_, data_dir);
     
-    p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
-    f2f_param_ = F2FParamsPtr(new F2FParams());
-    pp_param_ = PProParamsPtr(new PProParams());
+    session.p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
+    session.f2f_param_ = F2FParamsPtr(new F2FParams());
+    session.pp_param_ = PProParamsPtr(new PProParams());
     
     auto frame_loader = EmptyLoader::Create();
     if( FLAGS_loader.find("jpg") != std::string::npos ||
@@ -398,22 +432,32 @@ void GUI::init(int w, int h)
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
-    
     if(FLAGS_mode.find("preview") != std::string::npos)
-        session.face_module_ = FacePreviewModule::Create("face", data_dir, face_model_, session.capture_queue_,
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
-    else{
+    else if(FLAGS_mode.find("tcp") != std::string::npos){
+        std::vector<std::pair<std::string, int>> dof;
+        dof.push_back(std::pair<std::string,int>("id",FLAGS_fd_dof_id));
+        dof.push_back(std::pair<std::string,int>("ex",FLAGS_fd_dof_ex));
+        dof.push_back(std::pair<std::string,int>("al",FLAGS_fd_dof_al));
+        dof.push_back(std::pair<std::string,int>("rf",FLAGS_fd_dof_rf));
+        dof.push_back(std::pair<std::string,int>("tf",FLAGS_fd_dof_tf));
+        dof.push_back(std::pair<std::string,int>("sh",FLAGS_fd_dof_sh));
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_,
+                                                         FLAGS_fd_ip, FLAGS_fd_port,dof,256,false);
+    }else{
         auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
-
-        session.preprocess_module_ = PreprocessModule::Create("face", pp_param_, face_detector, session.capture_queue_, 
+        
+        session.preprocess_module_ = PreprocessModule::Create("face", session.pp_param_, face_detector, session.capture_queue_,
                                                               session.preprocess_queue_, session.preprocess_control_queue_);
-
-        session.face_module_ = FaceOptModule::Create("face", data_dir, face_model_, p2d_param_, f2f_param_,
+        
+        session.face_module_ = FaceOptModule::Create("face", data_dir, session.face_model_, session.p2d_param_, session.f2f_param_,
                                                      session.preprocess_queue_, session.result_queue_, session.face_control_queue_);
     }
     
-    GLFWwindow* window = renderer_.windows_[MAIN];
+    GLFWwindow* window = session.windows_[MAIN];
 
 #ifdef WITH_IMGUI
     ImGui_ImplGlfwGL3_Init(window, true);
@@ -428,14 +472,14 @@ void GUI::init(int w, int h)
     glfwSetDropCallback(window,drop_callback);
 }
 
-void GUI::save_result(FaceResult& result)
+void save_result(FaceResult& result)
 {
     std::cout << result.name << std::endl;
     std::string filename = result.name;
     result.fd.saveObj(filename.substr(0,filename.size()-4) + ".obj");
     cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result.seg);
     write_pts(filename.substr(0,filename.size()-4) + ".pts", result.p2d);
-    auto r = renderer_.renderer_["F2F"];
+    auto r = session.renderer_.renderer_["F2F"];
     auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
     std::vector<cv::Mat_<cv::Vec4f>> outs;
     f2f_r->param_.tex_mode = 1;
@@ -513,10 +557,10 @@ void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-    pp_param_->update_land_ = true;
-    pp_param_->update_seg_ = true;
-    p2d_param_->run_ = true;
-    f2f_param_->run_ = true;
+    session.pp_param_->update_land_ = true;
+    session.pp_param_->update_seg_ = true;
+    session.p2d_param_->run_ = true;
+    session.f2f_param_->run_ = true;
     
     session.capture_thread = std::thread([&](){ session.capture_module_->Process(); });
     if(FLAGS_mode.find("opt") != std::string::npos)
@@ -526,10 +570,10 @@ void GUI::loop()
     // this makes sure result has some value
     while(!session.result_queue_->front())
         ;
-    result_ = *session.result_queue_->front();
+    session.result_ = *session.result_queue_->front();
     session.result_queue_->pop();
-    result_.fd.updateAll();
-    save_result(result_);
+    session.result_.fd.updateAll();
+    save_result(session.result_);
     
     // update lookat
     {
@@ -537,76 +581,74 @@ void GUI::loop()
         lookat = Eigen::ApplyTransform(session.result_queue_->front()->fd.RT,c);
     }
 
-    while(!glfwWindowShouldClose(renderer_.windows_[MAIN]))
+    while(!glfwWindowShouldClose(session.windows_[MAIN]))
     {
         if(session.result_queue_->front()){
-            std::lock_guard<std::mutex> lock(result_mutex_);
+            std::lock_guard<std::mutex> lock(session.result_mutex_);
             auto& result = *session.result_queue_->front();
             
             if(result.processed_){
-                result_ = result;
-                oriRT = result_.camera.extrinsic_;
+                session.result_ = result;
+                oriRT = session.result_.camera.extrinsic_;
             }
             else{
-                result_.p2d = result.p2d;
-                result_.seg = result.seg;
-                result_.img = result.img;
+                session.result_.p2d = result.p2d;
+                session.result_.seg = result.seg;
+                session.result_.img = result.img;
             }
 
             session.result_queue_->pop();
-            result_.fd.updateAll();
+            session.result_.fd.updateAll();
             
-            if(result.processed_){
-                if(result.frame_id == 0){
+            if(session.result.processed_){
+                if(session.result.frame_id == 0){
                     if(FLAGS_close_after_opt)
                         break;
-                    pp_param_->update_land_ = false;
-                    pp_param_->update_seg_ = false;
-                    p2d_param_->run_ = false;
-                    f2f_param_->run_ = false;
+                    session.pp_param_->update_land_ = false;
+                    session.pp_param_->update_seg_ = false;
+                    session.p2d_param_->run_ = false;
+                    session.f2f_param_->run_ = false;
                     session.capture_control_queue_->push("pause");
                 }
-                save_result(result_);
+                save_result(session.result_);
             }
         }
         
         char title[256];
         sprintf(title, "Main Window [fps: %.1f]", fps_.count());
-        glfwSetWindowTitle(renderer_.get_window(MAIN), title);
+        glfwSetWindowTitle(session.windows_[MAIN], title);
 
         clearBuffer(COLOR::COLOR_GREY);
         int w, h;
-        glfwGetFramebufferSize(renderer_.get_window(MAIN), &w, &h);
+        glfwGetFramebufferSize(session.windows_[MAIN], &w, &h);
         glViewport(0, 0, w, h);
         
-        renderer_.draw(result_);
+        session.renderer_.draw(session.result_);
         
 #ifdef WITH_IMGUI
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
             if(FLAGS_mode.find("opt") != std::string::npos){
-                pp_param_->updateIMGUI();
-                p2d_param_->updateIMGUI();
-                f2f_param_->updateIMGUI();
+                session.pp_param_->updateIMGUI();
+                session.p2d_param_->updateIMGUI();
+                session.f2f_param_->updateIMGUI();
             }
-            renderer_.updateIMGUI();
-            result_.camera.updateIMGUI();
-            result_.fd.updateIMGUI();
+            session.renderer_.updateIMGUI();
+            session.result_.camera.updateIMGUI();
+            session.result_.fd.updateIMGUI();
             
             ImGui::End();
             ImGui::Render();
         }
 #endif        
-        renderer_.flush();
-
-
+        session.windows_[MAIN].flush();
         
         if(FLAGS_fd_record){
             cv::Mat img;
-            renderer_.screenshot(img);
-            cv::imwrite(std::to_string(result_.frame_id) + ".png", img);
-            if(result_.frame_id == FLAGS_fd_end_id) break;
+            screenshot(img,session.windows_[MAIN]);
+            cv::imwrite(std::to_string(session.result_.frame_id) + ".png", img);
+            if(session.result_.frame_id == FLAGS_fd_end_id) break;
         }
         
         glDeleteSync(tsync);

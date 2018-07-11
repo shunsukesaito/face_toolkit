@@ -16,6 +16,8 @@
 #include <f2f/f2f_optimizer.h>
 #include <optimizer/face_result.h>
 
+#include <param_stream.h>
+
 #include "module.h"
 #include "capture_module.h"
 
@@ -100,6 +102,14 @@ public:
               FaceModelPtr face_model,
               const std::vector<std::string>& flist = std::vector<std::string>());
     
+    void init(std::string data_dir,
+              FaceModelPtr face_model,
+              const std::string& ip,
+              int port,
+              const std::vector<std::pair<std::string, int>>& dof,
+              int input_img_size,
+              bool sendImage);
+    
     void update(FaceResult& result);
     
     // does module specific work
@@ -144,7 +154,18 @@ public:
                                CmdQueueHandle command_queue,
                                const std::string &root_dir,
                                const std::string &list_file);
-    
+  
+    // construct a default module
+    static ModuleHandle Create(const std::string &name,
+                               const std::string &data_dir,
+                               FaceModelPtr face_model,
+                               CapQueueHandle input_frame_queue,
+                               FaceQueueHandle output_result_queue,
+                               CmdQueueHandle command_queue,
+                               const std::string& ip, int port,
+                               const std::vector<std::pair<std::string, int>>& dof,
+                               int input_img_size,
+                               bool sendImage=false);
 private:
     std::string data_dir_;
     
@@ -156,6 +177,9 @@ private:
     FaceData fd_;
     
     std::vector<std::string> flist_;
+    
+    std::shared_ptr<ParamTCPStream> param_tcp_ = NULL;
+    bool send_image_ = false;
     
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;

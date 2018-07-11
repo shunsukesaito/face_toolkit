@@ -47,7 +47,7 @@ struct FaceData
     Eigen::VectorXf exCoeff;
     Eigen::VectorXf alCoeff;
     
-    float scale = 1.0f;
+//    float scale = 1.0f;
     
     Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
     Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);

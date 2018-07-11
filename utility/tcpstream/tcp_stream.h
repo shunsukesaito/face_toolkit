@@ -40,12 +40,18 @@ struct LandmarkFrame : public Frame {
     std::vector<Eigen::Vector3f> lands;
 };
 
+struct ParamFrame : public Frame {
+    std::vector<float> param;
+    std::vector<std::pair<std::string, int>> dof;
+};
+
 struct ImageFrame : public Frame {
     cv::Mat image;
 };
 
 typedef std::shared_ptr<Frame> FramePtr;
 typedef std::shared_ptr<ImageFrame> ImageFramePtr;
+typedef std::shared_ptr<ParamFrame> ParamFramePtr;
 typedef std::shared_ptr<LandmarkFrame> LandmarkFramePtr;
 
 struct TCPStreamSync {
