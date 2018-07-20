@@ -53,20 +53,6 @@ void compute_rigid_motion(const Eigen::Matrix4f &intrinsic,
 						  const std::vector<Eigen::Vector3f> &q2d,
                           Eigen::Matrix4f& extrinsic);
 
-void P2DGaussNewton(FaceData& fd,
-                    Camera& camera,
-                    const std::vector<P2P2DC>& CP2P,
-                    std::vector<P2L2DC>& CP2L,
-                    const std::vector<Eigen::Vector3f>& q2V,
-                    const P2DFitParams& params = P2DFitParams());
-
-void P2DGaussNewton(std::vector<FaceData>& fd,
-                    Camera& camera,
-                    const std::vector<P2P2DC>& CP2P,
-                    std::vector<P2L2DC>& CP2L,
-                    const std::vector<std::vector<Eigen::Vector3f>>& q2V,
-                    const P2DFitParams& params = P2DFitParams());
-
 void P2DGaussNewton(std::vector<FaceData>& fd,
                     std::vector<Camera>& cameras,
                     const MFMVCaptureData& data,

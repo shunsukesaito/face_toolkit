@@ -59,27 +59,6 @@ typedef std::shared_ptr<F2FParams> F2FParamsPtr;
 
 // renderTarget contains 
 // positions,normals,colors,vIndices,vBarycentric,texCoords
-void F2FGaussNewton(FaceData& fd,
-                    Camera& camera,
-                    F2FRenderer& renderer,
-                    const cv::Mat_<cv::Vec4f>& inputRGB,
-                    const std::vector<P2P2DC>& C_P2P,
-                    std::vector<P2L2DC>& C_P2L,
-                    const std::vector<Eigen::Vector3f>& q2V,
-                    unsigned int level,
-                    const F2FParams& params,
-                    std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
-
-void F2FHierarchicalGaussNewton(FaceData& fd,
-                                Camera& camera,
-                                F2FRenderer& renderer,
-                                const cv::Mat_<cv::Vec4f>& inputRGB,
-                                const std::vector<P2P2DC>& C_P2P,
-                                std::vector<P2L2DC>& C_P2L,
-                                const std::vector<Eigen::Vector3f>& q2V,
-                                const F2FParams& params,
-                                std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
-
 void F2FGaussNewton(std::vector<FaceData>& fd,
                     std::vector<Camera>& cameras,
                     F2FRenderer& renderer,

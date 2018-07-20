@@ -355,105 +355,6 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
 // positions,normals,colors,vIndices,vBarycentric,texCoords
 // compute jacobian for color consistency term
 // | renderTarget(i,j)(x) - inputRGB(i,j) |
-void F2FGaussNewton(FaceData& fd,
-                    Camera& camera,
-                    F2FRenderer& renderer,
-                    const cv::Mat_<cv::Vec4f>& inputRGB,
-                    const std::vector<P2P2DC>& CP2P,
-                    std::vector<P2L2DC>& CP2L,
-                    const std::vector<Eigen::Vector3f>& q2V,
-                    unsigned int level,
-                    const F2FParams& params,
-                    std::shared_ptr<spdlog::logger> logger)
-{
-    MTR_SCOPE("GaussNewton", "GaussNewtonMultiView");    
-    const DOF& dof = params.dof;
-    const int n_vert = fd.pts_.size()/3;
-    
-    Eigen::VectorXf X(dof.all());
-    Eigen::VectorXf dX(dof.all());
-    Eigen::Vector6f rtf, rtc;
-    cv::Mat dIx, dIy;
-
-    F2FData data(n_vert, dof);
-    Eigen::MatrixXf JtJ = Eigen::MatrixXf::Zero(dof.all(), dof.all());
-    Eigen::VectorXf Jtr = Eigen::VectorXf::Zero(dof.all());
-    
-    clock_t tm0, tm1;
-    tm0 = clock();
-    
-    // compute image gradient
-    if (params.verbose_)
-        logger->info("	Computing Image Gradient...");
-
-    MTR_BEGIN("GaussNewton", "cv::Scharr");
-    cv::Mat tmp;
-    cv::cvtColor(inputRGB, tmp, CV_BGRA2BGR);
-    cv::Scharr(tmp, dIx, CV_32F, 1, 0);
-    cv::Scharr(tmp, dIy, CV_32F, 0, 1);
-    MTR_END("GaussNewton", "cv::Scharr");
-    
-    tm1 = clock(); if (params.verbose_) logger->info(" img grad: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-    
-    tm1 = clock(); if (params.verbose_) logger->info(" setFaceVec: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-    
-    if (params.verbose_)
-        logger->info("	First Color Evaluation + Contour Line Search...");
-    
-    tm1 = clock(); if (params.verbose_)logger->info(" renderFace: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-    
-    Eigen::Ref<Eigen::VectorXf> Xf = X.segment(0,dof.face());
-    Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.face(),dof.camera());
-    setFaceVector(Xf, rtf, fd, dof);
-    setCameraVector(Xc, rtc, camera, dof);
-    
-    tm1 = clock(); if (params.verbose_) logger->info(" data/cucg init: ", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-    
-    float err_cur, err_prev = 1.e10;
-    for (int i = 0; i < params.maxIter_[level]; ++i)
-    {
-        JtJ.setZero();
-        Jtr.setZero();
-        
-        ErrF2F err;
-        
-        // render face
-        if (params.verbose_) logger->info("	Computing Vert-wise Normal and its Gradient...");;
-        
-        if (params.w_pix_ != 0.f)
-            computeVertexWiseGradNormal(data.nV, data.dnV, fd, dof);
-        
-        computeF2FJacobian(Jtr, JtJ, data, renderer, fd, camera, rtf, rtc, inputRGB, dIx, dIy, q2V, CP2P, CP2L, params, err, logger);
-        
-        tm1 = clock(); if (params.verbose_) logger->info(" t5: {}", (float)(tm1 - tm0) / (float)CLOCKS_PER_SEC); tm0 = tm1;
-        
-        computeRegularizerJacobian(Jtr, JtJ, X, fd, params, 0, dof.AL, dof.ftinv(), err, logger);
-
-        // update x
-        if (params.verbose_) logger->info("	Solving Gauss-Newton Step...");
-        
-        dX = JtJ.ldlt().solve(Jtr);
-        X -= dX;
-        
-        if (params.verbose_) logger->info("	Updating Face...");
-        
-        loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
-        loadCameraVector(X.segment(dof.face(), dof.camera()), rtc, camera, dof);
-
-        fd.updateAll();
-        
-        if (params.verbose_) logger->info("	Error Evaluation...");
-        
-        std::cout << "iter " << i << " " << err << " |dX|:" << dX.norm() << std::endl;
-        
-        err_cur = err.total();
-        //logger->info("iter: {} E = {} (Eprev-Ecur) = {} |dX| = {} ", i, ErrCur, ErrPrev - ErrCur, dX.norm());
-        
-        if (dX.norm() < params.gn_thresh_ || err_cur > err_prev) break;
-        err_prev = err_cur;
-    }
-}
-
 void F2FGaussNewton(std::vector<FaceData>& fd,
                     std::vector<Camera>& cameras,
                     F2FRenderer& renderer,
@@ -464,6 +365,7 @@ void F2FGaussNewton(std::vector<FaceData>& fd,
                     const F2FParams& params,
                     std::shared_ptr<spdlog::logger> logger)
 {
+    std::cout << "Start Optimizing at level " << level << std::endl;
     MTR_SCOPE("GaussNewton", "GaussNewtonMultiView");
     assert(fd.size() == data.frames_.size());
     const DOF& dof = params.dof;
@@ -599,49 +501,15 @@ void F2FGaussNewton(std::vector<FaceData>& fd,
 
         if (params.verbose_){
             std::stringstream ss;
-            ss << i << "thItr " << err << " |dX|:" << dX.norm();
+            ss << i << " iter " << err << " |dX|:" << dX.norm();
             logger->info(ss.str());
         }
         else
-            std::cout << i << "thItr " << err << " |dX|:" << dX.norm() << std::endl;
+            std::cout << i << " iter " << err << " |dX|:" << dX.norm() << std::endl;
         
         err_cur = err.total();
         if (dX.norm() < params.gn_thresh_ || err_cur > err_prev) break;
         err_prev = err_cur;
-    }
-}
-
-void F2FHierarchicalGaussNewton(FaceData& fd,
-                                Camera& camera,
-                                F2FRenderer& renderer,
-                                const cv::Mat_<cv::Vec4f>& inputRGB,
-                                const std::vector<P2P2DC>& C_P2P,
-                                std::vector<P2L2DC>& C_P2L,
-                                const std::vector<Eigen::Vector3f>& q2V,
-                                const F2FParams& params,
-                                std::shared_ptr<spdlog::logger> logger )
-{
-    MTR_SCOPE("GaussNewton", "HierarchicalGaussNewtonMultiView");
-    if (params.maxIter_.size() == 0) return;
-    
-    const int hieLev = params.maxIter_.size();
-    // build image hierarchy 
-    std::vector< cv::Mat_<cv::Vec4f> > inputHieRGB(hieLev);
-    
-    MTR_BEGIN("GaussNewton", "cv::GaussianBlur");
-    inputHieRGB[0] = inputRGB.clone();
-    cv::GaussianBlur(inputHieRGB[0], inputHieRGB[0], cv::Size(params.smoothLev_ * 2 + 1, params.smoothLev_ * 2 + 1), 0.0f);
-    
-    MTR_END("GaussNewton", "cv::GaussianBlur");
-    MTR_BEGIN("GaussNewton", "cv::pyrDown");
-    for (int i = 1; i < hieLev; ++i)
-    {
-        cv::pyrDown(inputHieRGB[i - 1], inputHieRGB[i]);
-    }
-    MTR_END("GaussNewton", "cv::pyrDown");
-    for (int i = hieLev - 1; i >= 0; --i)
-    {
-        F2FGaussNewton(fd, camera, renderer, inputHieRGB[i], C_P2P, C_P2L, q2V, i, params, logger);
     }
 }
 
