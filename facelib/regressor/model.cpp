@@ -254,6 +254,7 @@ bool Model::train(std::string file_path,
         // TODO: update 2d projection
 
         regressors_[i].setStage(i);
+        
         // NOTE: another trick I found is rescaling residual in every stage of regression actually does harm the performance.
         if(i != 0) regressors_[i].setMeanStddev(regressors_[0].means_, regressors_[0].SDs_);
         regressors_[i].train(augmented_data, mean_p2d, params.tri);

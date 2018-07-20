@@ -47,8 +47,8 @@ DEFINE_string(facemodel, "pin", "FaceModel to use");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
-DEFINE_int32(fd_begin_id, 0, "FaceData start frame id");
-DEFINE_int32(fd_end_id, 0, "FaceData end frame id");
+DEFINE_int32(fd_begin_id, -1, "FaceData start frame id");
+DEFINE_int32(fd_end_id, -1, "FaceData end frame id");
 
 DEFINE_string(fd_ip, "127.0.0.1", "IP for face parameters");
 DEFINE_int32(fd_port, 19820, "port number for face parameters");
@@ -173,12 +173,12 @@ void GUI::resize(int w, int h)
 
 void GUI::keyboard(int key, int s, int a, int m)
 {
-    Camera& cam = session.result_.camera;
+    Camera& cam = session.result_.cameras[cam_id_];
     Eigen::Matrix4f& RT = cam.extrinsic_;
     
     if(key == GLFW_KEY_F1 && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(session.result_mutex_);
-        session.result_.fd.saveObj("cur_mesh.obj");
+        session.result_.fd[0].saveObj("cur_mesh.obj");
     }
     if(key == GLFW_KEY_F2 && a == GLFW_PRESS){
         cv::Mat img;
@@ -192,16 +192,16 @@ void GUI::keyboard(int key, int s, int a, int m)
     }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(session.result_mutex_);
-        lookat = Eigen::ApplyTransform(session.result_.fd.RT, getCenter(session.result_.fd.pts_));
+        lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT, getCenter(session.result_.fd[frame_id_].pts_));
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
     if(key == GLFW_KEY_R && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(session.result_mutex_);
-        session.result_.camera.extrinsic_ = oriRT;
+        session.result_.cameras[cam_id_].extrinsic_ = oriRT;
     }
     if(key == GLFW_KEY_I && a == GLFW_PRESS){
-        session.result_.fd.init();
+        session.result_.fd[frame_id_].init();
     }
     if(key == GLFW_KEY_SPACE && a == GLFW_PRESS){
         if(!pause_)
@@ -229,7 +229,7 @@ void GUI::mouseMotion(double x, double y)
     current_mouse_x = x;
     current_mouse_y = y;
     
-    Camera& cam = session.result_.camera;
+    Camera& cam = session.result_.cameras[frame_id_];
     
     switch (mouse_mode)
     {
@@ -292,7 +292,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 {
     down_mouse_x = current_mouse_x;
     down_mouse_y = current_mouse_y;
-    curRT = session.result_.camera.extrinsic_.inverse();
+    curRT = session.result_.cameras[frame_id_].extrinsic_.inverse();
     up = curRT.block<3,3>(0,0).inverse()*Eigen::Vector3f(0,1,0);
     right = (curRT.block<3,1>(0,3)-lookat).cross(up).normalized();
     
@@ -315,7 +315,7 @@ void GUI::mouseDown(MouseButton mb, int m)
 
 void GUI::mouseUp(MouseButton mb, int m)
 {
-    Camera& cam = session.result_.camera;
+    Camera& cam = session.result_.cameras[frame_id_];
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
     
     if(mb == MouseButton::Right)
@@ -325,7 +325,7 @@ void GUI::mouseUp(MouseButton mb, int m)
 
 void GUI::mouseScroll(double x, double y)
 {
-    Camera& cam = session.result_.camera;
+    Camera& cam = session.result_.cameras[frame_id_];
     Eigen::Matrix4f RT = cam.extrinsic_.inverse();
 
     float scale = 0.01;
@@ -440,11 +440,23 @@ void GUI::init(int w, int h)
     int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
-    if(FLAGS_mode.find("preview") != std::string::npos)
+    if(FLAGS_mode == "preview")
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
-    else if(FLAGS_mode.find("tcp") != std::string::npos){
+    else if(FLAGS_mode == "preview_vgpt"){
+        std::vector<std::pair<std::string, int>> dof;
+        dof.push_back(std::pair<std::string,int>("id",FLAGS_fd_dof_id));
+        dof.push_back(std::pair<std::string,int>("ex",FLAGS_fd_dof_ex));
+        dof.push_back(std::pair<std::string,int>("al",FLAGS_fd_dof_al));
+        dof.push_back(std::pair<std::string,int>("rf",FLAGS_fd_dof_rf));
+        dof.push_back(std::pair<std::string,int>("tf",FLAGS_fd_dof_tf));
+        dof.push_back(std::pair<std::string,int>("sh",FLAGS_fd_dof_sh));
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_, dof,
+                                                         FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
+    }
+    else if(FLAGS_mode == "tcp"){
         std::vector<std::pair<std::string, int>> dof;
         dof.push_back(std::pair<std::string,int>("id",FLAGS_fd_dof_id));
         dof.push_back(std::pair<std::string,int>("ex",FLAGS_fd_dof_ex));
@@ -455,7 +467,8 @@ void GUI::init(int w, int h)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_ip, FLAGS_fd_port,dof,256,false);
-    }else{
+    }
+    else if(FLAGS_mode == "opt"){
         auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
 
         session.preprocess_module_ = PreprocessModule::Create("face", session.pp_param_, face_detector, session.capture_queue_,
@@ -494,8 +507,8 @@ void GUI::loop()
         ;
     // update lookat
     session.result_ = *session.result_queue_->front();
-    lookat = Eigen::ApplyTransform(session.result_.fd.RT,getCenter(session.result_.fd.pts_));
-
+    lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT,getCenter(session.result_.fd[frame_id_].pts_));
+    
     while(!glfwWindowShouldClose(session.windows_[MAIN]))
     {
         if(session.result_queue_->front()){
@@ -503,17 +516,17 @@ void GUI::loop()
             auto& result = *session.result_queue_->front();
             
             if(result.processed_){
+                session.result_.processed_ = true;
                 session.result_ = result;
-                oriRT = session.result_.camera.extrinsic_;
+                oriRT = session.result_.cameras[cam_id_].extrinsic_;
             }
             else{
-                session.result_.p2d = result.p2d;
-                session.result_.seg = result.seg;
-                session.result_.img = result.img;
+                session.result_.cap_data = result.cap_data;
+                session.result_.processed_ = false;
             }
 
             session.result_queue_->pop();
-            session.result_.fd.updateAll();
+            session.result_.fd[frame_id_].updateAll();
         }
         
         char title[256];
@@ -525,7 +538,7 @@ void GUI::loop()
         glfwGetFramebufferSize(session.windows_[MAIN], &w, &h);
         glViewport(0, 0, w, h);
         
-        session.renderer_.draw(session.result_);
+        session.renderer_.draw(session.result_,cam_id_,frame_id_);
         
 #ifdef WITH_IMGUI
         if(!FLAGS_no_imgui){
@@ -537,8 +550,8 @@ void GUI::loop()
                 session.f2f_param_->updateIMGUI();
             }
             session.renderer_.updateIMGUI();
-            session.result_.camera.updateIMGUI();
-            session.result_.fd.updateIMGUI();
+            session.result_.cameras[cam_id_].updateIMGUI();
+            session.result_.fd[frame_id_].updateIMGUI();
             
             ImGui::End();
             ImGui::Render();
@@ -546,12 +559,12 @@ void GUI::loop()
 #endif        
         session.windows_[MAIN].flush();
         
-        if(FLAGS_fd_record){
+        if(FLAGS_fd_record && session.result_.processed_){
             cv::Mat img;
             screenshot(img, session.windows_[MAIN]);
             cv::imwrite(std::to_string(session.result_.frame_id) + ".png", img);
-            if(session.result_.frame_id == FLAGS_fd_end_id) break;
         }
+        if(session.result_.frame_id == FLAGS_fd_end_id) break;
         
         glDeleteSync(tsync);
         tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

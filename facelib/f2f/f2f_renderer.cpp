@@ -289,6 +289,8 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     auto& prog_depth = programs_["depth"];
     auto& prog_pl = programs_["plane"];
     
+    if(camera.weakPersp_)
+        param_.enable_cull = false;
     param_.update(prog_f2f);
     
     prog_pl.setUniformData("u_alpha", param_.alpha);
@@ -407,15 +409,15 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
 }
 
 #ifdef FACE_TOOLKIT
-void F2FRenderer::render(const FaceResult& result)
+void F2FRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(!result.seg.empty())
-        updateSegment(result.seg);
+    if(!result.cap_data[frame_id][cam_id].seg_.empty())
+        updateSegment(result.cap_data[frame_id][cam_id].seg_);
     if(param_.enable_tex)
-        programs_["f2f"].updateTexture("u_sample_texture", result.img);
+        programs_["f2f"].updateTexture("u_sample_texture", result.cap_data[frame_id][cam_id].img_);
     
     if(show_)
-        render(result.camera, result.fd);
+        render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 

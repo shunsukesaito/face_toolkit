@@ -58,7 +58,7 @@ struct LSGeoRenderer : public BaseRenderer
                 const FaceData& fd);
     
 #ifdef FACE_TOOLKIT
-    virtual void render(const FaceResult& result);
+    virtual void render(const FaceResult& result, int cam_id, int frame_id);
 #endif
     
 #ifdef WITH_IMGUI

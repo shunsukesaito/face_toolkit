@@ -60,10 +60,10 @@ void BGRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
     init(shader_dir);
 }
 
-void BGRenderer::render(const FaceResult& result)
+void BGRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.img);
+        render(result.cap_data[frame_id][cam_id].img_);
 }
 #endif
 

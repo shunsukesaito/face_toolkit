@@ -96,9 +96,9 @@ void PreprocessModule::update(CaptureResult& result)
             rect_ = GetBBoxFromLandmarks(result.p2d);
         }
         p2d_ = result.p2d;
-        cv::Mat tmp;
-        crop_image(result.img, tmp, rect_);
-        cv::imwrite("rect.png", tmp);
+//        cv::Mat tmp;
+//        crop_image(result.img, tmp, rect_);
+//        cv::imwrite("rect.png", tmp);
         if(param_->onetime_land_) param_->onetime_land_ = false;
     }
     else{

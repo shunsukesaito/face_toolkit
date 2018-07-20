@@ -176,11 +176,10 @@ void PosMapRenderer::render(int w, int h, const FaceData& fd, std::vector<cv::Ma
 }
 
 #ifdef FACE_TOOLKIT
-void PosMapRenderer::render(const FaceResult& result)
+void PosMapRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera, result.fd);
-        //render(result.fd);
+        render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 
@@ -285,10 +284,10 @@ void PosMapReconRenderer::render(const Camera& camera, const FaceData& fd)
 
 
 #ifdef FACE_TOOLKIT
-void PosMapReconRenderer::render(const FaceResult& result)
+void PosMapReconRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera, result.fd);
+        render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 

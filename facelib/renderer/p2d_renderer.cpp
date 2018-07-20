@@ -48,10 +48,10 @@ void P2DRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
     init(shader_dir);
 }
 
-void P2DRenderer::render(const FaceResult& result)
+void P2DRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera.width_, result.camera.height_, result.p2d);
+        render(result.cameras[cam_id].width_, result.cameras[cam_id].height_, result.cap_data[frame_id][cam_id].q2V_);
 }
 #endif
 

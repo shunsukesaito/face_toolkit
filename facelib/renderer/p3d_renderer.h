@@ -28,7 +28,7 @@ struct P3DRenderer : public BaseRenderer
     
 #ifdef FACE_TOOLKIT
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);
-    virtual void render(const FaceResult& result);
+    virtual void render(const FaceResult& result, int cam_id, int frame_id);
 #endif
     
 #ifdef WITH_IMGUI

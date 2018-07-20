@@ -136,10 +136,10 @@ void MeshRenderer::init(std::string data_dir, std::string shader_dir, FaceModelP
     init(shader_dir,fm->tri_pts_);
 }
 
-void MeshRenderer::render(const FaceResult& result)
+void MeshRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera, result.fd.getRT(), result.fd.pts_, result.fd.nml_);
+        render(result.cameras[cam_id], result.fd[frame_id].getRT(), result.fd[frame_id].pts_, result.fd[frame_id].nml_);
 }
 #endif
 

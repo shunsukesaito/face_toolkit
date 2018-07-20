@@ -245,10 +245,10 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
 }
 
 #ifdef FACE_TOOLKIT
-void IBLRenderer::render(const FaceResult& result)
+void IBLRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera, result.fd, show_sphere_);
+        render(result.cameras[cam_id], result.fd[frame_id], show_sphere_);
 }
 #endif
 

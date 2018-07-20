@@ -35,7 +35,7 @@ struct FaceRenderer {
     void init(FaceModelPtr fm, std::string data_dir = "./");
     void addRenderer(std::string name, RendererHandle renderer);
     
-    void draw(const FaceResult& result);
+    void draw(const FaceResult& result, int cam_id = 0, int frame_id = 0);
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

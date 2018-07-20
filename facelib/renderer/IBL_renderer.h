@@ -53,7 +53,7 @@ struct IBLRenderer : public BaseRenderer
                 bool draw_sphere = false);
     
 #ifdef FACE_TOOLKIT
-    virtual void render(const FaceResult& result);
+    virtual void render(const FaceResult& result, int cam_id, int frame_id);
 #endif
     
 #ifdef WITH_IMGUI

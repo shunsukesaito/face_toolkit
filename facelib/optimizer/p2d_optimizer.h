@@ -5,6 +5,7 @@
 #include <shape_model/face_model.h>
 
 #include "face_gradient.h"
+#include "face_result.h"
 
 #ifdef WITH_IMGUI
 #include <imgui.h>
@@ -64,4 +65,11 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
                     const std::vector<P2P2DC>& CP2P,
                     std::vector<P2L2DC>& CP2L,
                     const std::vector<std::vector<Eigen::Vector3f>>& q2V,
+                    const P2DFitParams& params = P2DFitParams());
+
+void P2DGaussNewton(std::vector<FaceData>& fd,
+                    std::vector<Camera>& cameras,
+                    const MFMVCaptureData& data,
+                    const std::vector<P2P2DC>& CP2P,
+                    std::vector<P2L2DC>& CP2L,
                     const P2DFitParams& params = P2DFitParams());

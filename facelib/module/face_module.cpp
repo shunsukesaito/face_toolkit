@@ -41,14 +41,15 @@ void FaceOptModule::Process()
     {
         if(input_frame_queue_->front()){
             FaceResult result;
-            result.img = input_frame_queue_->front()->img;
-            result.camera = input_frame_queue_->front()->camera;
-            result.p2d = input_frame_queue_->front()->p2d;
-            result.seg = input_frame_queue_->front()->seg;
+            // TODO: make it general so that we can take multi-view/multi-frame input
+            result.cameras[0] = input_frame_queue_->front()->camera;
+            result.cap_data[0][0].img_ = input_frame_queue_->front()->img;
+            result.cap_data[0][0].q2V_ = input_frame_queue_->front()->p2d;
+            result.cap_data[0][0].seg_ = input_frame_queue_->front()->seg;
             result.name = input_frame_queue_->front()->name;
             result.frame_id = input_frame_queue_->front()->frame_id;
 
-            if(result.img.empty()){
+            if(result.cap_data[0][0].img_.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
                 continue;
@@ -91,7 +92,7 @@ void FaceOptModule::init(std::string data_dir,
     f2f_param_->dof.EX = std::min(f2f_param_->dof.EX, face_model->n_exp());
     f2f_param_->dof.AL = std::min(f2f_param_->dof.AL, face_model->n_clr());
     
-    fd_.setFaceModel(face_model_);
+    fd_[0].setFaceModel(face_model_);
 
     P2P2DC::parseConstraints(data_dir + "p2p_const_" + face_model->fm_type_ + ".txt", c_p2p_);
     P2L2DC::parseConstraints(data_dir + "p2l_const_" + face_model->fm_type_ + ".txt", c_p2l_);
@@ -102,86 +103,49 @@ void FaceOptModule::init(std::string data_dir,
 
 void FaceOptModule::update(FaceResult& result)
 {
-    if(p2d_param_->run_ || p2d_param_->onetime_run_){
-        if(std::isnan(fd_.idCoeff.sum()) ||
-           std::isnan(fd_.exCoeff.sum()) ||
-           std::isnan(fd_.alCoeff.sum()) ||
-           std::isnan(fd_.RT.sum()) ||
-           std::isnan(fd_.SH.sum())){
+    for(int i = 0; i < fd_.size(); ++i)
+    {
+        if(std::isnan(fd_[i].idCoeff.sum()) ||
+           std::isnan(fd_[i].exCoeff.sum()) ||
+           std::isnan(fd_[i].alCoeff.sum()) ||
+           std::isnan(fd_[i].RT.sum()) ||
+           std::isnan(fd_[i].SH.sum())){
             std::cout << "Warning: face gets nan..." << std::endl;
-            fd_.init();
+            fd_[i].init();
         }
+        
         // update contour
-        fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
-        for(int i = 0; i < fd_.cont_idx_.size(); ++i)
+        // TODO: support multu-view contour update
+        fd_[i].updateContour(result.cameras[0].intrinsic_, result.cameras[0].extrinsic_);
+        for(int j = 0; j < fd_[i].cont_idx_.size(); ++j)
         {
-            c_p2l_[i].v_idx = fd_.cont_idx_[i];
+            c_p2l_[j].v_idx = fd_[i].cont_idx_[j];
         }
+    }
+
+    if(p2d_param_->run_ || p2d_param_->onetime_run_){
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         P2DFitParams opt_param = *p2d_param_;
-        if(result.p2d.size() != 0){
-            P2DGaussNewton(fd_, result.camera, c_p2p_, c_p2l_, result.p2d, opt_param);
-            result.processed_ = true;
-        }
+        
+        P2DGaussNewton(fd_, result.cameras, result.cap_data, c_p2p_, c_p2l_, opt_param);
+        result.processed_ = true;
         if(p2d_param_->onetime_run_) p2d_param_->onetime_run_ = false;
     }
     if(f2f_param_->run_ || f2f_param_->onetime_run_){
-        // update contour
-        fd_.updateContour(result.camera.intrinsic_, result.camera.extrinsic_);
-        for(int i = 0; i < fd_.cont_idx_.size(); ++i)
-        {
-            c_p2l_[i].v_idx = fd_.cont_idx_[i];
-        }
-        
         // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
         F2FParams opt_param = *f2f_param_;
 
         // update segmentation mask
-        if(!result.seg.empty())
-            f2f_renderer_.updateSegment(result.seg);
+        // TODO: support multi-view and multi-frame for segmentation update
+        if(!result.cap_data[0][0].seg_.empty())
+            f2f_renderer_.updateSegment(result.cap_data[0][0].seg_);
         
-        if(result.p2d.size() != 0){
-            cv::Mat_<cv::Vec4f> inputRGB;
-            cv::Mat tmp;
-            cv::cvtColor(result.img, tmp, CV_BGR2RGBA);
-            tmp.convertTo(inputRGB, CV_32F);
-            inputRGB *= 1.f / 255.f;
-            F2FHierarchicalGaussNewton(fd_, result.camera, f2f_renderer_, inputRGB, c_p2p_, c_p2l_, result.p2d, opt_param, logger_);
-            result.processed_ = true;
-        }
+        F2FHierarchicalGaussNewton(fd_, result.cameras, f2f_renderer_, result.cap_data, c_p2p_, c_p2l_, opt_param, logger_);
+        result.processed_ = true;
+        
         if(f2f_param_->onetime_run_) f2f_param_->onetime_run_ = false;
     }
-    {
-        cv::Mat tmp = result.img.clone();
-        DrawLandmarks(tmp, result.p2d);
-        cv::imwrite("land.png", tmp);
-    }
 
-    
-//    std::ifstream infile("/Users/shunsuke/Documents/contour_index.txt");
-//    std::string line;
-//    for(int i = 0; i < 17; ++i)
-//    {
-//        std::ofstream ofile("/Users/shunsuke/Documents/cont" + std::to_string(i) + ".txt");
-//        std::vector<int> tmp;
-//        // identity
-//        std::getline(infile, line);
-//        std::istringstream iss(line);
-//        int tmp_i;
-//        while (iss >> tmp_i)
-//        {
-//            ofile << face_model_->uvs_(tmp_i,0) << " " << 1.0-face_model_->uvs_(tmp_i,1) << std::endl;
-//        }
-//        ofile.close();
-//    }
-//    exit(0);
-    
-//    for(auto&& c : c_p2p_)
-//    {
-//        std::cout << face_model_->uvs_(c.v_idx,0) << " " << 1.0-face_model_->uvs_(c.v_idx,1) << std::endl;
-//    }
-//    std::cout << std::endl;
-    
     result.fd = fd_;
     result.c_p2p = c_p2p_;
     result.c_p2l = c_p2l_;
@@ -253,14 +217,15 @@ void FacePreviewModule::Process()
     {
         if(input_frame_queue_->front()){
             FaceResult result;
-            result.img = input_frame_queue_->front()->img;
-            result.camera = input_frame_queue_->front()->camera;
-            result.frame_id = input_frame_queue_->front()->frame_id;
-            result.p2d = input_frame_queue_->front()->p2d;
-            result.seg = input_frame_queue_->front()->seg;
+            // TODO: make it general so that we can take multi-view/multi-frame input
+            result.cameras[0] = input_frame_queue_->front()->camera;
+            result.cap_data[0][0].img_ = input_frame_queue_->front()->img;
+            result.cap_data[0][0].q2V_ = input_frame_queue_->front()->p2d;
+            result.cap_data[0][0].seg_ = input_frame_queue_->front()->seg;
             result.name = input_frame_queue_->front()->name;
+            result.frame_id = input_frame_queue_->front()->frame_id;
             
-            if(result.img.empty()){
+            if(result.cap_data[0][0].img_.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
                 continue;
@@ -291,7 +256,7 @@ void FacePreviewModule::init(std::string data_dir,
     
     flist_ = flist;
     face_model_ = face_model;
-    fd_.setFaceModel(face_model_);
+    fd_[0].setFaceModel(face_model_);
 }
 
 void FacePreviewModule::init(std::string data_dir,
@@ -306,7 +271,7 @@ void FacePreviewModule::init(std::string data_dir,
     
     flist_ = std::vector<std::string>();
     face_model_ = face_model;
-    fd_.setFaceModel(face_model_);
+    fd_[0].setFaceModel(face_model_);
     
     send_image_ = sendImage;
     
@@ -321,8 +286,22 @@ void FacePreviewModule::init(std::string data_dir,
 void FacePreviewModule::update(FaceResult& result)
 {
     result.fd = fd_;
-    if(flist_.size() != 0 && result.frame_id >= 0){
+    if(flist_.size() != 0 && result.frame_id >= 0 && dof_.empty()){
         result.loadFromTXT(flist_[result.frame_id%(int)flist_.size()]);
+        result.processed_ = true;
+    }
+    if(flist_.size() != 0 && result.frame_id >= 0 && !dof_.empty()){
+        std::ifstream infile(flist_[result.frame_id%(int)flist_.size()]);
+        if(!infile.is_open()){
+            std::cout << "Warning: failed parsing face data from " << flist_[result.frame_id%(int)flist_.size()] << std::endl;
+            return;
+        }
+        std::string line;
+        std::vector<float> tmp;
+        // identity
+        std::getline(infile, line);
+        tmp = string2arrayf(line);
+        result.loadFromVec(dof_, tmp);
         result.processed_ = true;
     }
     if(param_tcp_ != NULL){
@@ -380,6 +359,50 @@ ModuleHandle FacePreviewModule::Create(const std::string &name,
             throw std::runtime_error("Error: face parameters does not exist. ");
         }
         module->init(data_dir,face_model,file_list);
+    }
+    
+    module->set_input_queue(input_frame_queue);
+    module->set_output_queue(output_result_queue);
+    module->set_command_queue(command_queue);
+    
+    ModuleHandle handle(module);
+    ModuleRegistry::RegisterModule(handle);
+    return handle;
+}
+
+ModuleHandle FacePreviewModule::Create(const std::string &name,
+                                       const std::string &data_dir,
+                                       FaceModelPtr face_model,
+                                       CapQueueHandle input_frame_queue,
+                                       FaceQueueHandle output_result_queue,
+                                       CmdQueueHandle command_queue,
+                                       const std::vector<std::pair<std::string, int>>& dof,
+                                       const std::string &file_fmt,
+                                       int begin_frame,
+                                       int end_frame)
+{
+    auto module = new FacePreviewModule(name);
+    // add this module to the global registry
+    
+    if(file_fmt.empty()){
+        module->init(data_dir,face_model);
+    }
+    else{
+        char tmp[256];
+        std::vector<std::string> file_list;
+        for(int i = begin_frame; i <= end_frame; ++i)
+        {
+            sprintf(tmp, file_fmt.c_str(), i);
+            std::ifstream dummy(tmp);
+            if (dummy.good())
+                file_list.push_back(tmp);
+        }
+        if(file_list.size() == 0){
+            std::cout << "Error: face parameters does not exist. " << file_fmt << std::endl;
+            throw std::runtime_error("Error: face parameters does not exist. ");
+        }
+        module->init(data_dir,face_model,file_list);
+        module->dof_ = dof;
     }
     
     module->set_input_queue(input_frame_queue);

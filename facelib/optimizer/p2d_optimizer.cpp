@@ -327,7 +327,7 @@ void P2DGaussNewton(FaceData& fd,
         dX = JtJ.ldlt().solve(Jtr);
         X -= dX;
         
-        std::cout << "iter " << i << " " << err << "|dX|:" << dX.norm() << std::endl;
+        std::cout << i << "th iter " << err << "|dX|:" << dX.norm() << std::endl;
         
         loadFaceVector(X.segment(0,dof.face()), rtf, fd, dof);
         loadCameraVector(X.segment(dof.face(),dof.camera()), rtc, camera, dof);
@@ -347,7 +347,7 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
     assert(fd.size() == q2V.size());
     const DOF& dof = params.dof;
     const int n_frame = q2V.size();
-    const int dof_all = dof.tvar()*n_frame+dof.tinvar();
+    const int dof_all = dof.tvar()*n_frame+dof.tinv();
     
     std::vector<Eigen::Vector6f> rtf(n_frame);
     Eigen::Vector6f rtc;
@@ -355,13 +355,13 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
     Eigen::VectorXf dX(dof_all);
    
     {
-        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinvar());
+        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinv());
         setFaceVector(Xfinvar, rtf[0], fd[0], dof);
-        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinvar(),dof.camera());
+        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinv(),dof.camera());
         setCameraVector(Xc, rtc, camera, dof);
         for(int i = 0; i < n_frame; ++i)
         {
-            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinvar()+i*dof.tvar(),dof.tvar());
+            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinv()+i*dof.tvar(),dof.tvar());
             setFaceVector(Xf, rtf[i], fd[i], dof);
         }
     }
@@ -385,24 +385,24 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
             Jtre.setZero();
             
             computeP2DJacobian(Jtre, JtJe, fd[j], camera, rtf[j], rtc, q2V[j], CP2P, CP2L, params, err);
-            computeRegularizerJacobian(Jtre, JtJe, X, fd[j], params, 0, dof.tinvar()+j*dof.tvar(), err);
+            computeRegularizerJacobian(Jtre, JtJe, X, fd[j], params, 0, dof.tinv()+j*dof.tvar(), err);
 
             // block diagonal part
             JtJ.block(0,0,dof.ID,dof.ID) += JtJe.block(0,0,dof.ID,dof.ID);
             JtJ.block(dof.ID,dof.ID,dof.camera(),dof.camera()) += JtJe.block(dof.face(),dof.face(),dof.camera(),dof.camera());
-            JtJ.block(dof.tinvar(),dof.tinvar(),dof.tvar(),dof.tvar()) += JtJe.block(dof.ID,dof.ID,dof.tvar(),dof.tvar());
+            JtJ.block(dof.tinv()+j*dof.tvar(),dof.tinv()+j*dof.tvar(),dof.tvar(),dof.tvar()) += JtJe.block(dof.tinv(),dof.tinv(),dof.tvar(),dof.tvar());
             
             // off diagonal part
             JtJ.block(0,dof.ID,dof.ID,dof.camera()) += JtJe.block(0,dof.face(),dof.ID,dof.camera());
             JtJ.block(dof.ID,0,dof.camera(),dof.ID) += JtJe.block(dof.face(),0,dof.camera(),dof.ID);
-            JtJ.block(0,dof.tinvar()+j*dof.tvar(),dof.ID,dof.tvar()) += JtJe.block(0,dof.ID,dof.ID,dof.tvar());
-            JtJ.block(dof.tinvar()+j*dof.tvar(),0,dof.tvar(),dof.ID) += JtJe.block(dof.ID,0,dof.tvar(),dof.ID);
-            JtJ.block(dof.ID,dof.tinvar()+j*dof.tvar(),dof.camera(),dof.tvar()) += JtJe.block(dof.face(),dof.ID,dof.camera(),dof.tvar());
-            JtJ.block(dof.tinvar()+j*dof.tvar(),dof.ID,dof.tvar(),dof.camera()) += JtJe.block(dof.ID,dof.face(),dof.tvar(),dof.camera());
+            JtJ.block(0,dof.tinv()+j*dof.tvar(),dof.ID,dof.tvar()) += JtJe.block(0,dof.ID,dof.ID,dof.tvar());
+            JtJ.block(dof.tinv()+j*dof.tvar(),0,dof.tvar(),dof.ID) += JtJe.block(dof.ID,0,dof.tvar(),dof.ID);
+            JtJ.block(dof.ID,dof.tinv()+j*dof.tvar(),dof.camera(),dof.tvar()) += JtJe.block(dof.face(),dof.ID,dof.camera(),dof.tvar());
+            JtJ.block(dof.tinv()+j*dof.tvar(),dof.ID,dof.tvar(),dof.camera()) += JtJe.block(dof.ID,dof.face(),dof.tvar(),dof.camera());
             
             Jtr.segment(0, dof.ID) += Jtre.segment(0, dof.ID);
             Jtr.segment(dof.ID, dof.camera()) += Jtre.segment(dof.face(), dof.camera());
-            Jtr.segment(dof.tinvar()+j*dof.tvar(), dof.tvar()) += Jtre.segment(dof.ID, dof.tvar());
+            Jtr.segment(dof.tinv()+j*dof.tvar(), dof.tvar()) += Jtre.segment(dof.ID, dof.tvar());
         }
         
         for(int j = 0; j < Jtr.size(); ++j)
@@ -416,18 +416,125 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
         dX = ldlt.solve(Jtr);
         X -= dX;
         
-        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinvar());
+        Eigen::Ref<Eigen::VectorXf> Xfinvar = X.segment(0,dof.ftinv());
         loadFaceVector(Xfinvar, rtf[0], fd[0], dof);
-        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinvar(),dof.camera());
-        setCameraVector(Xc, rtc, camera, dof);
+        Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinv(),dof.camera());
+        loadCameraVector(Xc, rtc, camera, dof);
         for(int j = 0; j < n_frame; ++j)
         {
-            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinvar()+j*dof.tvar(),dof.tvar());
-            setFaceVector(Xf, rtf[j], fd[j], dof);
+            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof.tinv()+j*dof.tvar(),dof.tvar());
+            loadFaceVector(Xf, rtf[j], fd[j], dof);
         }
         
         std::cout << "iter " << i << " " << err << std::endl;
 
+        if (dX.norm() < params.gn_thresh_) break;
+    }
+}
+
+void P2DGaussNewton(std::vector<FaceData>& fd,
+                    std::vector<Camera>& cameras,
+                    const MFMVCaptureData& data,
+                    const std::vector<P2P2DC>& CP2P,
+                    std::vector<P2L2DC>& CP2L,
+                    const P2DFitParams& params)
+{
+    MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
+    assert(fd.size() == data.frames_.size());
+    const DOF& dof = params.dof;
+    const int n_frame = data.frames_.size();
+    const int n_camera = cameras.size();
+    const int dof_all = dof.tvar()*n_frame+dof.ftinv()+dof.camera()*n_camera;
+    const int dof_tinv = dof.ftinv()+dof.camera()*n_camera;
+    std::vector<Eigen::Vector6f> rtf(n_frame);
+    std::vector<Eigen::Vector6f> rtc(n_camera);
+    Eigen::VectorXf X(dof_all);
+    Eigen::VectorXf dX(dof_all);
+    
+    {
+        Eigen::Ref<Eigen::VectorXf> Xfinv = X.segment(0,dof.ftinv());
+        setFaceVector(Xfinv, rtf[0], fd[0], dof);
+        for(int i = 0; i < n_camera; ++i)
+        {
+            Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinv()+dof.camera()*i,dof.camera());
+            setCameraVector(Xc, rtc[i], cameras[i], dof);
+        }
+        for(int i = 0; i < n_frame; ++i)
+        {
+            Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof_tinv+i*dof.tvar(),dof.tvar());
+            setFaceVector(Xf, rtf[i], fd[i], dof);
+        }
+    }
+    
+    // ID, camera parameters, (EX, RT) * #frames
+    Eigen::MatrixXf JtJ = Eigen::MatrixXf::Zero(dof_all, dof_all);
+    Eigen::VectorXf Jtr = Eigen::VectorXf::Zero(dof_all);
+    
+    Eigen::MatrixXf JtJe = Eigen::MatrixXf::Zero(dof.all(), dof.all());
+    Eigen::VectorXf Jtre = Eigen::VectorXf::Zero(dof.all());
+    
+    for (int i = 0; i < params.maxIter_; ++i)
+    {
+        JtJ.setZero();
+        Jtr.setZero();
+        
+        ErrP2D err;
+        for(int j = 0; j < n_frame; ++j)
+        {
+            for(int k = 0; k < n_camera; ++k)
+            {
+                JtJe.setZero();
+                Jtre.setZero();
+
+                computeP2DJacobian(Jtre, JtJe, fd[j], cameras[k], rtf[j], rtc[k], data.frames_[j].val_[k].q2V_, CP2P, CP2L, params, err);
+                computeRegularizerJacobian(Jtre, JtJe, X, fd[j], params, 0, dof_tinv+j*dof.tvar(), err);
+                
+                // block diagonal part
+                JtJ.block(0,0,dof.ftinv(),dof.ftinv()) += JtJe.block(0,0,dof.ftinv(),dof.ftinv());
+                JtJ.block(dof.ftinv()+k*dof.camera(),dof.ftinv()+k*dof.camera(),dof.camera(),dof.camera()) += JtJe.block(dof.face(),dof.face(),dof.camera(),dof.camera());
+                JtJ.block(dof_tinv+j*dof.tvar(),dof_tinv+j*dof.tvar(),dof.tvar(),dof.tvar()) += JtJe.block(dof.ftinv(),dof.ftinv(),dof.tvar(),dof.tvar());
+                
+                // off diagonal part
+                JtJ.block(0,dof.ftinv()+dof.camera()*k,dof.ftinv(),dof.camera()) += JtJe.block(0,dof.face(),dof.ftinv(),dof.camera());
+                JtJ.block(dof.ftinv()+dof.camera()*k,0,dof.camera(),dof.ftinv()) += JtJe.block(dof.face(),0,dof.camera(),dof.ftinv());
+                JtJ.block(0,dof_tinv+j*dof.tvar(),dof.ftinv(),dof.tvar()) += JtJe.block(0,dof.ftinv(),dof.ftinv(),dof.tvar());
+                JtJ.block(dof_tinv+j*dof.tvar(),0,dof.tvar(),dof.ftinv()) += JtJe.block(dof.ftinv(),0,dof.tvar(),dof.ftinv());
+                JtJ.block(dof.ftinv()+dof.camera()*k,dof_tinv+j*dof.tvar(),dof.camera(),dof.tvar()) += JtJe.block(dof.face(),dof.ftinv(),dof.camera(),dof.tvar());
+                JtJ.block(dof_tinv+j*dof.tvar(),dof.ftinv()+dof.camera()*k,dof.tvar(),dof.camera()) += JtJe.block(dof.ftinv(),dof.face(),dof.tvar(),dof.camera());
+                
+                Jtr.segment(0, dof.ftinv()) += Jtre.segment(0, dof.ftinv());
+                Jtr.segment(dof.ftinv()+dof.camera()*k, dof.camera()) += Jtre.segment(dof.face(), dof.camera());
+                Jtr.segment(dof_tinv+j*dof.tvar(), dof.tvar()) += Jtre.segment(dof.ftinv(), dof.tvar());
+            }
+        }
+        
+        for(int j = 0; j < Jtr.size(); ++j)
+        {
+            JtJ(j,j) += 1.e-5;
+        }
+        
+        Eigen::SparseMatrix<float> JtJsp = JtJ.sparseView();
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> ldlt;
+        factorizeLDLTSolver(JtJsp, ldlt);
+        dX = ldlt.solve(Jtr);
+        X -= dX;
+        
+        {
+            Eigen::Ref<Eigen::VectorXf> Xfinv = X.segment(0,dof.ftinv());
+            loadFaceVector(Xfinv, rtf[0], fd[0], dof);
+            for(int j = 0; j < n_camera; ++j)
+            {
+                Eigen::Ref<Eigen::VectorXf> Xc = X.segment(dof.ftinv()+dof.camera()*j,dof.camera());
+                loadCameraVector(Xc, rtc[j], cameras[j], dof);
+            }
+            for(int j = 0; j < n_frame; ++j)
+            {
+                Eigen::Ref<Eigen::VectorXf> Xf = X.segment(dof_tinv+j*dof.tvar(),dof.tvar());
+                loadFaceVector(Xf, rtf[j], fd[j], dof);
+            }
+        }
+        std::cout << i << "thItr " << err << std::endl;
+        
         if (dX.norm() < params.gn_thresh_) break;
     }
 }

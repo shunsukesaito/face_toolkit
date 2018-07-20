@@ -69,4 +69,5 @@ private:
     Eigen::Vector3f lookat;
     double current_mouse_x, current_mouse_y;
     double down_mouse_x, down_mouse_y;
+    int cam_id_ = 0, frame_id_ = 0;
 };

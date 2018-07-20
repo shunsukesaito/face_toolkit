@@ -6,6 +6,8 @@
 #include <gl_utility/camera.h>
 #include <shape_model/face_model.h>
 #include <optimizer/face_gradient.h>
+#include <optimizer/face_result.h>
+
 #include "f2f_renderer.h"
 
 #ifdef WITH_IMGUI
@@ -55,8 +57,6 @@ struct F2FParams
 
 typedef std::shared_ptr<F2FParams> F2FParamsPtr;
 
-
-
 // renderTarget contains 
 // positions,normals,colors,vIndices,vBarycentric,texCoords
 void F2FGaussNewton(FaceData& fd,
@@ -77,5 +77,24 @@ void F2FHierarchicalGaussNewton(FaceData& fd,
                                 const std::vector<P2P2DC>& C_P2P,
                                 std::vector<P2L2DC>& C_P2L,
                                 const std::vector<Eigen::Vector3f>& q2V,
+                                const F2FParams& params,
+                                std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
+
+void F2FGaussNewton(std::vector<FaceData>& fd,
+                    std::vector<Camera>& cameras,
+                    F2FRenderer& renderer,
+                    const MFMVCaptureData& data,
+                    const std::vector<P2P2DC>& C_P2P,
+                    std::vector<P2L2DC>& C_P2L,
+                    unsigned int level,
+                    const F2FParams& params,
+                    std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
+
+void F2FHierarchicalGaussNewton(std::vector<FaceData>& fd,
+                                std::vector<Camera>& cameras,
+                                F2FRenderer& renderer,
+                                const MFMVCaptureData& data,
+                                const std::vector<P2P2DC>& C_P2P,
+                                std::vector<P2L2DC>& C_P2L,
                                 const F2FParams& params,
                                 std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));

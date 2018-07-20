@@ -22,31 +22,56 @@ struct BaseCaptureData
 // single frame capture data
 struct CaptureData : public BaseCaptureData
 {
-    Camera camera_;
     std::vector<Eigen::Vector3f> q2V_;
     std::vector<Eigen::Vector4f> q3V_;
-    cv::Mat_<cv::Vec4f> img_;
+    cv::Mat img_;
+    cv::Mat seg_;
 };
 
 // multi-frame capture data
-struct MFCaptureData : public BaseCaptureData
-{
-    Camera camera_;
-    std::vector<std::vector<Eigen::Vector3f>> q2Vs_;
-    std::vector<std::vector<Eigen::Vector4f>> q3Vs_;
-    std::vector<cv::Mat_<cv::Vec4f>> imgs_;
-};
-
-// multi-view capture data
 struct MVCaptureData : public BaseCaptureData
 {
-    std::vector<CaptureData> frames_;
+    std::vector<CaptureData> val_;
+    MVCaptureData(){
+        val_.resize(1);
+    }
+    MVCaptureData(int i){
+        val_.resize(i);
+    }
+    
+    inline const CaptureData& operator[] (size_t i) const
+    {
+        return val_[i];
+    }
+    inline CaptureData& operator[] (size_t i)
+    {
+        return val_[i];
+    }
 };
 
 // multi-view + multi-frame capture data
-struct MVMFCaptureData : public BaseCaptureData
+struct MFMVCaptureData : public BaseCaptureData
 {
-    std::vector<MFCaptureData> frames_;
+    std::vector<MVCaptureData> frames_;
+    
+    MFMVCaptureData(){
+        frames_.resize(1);
+    }
+    MFMVCaptureData(int i){
+        frames_.resize(i);
+    }
+    MFMVCaptureData(int i, int j){
+        frames_.assign(i, MVCaptureData(j));
+    }
+    
+    inline const MVCaptureData& operator[] (size_t i) const
+    {
+        return frames_[i];
+    }
+    inline MVCaptureData& operator[] (size_t i)
+    {
+        return frames_[i];
+    }
 };
 
 struct FaceResult
@@ -56,17 +81,14 @@ struct FaceResult
     std::string name = "";
     
     // assume single camera for now
-    cv::Mat img;
-    cv::Mat seg;
-    Camera camera;
-    
-    FaceData fd;
+    MFMVCaptureData cap_data = MFMVCaptureData(1,1);
+    std::vector<Camera> cameras = std::vector<Camera>(1);
+    std::vector<FaceData> fd = std::vector<FaceData>(1);
     
     std::vector<P2P2DC> c_p2p;
     std::vector<P2L2DC> c_p2l;
     
-    std::vector<Eigen::Vector3f> p2d;
-    
+    // assuming single frame and single camera
     inline void loadFromTXT(std::string filename){
         std::ifstream infile(filename);
         if(!infile.is_open()){
@@ -79,39 +101,39 @@ struct FaceResult
         // identity
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.idCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
+        fd[0].idCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // expression
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.exCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
+        fd[0].exCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // albedo
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.alCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
+        fd[0].alCoeff.segment(0,tmp.size()) = Eigen::Map<Eigen::VectorXf>(&tmp[0],tmp.size());
         // face rotation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        fd[0].RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
         // face translation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
+        fd[0].RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // spherical hamonics
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd.SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],3,9);
+        fd[0].SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],3,9);
         // camera rotation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        cameras[0].extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
         // camera translation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
+        cameras[0].extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // camera intrinsic
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        cameras[0].intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
     }
     
     inline void loadFromVec(const std::vector<std::pair<std::string, int>>& dof, const std::vector<float>& val){
@@ -126,45 +148,45 @@ struct FaceResult
                 continue;
             
             if(label.find("id") != std::string::npos){
-                //fd.idCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                fd[0].idCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
                 p += dim;
             }
             if(label.find("ex") != std::string::npos){
-                fd.exCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                fd[0].exCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
                 p += dim;
             }
             if(label.find("al") != std::string::npos){
-                fd.alCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
+                fd[0].alCoeff.segment(0,dim) = Eigen::Map<Eigen::VectorXf>(p,dim);
                 p += dim;
             }
             if(label.find("rf") != std::string::npos){
                 assert(dim == 9);
-                fd.RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                fd[0].RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
                 p += dim;
             }
             if(label.find("tf") != std::string::npos){
                 assert(dim == 3);
-                fd.RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
+                fd[0].RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
                 p += dim;
             }
             if(label.find("sh") != std::string::npos){
                 assert(dim == 27);
-                fd.SH = Eigen::Map<Eigen::MatrixXf>(p,3,9);
+                fd[0].SH = Eigen::Map<Eigen::MatrixXf>(p,3,9);
                 p += dim;
             }
             if(label.find("rc") != std::string::npos){
                 assert(dim == 9);
-                camera.extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                cameras[0].extrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
                 p += dim;
             }
             if(label.find("tc") != std::string::npos){
                 assert(dim == 3);
-                camera.extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
+                cameras[0].extrinsic_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
                 p += dim;
             }
             if(label.find("k") != std::string::npos){
                 assert(dim == 9);
-                camera.intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                cameras[0].intrinsic_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
                 p += dim;
             }
             total_dof += dim;
@@ -183,20 +205,20 @@ struct FaceResult
             return;
         }
         
-        fout << fd.idCoeff.transpose() << std::endl;
-        fout << fd.exCoeff.transpose() << std::endl;
-        fout << fd.alCoeff.transpose() << std::endl;
-        Eigen::Matrix3f Rf = fd.RT.block(0,0,3,3);
+        fout << fd[0].idCoeff.transpose() << std::endl;
+        fout << fd[0].exCoeff.transpose() << std::endl;
+        fout << fd[0].alCoeff.transpose() << std::endl;
+        Eigen::Matrix3f Rf = fd[0].RT.block(0,0,3,3);
         Eigen::Map<Eigen::RowVectorXf> Rfmap(Rf.data(), Rf.size());
         fout << Rfmap << std::endl;
-        fout << fd.RT.block(0,3,3,1).transpose() << std::endl;
-        Eigen::Map<Eigen::RowVectorXf> SHmap(fd.SH.data(), fd.SH.size());
+        fout << fd[0].RT.block(0,3,3,1).transpose() << std::endl;
+        Eigen::Map<Eigen::RowVectorXf> SHmap(fd[0].SH.data(), fd[0].SH.size());
         fout << SHmap << std::endl;
-        Eigen::Matrix3f Rc = camera.extrinsic_.block(0,0,3,3);
+        Eigen::Matrix3f Rc = cameras[0].extrinsic_.block(0,0,3,3);
         Eigen::Map<Eigen::RowVectorXf> Rcmap(Rc.data(), Rc.size());
         fout << Rcmap << std::endl;
-        fout << camera.extrinsic_.block(0,3,3,1).transpose() << std::endl;
-        Eigen::Matrix3f K = camera.intrinsic_.block(0,0,3,3);
+        fout << cameras[0].extrinsic_.block(0,3,3,1).transpose() << std::endl;
+        Eigen::Matrix3f K = cameras[0].intrinsic_.block(0,0,3,3);
         Eigen::Map<Eigen::RowVectorXf> Kmap(K.data(), K.size());
         fout << Kmap << std::endl;
     }

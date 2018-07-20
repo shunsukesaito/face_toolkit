@@ -27,10 +27,10 @@ void FaceRenderer::addRenderer(std::string name, RendererHandle renderer)
     renderer_[name] = renderer;
 }
 
-void FaceRenderer::draw(const FaceResult& result)
+void FaceRenderer::draw(const FaceResult& result, int cam_id, int frame_id)
 {
     for(auto&& r : renderer_)
-        r.second->render(result);
+        r.second->render(result, cam_id, frame_id);
 }
 
 #ifdef WITH_IMGUI

@@ -168,7 +168,7 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
         
         RTv = ApplyTransform(RTf, V[i]);
         RTRTv = ApplyTransform(RTc, RTv);
-        RTRTv(2) = (RTRTv(2) > EPSILON) ? RTRTv(2) : EPSILON;
+        RTRTv(2) = (fabs(RTRTv(2)) > EPSILON) ? RTRTv(2) : EPSILON;
         IRTRTv = I.block<3,3>(0,0) * RTRTv;
         
         dPi << 1.0/IRTRTv(2), 0 , -IRTRTv(0)/IRTRTv(2)/IRTRTv(2), 0, 1.0/IRTRTv(2), -IRTRTv(1)/IRTRTv(2)/IRTRTv(2);
@@ -389,7 +389,7 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
     if(X.size() == dof.face()){
         tinvar = true; tvar = true;
     }
-    else if(X.size() == dof.ftinvar()){
+    else if(X.size() == dof.ftinv()){
         tinvar = true;
     }
     else if(X.size() == dof.tvar()){
@@ -520,7 +520,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
     if(X.size() == dof.face()){
         tinvar = true; tvar = true;
     }
-    else if(X.size() == dof.ftinvar()){
+    else if(X.size() == dof.ftinv()){
         tinvar = true;
     }
     else if(X.size() == dof.tvar()){

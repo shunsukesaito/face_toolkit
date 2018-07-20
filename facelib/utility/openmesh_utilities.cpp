@@ -194,7 +194,7 @@ int GetConnectedComponents(TriangleMesh& mesh, std::vector<int>& comp_size)
     
     // check everything is selected
     for (auto v_it = mesh.vertices_begin(); v_it != mesh.vertices_end(); ++v_it )
-        assert(mesh.data(*v_it).is_selected(false));
+        assert(mesh.data(*v_it).is_selected());
     
     return max_comp;
 }

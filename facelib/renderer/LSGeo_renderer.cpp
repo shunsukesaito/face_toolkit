@@ -158,10 +158,10 @@ void LSGeoRenderer::render(const Camera& camera, const FaceData& fd)
 }
 
 #ifdef FACE_TOOLKIT
-void LSGeoRenderer::render(const FaceResult& result)
+void LSGeoRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_)
-        render(result.camera, result.fd);
+        render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 

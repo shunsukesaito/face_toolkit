@@ -45,7 +45,7 @@ public:
     // Default implementation does nothing.
     virtual void Stop();
     
-    inline void reset(){ fd_.init(); }
+    inline void reset(){ for(auto& f : fd_){f.init();} }
     
     // Set input queue. The input queue is automatically set in Create().
     // Not thread safe.
@@ -79,7 +79,7 @@ private:
     F2FRenderer f2f_renderer_;
     
     FaceModelPtr face_model_;
-    FaceData fd_;
+    std::vector<FaceData> fd_ = std::vector<FaceData>(1);
         
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
@@ -119,7 +119,7 @@ public:
     // Default implementation does nothing.
     virtual void Stop();
     
-    inline void reset(){ fd_.init(); }
+    inline void reset(){ for(auto& f : fd_){f.init();} }
     
     // Set input queue. The input queue is automatically set in Create().
     // Not thread safe.
@@ -141,6 +141,17 @@ public:
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue,
+                               const std::string &file_fmt = "",
+                               int begin_frame = 0,
+                               int end_frame = 0);
+    
+    static ModuleHandle Create(const std::string &name,
+                               const std::string &data_dir,
+                               FaceModelPtr face_model,
+                               CapQueueHandle input_frame_queue,
+                               FaceQueueHandle output_result_queue,
+                               CmdQueueHandle command_queue,
+                               const std::vector<std::pair<std::string, int>>& dof,
                                const std::string &file_fmt = "",
                                int begin_frame = 0,
                                int end_frame = 0);
@@ -174,9 +185,10 @@ private:
     CmdQueueHandle command_queue_;
     
     FaceModelPtr face_model_;
-    FaceData fd_;
+    std::vector<FaceData> fd_ = std::vector<FaceData>(1);
     
     std::vector<std::string> flist_;
+    std::vector<std::pair<std::string, int>> dof_;
     
     std::shared_ptr<ParamTCPStream> param_tcp_ = NULL;
     bool send_image_ = false;

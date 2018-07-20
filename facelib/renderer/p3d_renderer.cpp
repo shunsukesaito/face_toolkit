@@ -72,11 +72,11 @@ void P3DRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
     init(shader_dir);
 }
 
-void P3DRenderer::render(const FaceResult& result)
+void P3DRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
     if(show_){
-        render(result.camera, result.fd.getRT(), getP3DFromP2PC(result.fd.pts_, result.c_p2p));
-        render(result.camera, result.fd.getRT(), getP3DFromP2LC(result.fd.pts_, result.c_p2l));
+        render(result.cameras[cam_id], result.fd[frame_id].getRT(), getP3DFromP2PC(result.fd[frame_id].pts_, result.c_p2p));
+        render(result.cameras[cam_id], result.fd[frame_id].getRT(), getP3DFromP2LC(result.fd[frame_id].pts_, result.c_p2l));
     }
 }
 #endif

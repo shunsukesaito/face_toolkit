@@ -51,10 +51,10 @@ struct DOF
     inline int camera() const {
         return cROT + cTR + CAM;
     }
-    inline int tinvar() const {
+    inline int tinv() const {
         return ID + AL + cROT + cTR + CAM;
     }
-    inline int ftinvar() const {
+    inline int ftinv() const {
         return ID + AL;
     }
     inline int tvar() const {
