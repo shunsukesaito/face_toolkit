@@ -95,7 +95,7 @@ struct BaseRenderer
     
 #ifdef FACE_TOOLKIT
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
-    virtual void render(const FaceResult& result, int cam_id, int frame_id){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
+    virtual void render(const FaceResult& result, int cam_id = 0, int frame_id = 0){ throw std::runtime_error( "Error: Base class (Renderer) is called..."); }
 #endif
     
 #ifdef WITH_IMGUI

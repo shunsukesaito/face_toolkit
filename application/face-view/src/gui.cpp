@@ -29,6 +29,8 @@
 
 #include <utility/str_utils.h>
 #include <utility/obj_loader.h>
+#include <utility/exr_loader.h>
+#include <utility/pts_loader.h>
 #include <utility/trackball.h>
 
 #ifdef WITH_IMGUI
@@ -39,6 +41,11 @@
 // constants
 #include <gflags/gflags.h>
 DEFINE_string(data_dir, "../assets/", "data directory");
+
+// for batch face fitting
+DEFINE_bool(dump_pca, false, "dumping out pca albedo texture map");
+// for batch rendering
+DEFINE_bool(center_cam, false, "rendering with face center");
 
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
@@ -374,6 +381,8 @@ void GUI::init(int w, int h)
     }
     else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
         session.face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
+    else
+        throw std::runtime_error("Unrecongnized face model... "+FLAGS_facemodel);
 
     auto renderers = vector2map(split_str(FLAGS_renderer, "/"));
     
@@ -399,6 +408,9 @@ void GUI::init(int w, int h)
         session.renderer_.addRenderer("P3D", P3DRenderer::Create("P3D Rendering", true));
     if( renderers.find("p2d") != renderers.end() )
         session.renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
+    
+    if( session.renderer_.size() == 0)
+        throw std::runtime_error("No renderer is set... " +FLAGS_renderer);
     
     session.renderer_.init(session.face_model_, data_dir);
     
@@ -444,6 +456,12 @@ void GUI::init(int w, int h)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
+    else if(FLAGS_mode == "brender"){
+        std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_,
+                                                         root_dir, FLAGS_loader );
+    }
     else if(FLAGS_mode == "preview_vgpt"){
         std::vector<std::pair<std::string, int>> dof;
         dof.push_back(std::pair<std::string,int>("id",FLAGS_fd_dof_id));
@@ -468,7 +486,7 @@ void GUI::init(int w, int h)
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_ip, FLAGS_fd_port,dof,256,false);
     }
-    else if(FLAGS_mode == "opt"){
+    else if(FLAGS_mode == "opt" || FLAGS_mode == "bopt"){
         auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
 
         session.preprocess_module_ = PreprocessModule::Create("face", session.pp_param_, face_detector, session.capture_queue_,
@@ -477,6 +495,9 @@ void GUI::init(int w, int h)
         session.face_module_ = FaceOptModule::Create("face", data_dir, session.face_model_, session.p2d_param_, session.f2f_param_,
                                                      session.preprocess_queue_, session.result_queue_, session.face_control_queue_);
     }
+    else
+        throw std::runtime_error("Unrecognized mode... "+FLAGS_mode);
+    
     
     GLFWwindow* window = session.windows_[MAIN];
 
@@ -493,6 +514,144 @@ void GUI::init(int w, int h)
     glfwSetDropCallback(window,drop_callback);
 }
 
+// for batch face fitting
+void save_result(FaceResult& result)
+{
+    std::cout << result.name << std::endl;
+    std::string filename = result.name;
+    result.fd[0].saveObj(filename.substr(0,filename.size()-4) + ".obj");
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result.cap_data[0][0].seg_);
+    write_pts(filename.substr(0,filename.size()-4) + ".pts", result.cap_data[0][0].q2V_);
+    auto r = session.renderer_.renderer_["F2F"];
+    auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
+    std::vector<cv::Mat_<cv::Vec4f>> outs;
+    f2f_r->param_.tex_mode = 1;
+    f2f_r->param_.enable_seg = 1;
+    f2f_r->param_.enable_tex = 1;
+    f2f_r->param_.enable_mask = 1;
+    f2f_r->param_.enable_inv_diffuse = 1;
+    f2f_r->param_.enable_cull = 1;
+    f2f_r->param_.cull_offset = -0.25;
+    f2f_r->updateSegment(result.cap_data[0][0].seg_);
+    f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result.cap_data[0][0].img_);
+    f2f_r->render(1024,1024,result.cameras[0], result.fd[0], outs);
+    cv::Mat_<cv::Vec4f> tmp;
+    cv::cvtColor(outs[2],tmp,CV_RGBA2BGRA);
+    for(int h = 0; h < tmp.rows; ++h)
+    {
+        for(int w = 0; w < tmp.cols; ++w)
+        {
+            if(tmp(h,w)[3] == 0)
+                tmp(h, w) = cv::Vec4f(0,1,0,1.0);
+        }
+    }
+    cv::Mat out;
+    cv::cvtColor(tmp, out, CV_BGRA2BGR);
+    out = 255.0 * out;
+    out.convertTo(out, CV_8UC3);
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
+    if (FLAGS_dump_pca){
+        cv::cvtColor(outs[4],tmp,CV_RGBA2BGRA);
+        for(int h = 0; h < tmp.rows; ++h)
+        {
+            for(int w = 0; w < tmp.cols; ++w)
+            {
+                if(tmp(h,w)[3] == 0)
+                    tmp(h, w) = cv::Vec4f(0,1,0,1.0);
+            }
+        }
+        cv::cvtColor(tmp, out, CV_BGRA2BGR);
+        out = 255.0 * out;
+        out.convertTo(out, CV_8UC3);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_inv.png", out);
+        f2f_r->param_.tex_mode = 1;
+        f2f_r->param_.enable_mask = 0;
+        f2f_r->param_.enable_seg = 0;
+        f2f_r->param_.enable_tex = 0;
+        f2f_r->param_.enable_inv_diffuse = 0;
+        f2f_r->param_.enable_cull = 0;
+        f2f_r->render(1024,1024,result.cameras[0],result.fd[0],outs);
+        // mixChannels: split [rgba] image to [bgr] and [a]
+        cv::Mat bgr( 1024, 1024, CV_32FC3 );
+        cv::Mat alpha( 1024, 1024, CV_32FC1 );
+        cv::Mat_<uchar> mask(1024,1024,uchar(255));
+        cv::Mat comp[] = { bgr, alpha };
+        // rgba[0] -> bgr[2], rgba[1] -> bgr[1],
+        // rgba[2] -> bgr[0], rgba[3] -> alpha[0]
+        int from_to[] = { 0,2, 1,1, 2,0, 3,3 };
+        mixChannels( &outs[2], 1, comp, 2, from_to, 4 );
+        mask.setTo(0,alpha != 0.0f);
+        bgr = 255.0*bgr;
+        bgr.convertTo(bgr, CV_8UC3);
+        cv::inpaint(bgr, mask, bgr, 3.0, cv::INPAINT_TELEA);
+        cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_pca.png", bgr);
+    }
+    
+    f2f_r->param_.tex_mode = 0;
+    f2f_r->param_.enable_mask = 1;
+    f2f_r->param_.enable_seg = 1;
+    f2f_r->param_.enable_tex = 0;
+    f2f_r->param_.cull_offset = 0.0;
+    
+    result.saveToTXT(filename.substr(0,filename.size()-4) + "_params.txt");
+}
+
+// for batch rendering
+void save_render(FaceResult& result)
+{
+    std::cout << "processing... " << result.name << std::endl;
+    std::string filename = result.name;
+    session.face_model_->maps_.resize(3);
+    cv::Mat_<cv::Vec4f> disp;
+    loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
+    session.face_model_->maps_[0] = GLTexture::CreateTexture(disp);
+    cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
+    cv::flip(diff,diff,0);
+    session.face_model_->maps_[1] = GLTexture::CreateTexture(diff);
+    cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
+    cv::flip(spec,spec,0);
+    session.face_model_->maps_[2] = GLTexture::CreateTexture(spec);
+    
+    if (FLAGS_center_cam){
+        result.cameras[0] = Camera::craeteFromFOV(1024, 1024, 40);
+        Eigen::Matrix4f RT;
+        RT << 1, 0, 0, 0,
+        0, -1, 0, 0,
+        0, 0, -1, 40.0,
+        0, 0, 0, 1;
+        result.cameras[0].extrinsic_ = RT;
+        result.fd[0].RT = Eigen::Matrix4f::Identity();
+        result.fd[0].updateAll();
+    }
+    
+    auto r1 = session.renderer_.renderer_["DeepLS"];
+    auto dls_r = std::static_pointer_cast<DeepLSRenderer>(r1);
+    auto r2 = session.renderer_.renderer_["LSGeo"];
+    auto lsg_r = std::static_pointer_cast<LSGeoRenderer>(r2);
+    
+    std::vector<cv::Mat_<cv::Vec4f>> outs;
+    cv::Mat out;
+    dls_r->render(result);
+    dls_r->fb_->RetrieveFBO(outs);
+    cv::cvtColor(outs[3],outs[3],CV_RGBA2BGRA);
+    cv::cvtColor(outs[4],outs[4],CV_RGBA2BGRA);
+    outs[3] = 255.0*outs[3];
+    outs[4] = 255.0*outs[4];
+    outs[3].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_diff.png", out);
+    outs[4].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_spec.png", out);
+    
+    outs.clear();
+    lsg_r->render(result);
+    lsg_r->fb_->RetrieveFBO(outs);
+    cv::cvtColor(outs[0],outs[0],CV_RGBA2BGRA);
+    outs[0] = 255.0*outs[0];
+    outs[0].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_disp.png", out);
+}
+
+
 void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -508,7 +667,7 @@ void GUI::loop()
     // update lookat
     session.result_ = *session.result_queue_->front();
     lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT,getCenter(session.result_.fd[frame_id_].pts_));
-    
+    bool init_frame = true;
     while(!glfwWindowShouldClose(session.windows_[MAIN]))
     {
         if(session.result_queue_->front()){
@@ -527,6 +686,19 @@ void GUI::loop()
 
             session.result_queue_->pop();
             session.result_.fd[frame_id_].updateAll();
+            
+            if(session.result_.processed_ && (FLAGS_mode == "brender" || FLAGS_mode == "bopt")){
+                if(session.result_.frame_id == 0){
+                    if(init_frame)
+                        init_frame = false;
+                    else
+                        break;
+                }
+                if(FLAGS_mode == "brender")
+                    save_render(session.result_);
+                if(FLAGS_mode == "bopt")
+                    save_result(session.result_);
+            }
         }
         
         char title[256];

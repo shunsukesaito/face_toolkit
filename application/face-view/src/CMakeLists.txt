@@ -64,14 +64,6 @@ if(BUILD_EXECUTABLE)
   set_target_properties(faceview PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(faceview create-folder)
   
-  add_executable(batch_f2f main.cpp gui_batch_f2f.cpp gui.h)
-  set_target_properties(batch_f2f PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-  add_dependencies(batch_f2f create-folder)
-    
-  add_executable(batch_render main.cpp gui_batch_render.cpp gui.h)
-  set_target_properties(batch_render PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-  add_dependencies(batch_render create-folder)
-
   add_executable(hair_opt main.cpp hair_opt.cpp gui.h)
   set_target_properties(hair_opt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(hair_opt create-folder)
@@ -86,28 +78,6 @@ if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
 endif()
 
 target_link_libraries(faceview
-                      FTM::module
-                      FTM::renderer
-                      FTM::utility
-                      FTM::gflags
-                      FTM::OpenCV
-                      ${DLIB_LIBRARIES}
-                      Threads::Threads
-                      ${CMAKE_DL_LIBS}
-                      ${OPENMP_LIB})
-
-target_link_libraries(batch_f2f
-                      FTM::module
-                      FTM::renderer
-                      FTM::utility
-                      FTM::gflags
-                      FTM::OpenCV
-                      ${DLIB_LIBRARIES}
-                      Threads::Threads
-                      ${CMAKE_DL_LIBS}
-                      ${OPENMP_LIB})
-
-target_link_libraries(batch_render
                       FTM::module
                       FTM::renderer
                       FTM::utility

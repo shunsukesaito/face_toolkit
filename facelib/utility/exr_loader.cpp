@@ -8,7 +8,7 @@ void loadEXRToCV(std::string filename, cv::Mat& mat)
     if (ret != 0)
     {
         std::cout << "Error: exr file isn't loaded correctly... " << filename << " " << err << std::endl;
-        throw std::runtime_error("Error: diffEnv file isn't loaded correctly...");
+        throw std::runtime_error("Error: exr file isn't loaded correctly...");
     }
     mat = cv::Mat(tmp.width,tmp.height,CV_32FC4,(float*)tmp.buf).clone();
     cv::flip(mat, mat, 0);

@@ -439,7 +439,6 @@ void GUI::loop()
     hfm::OpenMeshToEigen(mesh, new_hair.pts_, new_hair.clr_, new_hair.nml_, new_hair.uvs_, new_hair.tri_pts_);
     new_hair.tri_uv_ = new_hair.tri_pts_;
     new_hair.saveObj("unko.obj",true);
-//    OpenMesh::IO::write_mesh(mesh, "unko.obj", openmesh_io_option);
     
 #ifdef WITH_IMGUI
     ImGui_ImplGlfwGL3_Shutdown();

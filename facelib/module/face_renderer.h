@@ -36,6 +36,7 @@ struct FaceRenderer {
     void addRenderer(std::string name, RendererHandle renderer);
     
     void draw(const FaceResult& result, int cam_id = 0, int frame_id = 0);
+    inline int size() const {return renderer_.size();}
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

@@ -62,7 +62,7 @@ struct F2FRenderer : public BaseRenderer
     void render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
 #ifdef FACE_TOOLKIT
-    virtual void render(const FaceResult& result, int cam_id, int frame_id);
+    virtual void render(const FaceResult& result, int cam_id = 0, int frame_id = 0);
 #endif
     
 #ifdef WITH_IMGUI

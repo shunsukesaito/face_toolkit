@@ -35,7 +35,7 @@ struct PosMapRenderer : public BaseRenderer
     void render(int w, int h, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out);
     
 #ifdef FACE_TOOLKIT
-    virtual void render(const FaceResult& result, int cam_id, int frame_id);
+    virtual void render(const FaceResult& result, int cam_id = 0, int frame_id = 0);
 #endif
     
 #ifdef WITH_IMGUI
@@ -69,7 +69,7 @@ struct PosMapReconRenderer : public BaseRenderer
     void render(const Camera& camera, const FaceData& fd);
     
 #ifdef FACE_TOOLKIT
-    virtual void render(const FaceResult& result, int cam_id, int frame_id);
+    virtual void render(const FaceResult& result, int cam_id = 0, int frame_id = 0);
 #endif
     
 #ifdef WITH_IMGUI
