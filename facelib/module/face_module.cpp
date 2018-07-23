@@ -136,7 +136,7 @@ void FaceOptModule::update(FaceResult& result)
         F2FParams opt_param = *f2f_param_;
 
         // update segmentation mask
-        // TODO: support multi-view and multi-frame for segmentation update
+        // TODO: support multi-view/multi-frame for segmentation update
         if(!result.cap_data[0][0].seg_.empty())
             f2f_renderer_.updateSegment(result.cap_data[0][0].seg_);
         

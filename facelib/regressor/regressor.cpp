@@ -69,11 +69,11 @@ void Regressor::train(std::vector<Data>& data,
     float sum_x_res = 0.0;
     float sum_p_res = 0.0;
     
-    cv::Mat_<float> res = cv::Mat_<float>::zeros(n_sample, len_x);
+    cv::Mat_<float> res = cv::Mat_<float>::zeros(len_x,n_sample);
     for(int i = 0; i < n_sample; ++i)
     {
-        res.row(i) = data[i].gt_x - data[i].cur_x;
-        sum_x_res += cv::norm(res.row(i));
+        res.col(i) = data[i].gt_x - data[i].cur_x;
+        sum_x_res += cv::norm(res.col(i));
         for(int j = 0; j < n_p2d; ++j)
         {
             sum_p_res += cv::norm(data[i].gt_p2d(j)-data[i].cur_p2d(j));
@@ -83,7 +83,7 @@ void Regressor::train(std::vector<Data>& data,
     std::cout << "  Shape Vector Residual: " << sum_x_res/(float)n_sample;
     std::cout << " 2Dlandmark norm: " << sum_p_res/(float)(n_sample*n_p2d) << std::endl;
     
-    normResidual(res); // project residuals to nomarlized space where mean is 0 and SD is 1.
+    normalizeRes(res); // project residuals to nomarlized space where mean is 0 and SD is 1.
     
     std::cout << "  Computing Shape Index Features..." << std::endl;
     // determine sampling pixels using baricentric coordinates
@@ -121,9 +121,8 @@ void Regressor::train(std::vector<Data>& data,
         }
     }
     
-    // for debug of meanshape
+    // meanshape visualization
     cv::Mat_<cv::Vec3b> debug_img(300,300,cv::Vec3b(255,255,255));
- 
     for(int i = 0; i < tri.rows; ++i)
     {
         cv::Point p1 = cv::Vec2i(50.0*mean_p2d(tri(i,0)))+cv::Vec2i(150.0,150.0);
@@ -133,7 +132,6 @@ void Regressor::train(std::vector<Data>& data,
         cv::line(debug_img, p1, p3, cv::Scalar(0,0,0));
         cv::line(debug_img, p2, p3, cv::Scalar(0,0,0));
     }
-    
     for(int i = 0; i < mean_p2d.rows; ++i)
     {
         cv::Point p = cv::Vec2i(50.0*mean_p2d(i))+cv::Vec2i(150.0,150.0);
@@ -146,7 +144,7 @@ void Regressor::train(std::vector<Data>& data,
         const cv::Vec2f& p0 = mean_p2d(tri(pt.first,0));
         const cv::Vec2f& p1 = mean_p2d(tri(pt.first,1));
         const cv::Vec2f& p2 = mean_p2d(tri(pt.first,2));
-                                                                                        
+        
         cv::Vec2f p_bc = p1+pt.second[0]*(p1-p0)+pt.second[1]*(p2-p0);
         cv::Point p(p_bc(0)*50+150,p_bc(1)*50+150);
         sampled_pts.push_back(p);
@@ -201,12 +199,12 @@ void Regressor::train(std::vector<Data>& data,
         
         for(int j = 0; j < n_sample; ++j)
         {
-            cv::Mat_<float> r = cv::Mat_<float>::zeros(1, res.cols);
+            cv::Mat_<float> r = cv::Mat_<float>::zeros(res.rows,1);
             ferns_[i].apply(r, pixels_val(cv::Range::all(),cv::Range(j,j+1)));
-            res.row(j) -= r;
-            dx.row(j) += r;
+            res.col(j) -= r;
+            dx.col(j) += r;
 
-            total_res_norm += cv::norm(res.row(j));
+            total_res_norm += cv::norm(res.col(j));
         }
 
         std::cout << "  fern Layer " << i << "th Stage: Average Residual Norm " << total_res_norm/n_sample << std::endl;
@@ -220,7 +218,7 @@ void Regressor::train(std::vector<Data>& data,
                 cv::line(debug_cpy, sampled_pts[si.first], sampled_pts[si.second], cv::Scalar(0,0,255));
             
             char stage[256];
-            sprintf(stage, "Stage %d",stage_num_);
+            sprintf(stage, "Stage %d", stage_num_);
 
             cv::putText(debug_cpy, stage, cv::Point(10,20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255));
 
@@ -230,11 +228,11 @@ void Regressor::train(std::vector<Data>& data,
     }
     
     std::cout << "  Applying Trained Regressor..." << std::endl;
-    unnormResidual(dx);
+    unnormalizeRes(dx);
     
     for(int i = 0; i < n_sample; ++i)
     {
-        data[i].cur_x += dx.row(i);
+        data[i].cur_x += dx.col(i);
     }
 }
 
@@ -275,7 +273,7 @@ void Regressor::apply(cv::Mat_<float>& X,
         ferns_[i].apply(X, pixels_val);
     }
     
-    unnormResidual(X);
+    unnormalizeRes(X);
 }
 
 void Regressor::apply(cv::Mat_<float>& X,
@@ -318,30 +316,36 @@ void Regressor::apply(cv::Mat_<float>& X,
     {
         ferns_[i].apply(X, pixels_val);
     }
-    unnormResidual(X);
+    unnormalizeRes(X);
 }
 
-void Regressor::normResidual(cv::Mat_<float>& res)
+void Regressor::normalizeRes(cv::Mat_<float>& res)
 {
     if(stage_num_ == 0){
-        means_ = cv::Mat_<float>::zeros(1, res.cols);
-        SDs_ = cv::Mat_<float>::zeros(1, res.cols);
+        means_ = cv::Mat_<float>::zeros(res.rows,1);
+        SDs_ = cv::Mat_<float>::zeros(res.rows,1);
         
-        cv::meanStdDev(res.t(), means_, SDs_);
+        cv::Mat meanValue, stdValue;
+        for (int i = 0; i < res.rows; i++){
+            cv::meanStdDev(res.row(i), meanValue, stdValue);
+            SDs_(i) = static_cast<float>(stdValue.at<double>(0));
+            means_(i) = static_cast<float>(meanValue.at<double>(0));
+        }
+        cv::meanStdDev(res, means_, SDs_);
         for(int i = 0; i < SDs_.total(); ++i)
             if(SDs_(i) == 0) SDs_(i) = 1.0;
     }
-    for(int i = 0; i < res.rows; ++i)
-        cv::divide(res.row(i)-means_, SDs_, res.row(i));
+    for(int i = 0; i < res.cols; ++i)
+        cv::divide(res.col(i)-means_, SDs_, res.col(i));
 }
 
-void Regressor::unnormResidual(cv::Mat_<float>& res)
+void Regressor::unnormalizeRes(cv::Mat_<float>& res)
 {
-    for(int i = 0; i < res.rows; ++i)
+    for(int i = 0; i < res.cols; ++i)
     {
         // TODO check if it works
-        cv::multiply(res.row(i), SDs_, res.row(i));
-        res.row(i) += means_;
+        cv::multiply(res.col(i), SDs_, res.col(i));
+        res.col(i) += means_;
     }
 }
 

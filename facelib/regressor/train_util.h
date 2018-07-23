@@ -10,8 +10,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-#include <Eigen/Core>
-#include "face_model.h"
+#include <shape_model/face_model.h>
 
 namespace cao{
     
@@ -33,12 +32,14 @@ struct DOF
     int TR;
     int DISP;
     
-    inline cv::Rect roiEX() const { return cv::Rect(0, 0, EX, 1);}
-    inline cv::Rect roiROT() const { return cv::Rect(EX, 0, ROT, 1);}
-    inline cv::Rect roiTR() const {return cv::Rect(EX+ROT, 0, TR, 1);}
-    inline cv::Rect roiRT() const {return cv::Rect(EX, 0, ROT+TR, 1);}
-    inline cv::Rect roiDISP() const {return cv::Rect(EX+ROT+TR, 0, DISP, 1);}
+    inline cv::Rect roiEX()   const { return cv::Rect(0, 0, EX, 1);}
+    inline cv::Rect roiROT()  const { return cv::Rect(EX, 0, ROT, 1);}
+    inline cv::Rect roiTR()   const { return cv::Rect(EX+ROT, 0, TR, 1);}
+    inline cv::Rect roiRT()   const { return cv::Rect(EX, 0, ROT+TR, 1);}
+    inline cv::Rect roiDISP() const { return cv::Rect(EX+ROT+TR, 0, DISP, 1);}
 };
+    
+typedef std::shared_ptr<DOF> DOFPtr;
     
 struct TrainParams
 {
@@ -73,13 +74,19 @@ struct Data
     cv::Mat_<cv::Vec2f> cur_p2d;
     
     float fl;
-    Eigen::VectorXf idCoeff;
+    cv::Mat_<float> id_coeff;
+    
+    cv::Mat_<float> mu_id; // (#land*3) x 1
+    cv::Mat_<float> w_ex; // (#land*3) x #exp
     
     cv::Rect rect;
     cv::Mat_<uchar> mask;
     cv::Mat_<uchar> img;
+    int img_w, img_h;
     
     int id = -1;
+    
+    DOFPtr dof;
     
     Data(const Data& other){
         // shallow copy
@@ -94,9 +101,13 @@ struct Data
         
         rect = other.rect;
         fl = other.fl;
-        idCoeff = other.idCoeff;
+        id_coeff = other.id_coeff.clone();
+        
+        w_ex = other.w_ex.clone();
+        mu_id = other.mu_id.clone();
         
         id = other.id;
+        dof = other.dof;
     }
     
     const Data &operator = (const Data &other){
@@ -117,12 +128,18 @@ struct Data
         
         this->rect = other.rect;
         this->fl = other.fl;
-        this->idCoeff = other.idCoeff;
+        this->id_coeff = other.id_coeff.clone();
+        
+        this->w_ex = other.w_ex.clone();
+        this->mu_id = other.mu_id.clone();
         
         this->id = other.id;
+        this->dof = other.dof;
         
         return *this;
     }
+    
+    void updateLandmarks(bool add_disp=true);
 };
   
     void augmentRotation(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dR, const DOF& dof);
@@ -133,5 +150,4 @@ struct Data
     void augmentOcclusion(std::vector<Data>& in);
     
     void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const TrainParams& params);
-    
 }

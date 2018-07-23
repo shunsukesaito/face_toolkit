@@ -333,8 +333,6 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
     
     if (dof.ID)
     {
-        // TODO: head constraints
-        
         const int sym_dof = (params.sym_with_exp_ ? dof.ID + dof.EX : dof.ID);
         Eigen::Ref<Eigen::VectorXf> Jtr_shape = Jtr.segment(dof.AL, sym_dof);
         Eigen::Ref<Eigen::MatrixXf> JtJ_shape = JtJ.block(dof.AL, dof.AL, sym_dof, sym_dof);

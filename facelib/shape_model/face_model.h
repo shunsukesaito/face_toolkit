@@ -14,6 +14,7 @@
 #include <iostream>
 #include <memory>
 
+#include <opencv2/opencv.hpp>
 #include <utility/EigenHelper.h>
 
 #ifdef WITH_IMGUI
@@ -99,6 +100,10 @@ struct FaceData
     const Eigen::MatrixX3i& tripts() const;
     const Eigen::MatrixX3i& triuv() const;
     
+    // for Cao's tracker
+    void updateLandmarks(const cv::Mat_<float>& x, Eigen::Matrix4f& K, cv::Mat_<cv::Vec2f>& p2d) const ;
+    void updateLandmarks(const cv::Mat_<float>& x, Eigen::Matrix4f& K, const cv::Mat_<float>& xid, cv::Mat_<cv::Vec2f>& p2d) const;
+
     void init();
     void saveObj(const std::string& filename);
     

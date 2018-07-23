@@ -121,6 +121,7 @@ static void normalize(cv::Mat_<cv::Vec2f>& out,
 }
 
 bool Model::test(cv::Mat_<float>& X,
+                 Data& data,
                  const cv::Mat_<uchar>& img,
                  const cv::Mat_<cv::Vec2f>& p2d,
                  const cv::Mat_<int>& tri,
@@ -129,10 +130,8 @@ bool Model::test(cv::Mat_<float>& X,
     cv::Mat_<float> cur_RT = X(dof.roiRT()).clone();
     cv::Mat_<float> dist;
 
-    // TODO: p2d to aligned_p2d
     cv::Mat_<cv::Vec2f> aligned_p2d;
-    int l_eye, r_eye;
-    normalize(aligned_p2d, p2d, l_eye, r_eye);
+    normalize(aligned_p2d, p2d, l_eye_id_, r_eye_id_);
     
     // Warning: this is approximate kNN! so the randomness may produce inconsistent output
     kdTree_.knnSearch(aligned_p2d, knn_, dist, k_);
@@ -143,12 +142,12 @@ bool Model::test(cv::Mat_<float>& X,
     {
         cv::Mat_<float> Xk = gt_x_.row(k).clone();
        
-        Xk(dof.roiRT()) = cur_RT.clone(); // Note: for normalization test
+        cur_RT.copyTo(Xk(dof.roiRT()));
         for(int i = 0; i < T_; ++i)
         {
-            // TODO: compute 2d projection
-            cv::Mat_<cv::Vec2f> p2d_k;
-            regressors_[i].apply(Xk, p2d_k, img, tri);
+            data.cur_x = Xk;
+            data.updateLandmarks();
+            regressors_[i].apply(Xk, data.cur_p2d, img, tri);
            
             // post process (normalize quartanion so that it remains in SO(3).)
             Xk(dof.roiROT()) *= 1.0/cv::norm(Xk(dof.roiROT()));
@@ -166,6 +165,7 @@ bool Model::test(cv::Mat_<float>& X,
 }
 
 bool Model::test(cv::Mat_<float>& X,
+                 Data& data,
                  const cv::Mat_<uchar>& img,
                  const cv::Mat_<cv::Vec2f>& p2d,
                  const cv::Mat_<bool> pmap,
@@ -176,10 +176,8 @@ bool Model::test(cv::Mat_<float>& X,
     cv::Mat_<float> cur_RT = X(dof.roiRT()).clone();
     cv::Mat_<float> dist;
 
-    // TODO: p2d to aligned_p2d
     cv::Mat_<cv::Vec2f> aligned_p2d;
-    int l_eye, r_eye;
-    normalize(aligned_p2d, p2d, l_eye, r_eye);
+    normalize(aligned_p2d, p2d, l_eye_id_, r_eye_id_);
 
     // Warning: this is approximate kNN! so the randomness may produce inconsistent output
     kdTree_.knnSearch(aligned_p2d, knn_, dist, k_);
@@ -190,13 +188,12 @@ bool Model::test(cv::Mat_<float>& X,
     {
         cv::Mat_<float> Xk = gt_x_.row(k).clone();
         
-        Xk(dof.roiRT()) = cur_RT.clone(); // Note: for normalization test
+        cur_RT.copyTo(Xk(dof.roiRT()));
         for(int i = 0; i < T_; ++i)
         {
-            // TODO: compute 2d projection
-            cv::Mat_<float> p2d_k;
-            
-            regressors_[i].apply(Xk, p2d_k, img, tri, pmap, rect);
+            data.cur_x = Xk;
+            data.updateLandmarks();
+            regressors_[i].apply(Xk, data.cur_p2d, img, tri, pmap, rect);
             
             // post process (normalize quartanion so that it remains in SO(3).)
             Xk(dof.roiROT()) *= 1.0/cv::norm(Xk(dof.roiROT()));
@@ -251,8 +248,10 @@ bool Model::train(std::string file_path,
     for(int i = 0; i < regressors_.size(); ++i)
     {
         std::cout << "1st Layer " << i << "th Stage Computing..." << std::endl;
-        // TODO: update 2d projection
-
+        // update cur_p2d in each data
+        for(auto& d : data)
+            d.updateLandmarks();
+        
         regressors_[i].setStage(i);
         
         // NOTE: another trick I found is rescaling residual in every stage of regression actually does harm the performance.
@@ -271,8 +270,8 @@ bool Model::train(std::string file_path,
     float sum_p2d_err = 0.0;
     for(auto&& d : augmented_data)
     {
+        d.updateLandmarks();
         sum_res_err += cv::norm(d.gt_x-d.cur_x);
-        // TODO: update 2d projection
         for(int j = 0; j < d.cur_p2d.rows; ++j)
         {
             sum_p2d_err += cv::norm(d.cur_p2d(j)-d.gt_p2d(j));
@@ -400,8 +399,8 @@ void Model::loadBinary(std::string file_path)
         }
         
         // load statistics for projection
-        reg.means_ = cv::Mat_<float>::zeros(1, size_list[1]);
-        reg.SDs_ = cv::Mat_<float>::zeros(1, size_list[1]);
+        reg.means_ = cv::Mat_<float>::zeros(size_list[1],1);
+        reg.SDs_ = cv::Mat_<float>::zeros(size_list[1],1);
         fread(reg.means_.ptr(), sizeof(float), reg.means_.total(), fp);
         fread(reg.SDs_.ptr(), sizeof(float), reg.SDs_.total(), fp);
         

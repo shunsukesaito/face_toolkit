@@ -35,7 +35,7 @@ void Fern::apply(cv::Mat_<float>& x, const cv::Mat_<float>& features)
         output_index |= (p1 - p2 > thresholds_[i]) << i;
     }
     
-    x += res_.row(output_index);
+    x += res_.col(output_index);
 }
 
 void Fern::apply(cv::Mat_<float>& x, const cv::Mat_<float>& features,const cv::Mat_<float> prob_val)
@@ -58,7 +58,7 @@ void Fern::apply(cv::Mat_<float>& x, const cv::Mat_<float>& features,const cv::M
         output_index |= (p1 - p2 > thresholds_[i]) << i;
     }
     
-    x += res_.row(output_index);
+    x += res_.col(output_index);
 }
 
 void Fern::train(cv::Mat_<float>& res, cv::Mat_<float>& pixel_values, cv::Mat_<float>& pixels_cov)
@@ -69,10 +69,10 @@ void Fern::train(cv::Mat_<float>& res, cv::Mat_<float>& pixel_values, cv::Mat_<f
     std::cout << "      Correlation-based Sampling..." << std::endl;
     for(int i = 0; i < F_; ++i)
     {
-        cv::Mat_<float> projection(res.cols,1);
+        cv::Mat_<float> projection(1,res.rows);
         cv::theRNG().fill(projection, cv::RNG::UNIFORM, cv::Scalar(-1.0), cv::Scalar(1.0));
-        cv::Mat_<float> Y_proj(res.rows,1);
-        static_cast<cv::Mat_<float>>(res*projection).copyTo(Y_proj);
+        cv::Mat_<float> Y_proj(1,res.cols);
+        (projection*res).copyTo(Y_proj);
         cv::Mat_<float> Y_pixel_cov(pixel_values.size(),1);
         for(int j = 0; j < pixel_values.rows; ++j)
         {
@@ -125,9 +125,9 @@ void Fern::train(cv::Mat_<float>& res, cv::Mat_<float>& pixel_values, cv::Mat_<f
     std::cout << "      Storing Residual Vectors in Each Bin..." << std::endl;
     int bin_size = 1 << F_;
     
-    res_ = cv::Mat_<float>::zeros(bin_size, res_.cols);
+    res_ = cv::Mat_<float>::zeros(res_.rows, bin_size);
     std::vector<int> each_res_count(bin_size,0);
-    for(int i = 0; i < res.rows; ++i) // for all training set
+    for(int i = 0; i < res.cols; ++i) // for all training set
     {
         int mask = 0;
         for(int j = 0; j < F_; ++j)
@@ -135,14 +135,14 @@ void Fern::train(cv::Mat_<float>& res, cv::Mat_<float>& pixel_values, cv::Mat_<f
             float value = pixel_values(shape_index_[j].first,i)-pixel_values(shape_index_[j].second,i);
             mask |= (value > thresholds_[j]) << j;
         }
-        res_.row(mask) += res.row(i);
+        res_.col(mask) += res.col(i);
         each_res_count[mask]++;
     }
     
     std::cout << "      ";
     for(int i = 0; i < bin_size; ++i)
     {
-        res.row(i) *= 1.0/(each_res_count[i]+beta_);
+        res.col(i) *= 1.0/(each_res_count[i]+beta_);
         std::cout << each_res_count[i] << " ";
     }
     std::cout << std::endl;

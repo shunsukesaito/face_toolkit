@@ -9,6 +9,8 @@
 
 #include <opencv2/flann/flann.hpp>
 
+#include <gl_utility/camera.h>
+
 #include "regressor.h"
 
 namespace cao{
@@ -23,6 +25,7 @@ struct Model
     cv::Mat_<float> gt_x_;
     
     // test
+    int l_eye_id_, r_eye_id_;
     cv::Mat_<int> knn_;
     cv::flann::KDTreeIndexParams indexParams_;
     cv::flann::Index kdTree_;
@@ -35,12 +38,14 @@ struct Model
     void writeBinary(std::string file_path);
     
     bool test(cv::Mat_<float>& X,
+              Data& data,
               const cv::Mat_<uchar>& img,
               const cv::Mat_<cv::Vec2f>& p2d,
               const cv::Mat_<int>& tri,
               const DOF& dof);
     
     bool test(cv::Mat_<float>& X,
+              Data& data,
               const cv::Mat_<uchar>& img,
               const cv::Mat_<cv::Vec2f>& p2d,
               const cv::Mat_<bool> pmap,

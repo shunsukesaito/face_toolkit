@@ -53,8 +53,8 @@ struct Regressor
                const cv::Mat_<float>& pmap,
                const cv::Rect &rect);
     
-    void normResidual(cv::Mat_<float>& res);
-    void unnormResidual(cv::Mat_<float>& res);
+    void normalizeRes(cv::Mat_<float>& res);
+    void unnormalizeRes(cv::Mat_<float>& res);
     
     void write(cv::FileStorage &fs)const;
     void read(const cv::FileNode &fn);
