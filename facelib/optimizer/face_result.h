@@ -10,75 +10,14 @@
 #include <fstream>
 #include <gl_utility/camera.h>
 #include <utility/str_utils.h>
+#include <utility/capture_data.h>
 
 #include <shape_model/face_model.h>
 #include "constraints.h"
 
-struct BaseCaptureData
-{
-    int type = 0; // 0: single frame, 1: multi-frame, 2: multi-view, 3: multi-view + multi-frame
-};
-
-// single frame capture data
-struct CaptureData : public BaseCaptureData
-{
-    std::vector<Eigen::Vector3f> q2V_;
-    std::vector<Eigen::Vector4f> q3V_;
-    cv::Mat img_;
-    cv::Mat seg_;
-};
-
-// multi-frame capture data
-struct MVCaptureData : public BaseCaptureData
-{
-    std::vector<CaptureData> val_;
-    MVCaptureData(){
-        val_.resize(1);
-    }
-    MVCaptureData(int i){
-        val_.resize(i);
-    }
-    
-    inline const CaptureData& operator[] (size_t i) const
-    {
-        return val_[i];
-    }
-    inline CaptureData& operator[] (size_t i)
-    {
-        return val_[i];
-    }
-};
-
-// multi-view + multi-frame capture data
-struct MFMVCaptureData : public BaseCaptureData
-{
-    std::vector<MVCaptureData> frames_;
-    
-    MFMVCaptureData(){
-        frames_.resize(1);
-    }
-    MFMVCaptureData(int i){
-        frames_.resize(i);
-    }
-    MFMVCaptureData(int i, int j){
-        frames_.assign(i, MVCaptureData(j));
-    }
-    
-    inline const MVCaptureData& operator[] (size_t i) const
-    {
-        return frames_[i];
-    }
-    inline MVCaptureData& operator[] (size_t i)
-    {
-        return frames_[i];
-    }
-};
-
 struct FaceResult
 {
     bool processed_ = false;
-    int frame_id = 0;
-    std::string name = "";
     
     // assume single camera for now
     MFMVCaptureData cap_data = MFMVCaptureData(1,1);

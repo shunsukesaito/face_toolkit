@@ -56,9 +56,21 @@ struct Camera
     void updateUniforms4Sphere(GLProgram& program, int flag) const;
     
     static Camera craeteFromFOV(int w, int h, int FOV);
-    static Camera parseCameraParams(std::string filename);
+    static Camera parseCameraParams(std::string filename, bool c2w = false);
     static Eigen::Matrix4f loadKFromTxt(std::string filename);
     static Eigen::Matrix4f loadRTFromTxt(std::string filename);
+    
+    friend std::ostream& operator<<(std::ostream& os, const Camera& cam)
+    {
+        os << "Camera Info: " << cam.name_ << std::endl;
+        os << "Intrinsic:" << std::endl;
+        os << cam.intrinsic_ << std::endl;
+        os << "Extrinsic:" << std::endl;
+        os << cam.extrinsic_ << std::endl;
+        os << "Width: " << cam.width_ << " Height: " << cam.height_ << " zNear: " << cam.zNear_ << " zFar: " << cam.zFar_ << std::endl;
+        os << "distCoeff: " << cam.distCoeff_.transpose();
+        return os;
+    }
     
 #ifdef WITH_IMGUI
     void updateIMGUI();

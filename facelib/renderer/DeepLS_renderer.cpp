@@ -55,7 +55,7 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
             }
         }
         else{
-            std::cout << "Error: failed to open " << data_dir << "env_list.txt" << std::endl;
+            std::cout << "Error: failed to open " << data_dir + "LS/env_list.txt" << std::endl;
         }
     }
     
@@ -136,11 +136,10 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
 
 void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
 {
-    int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
+    int w = camera.width_;
+    int h = camera.height_;
+
     if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
         fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, RT_NAMES::count);
     if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))

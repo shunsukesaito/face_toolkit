@@ -141,7 +141,7 @@ void Framebuffer::RetrieveFBO(int w, int h, cv::Mat& mat, int attachID)
     }
     else
     {
-        fprintf(stderr, "Error, texture formap unknown.\n");
+        throw std::runtime_error("Error, texture formap unknown.");
     }
     
     GLint type;
@@ -155,7 +155,7 @@ void Framebuffer::RetrieveFBO(int w, int h, cv::Mat& mat, int attachID)
     }
     else
     {
-        fprintf(stderr, "Error, texture type unknown.\n");
+        throw std::runtime_error("Error, texture type unknown.");
     }
     
     glReadPixels(0, 0, w, h, rgbmode, type, mat.data );
@@ -206,7 +206,7 @@ void Framebuffer::RetrieveFBO(cv::Mat& mat, int attachID)
     }
     else
     {
-        fprintf(stderr, "Error, texture formap unknown.\n");
+        throw std::runtime_error("Error, texture formap unknown.");
     }
     
     GLint type;
@@ -220,7 +220,7 @@ void Framebuffer::RetrieveFBO(cv::Mat& mat, int attachID)
     }
     else
     {
-        fprintf(stderr, "Error, texture type unknown.\n");
+        throw std::runtime_error("Error, texture type unknown.");
     }
     
     glReadPixels(0, 0, width_, height_, rgbmode, type, mat.data );
@@ -250,6 +250,8 @@ void Framebuffer::ApplyBuffers()
         if(ret != GL_FRAMEBUFFER_COMPLETE)
         {
             printf("GL_FRAMEBUFFER NOT COMPLETE! Status: 0x%x\n",ret);
+            throw std::runtime_error("GL_FRAMEBUFFER NOT COMPLETE!");
+
         }
         delete[] attachments;
     }
@@ -275,7 +277,6 @@ void Framebuffer::init(unsigned int width, unsigned int height, int color_size)
     height_ = height;
     
     Bind();
-    
     // add color attachment and query resolution from any of the available textures    
     if(depth_ == -1)
         glGenTextures(1, &depth_);
@@ -298,6 +299,7 @@ void Framebuffer::init(unsigned int width, unsigned int height, int color_size)
     if(ret != GL_FRAMEBUFFER_COMPLETE)
     {
         printf("GL_FRAMEBUFFER NOT COMPLETE! Status: 0x%x\n",ret);
+        throw std::runtime_error("GL_FRAMEBUFFER NOT COMPLETE!");
     }
     Unbind();
     

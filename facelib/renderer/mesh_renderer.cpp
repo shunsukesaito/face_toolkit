@@ -41,11 +41,10 @@ void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
                           const Eigen::MatrixX3f& nml)
 {
-    int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
+    int w = camera.width_;
+    int h = camera.height_;
+
     if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
         fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
     
@@ -88,11 +87,10 @@ void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
                           const Eigen::MatrixX3f& nml)
 {
-    int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
+    int w = camera.width_;
+    int h = camera.height_;
+
     if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
         fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
 

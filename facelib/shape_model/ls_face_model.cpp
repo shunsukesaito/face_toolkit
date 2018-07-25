@@ -25,8 +25,7 @@ void LinearFaceModel::loadLightStageData(const std::string& data_dir)
         }
     }
     
-    Eigen::MatrixX3f nml;
-    loadObjFile(files[0], mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    loadMeanFromObj(files[0]);
     maps_.resize(5);
     for(int i = 0; i < 5; ++i)
     {
@@ -50,8 +49,7 @@ void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
         }
     }
     
-    Eigen::MatrixX3f nml;
-    loadObjFile(files[0], mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    loadMeanFromObj(files[0]);
     maps_.resize(3);
     
     cv::Mat_<cv::Vec4f> disp;

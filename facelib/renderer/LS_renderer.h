@@ -50,6 +50,7 @@ struct LSRenderer : public BaseRenderer
         spec_albedo,
         spec_normal,
         diff_normal,
+        uv,
         count
     };
 

@@ -22,6 +22,7 @@
 #include <renderer/LS_renderer.h>
 #include <renderer/LSGeo_renderer.h>
 #include <renderer/DeepLS_renderer.h>
+#include <renderer/differedLS_renderer.h>
 #include <renderer/p3d_renderer.h>
 #include <renderer/p2d_renderer.h>
 #include <renderer/posmap_renderer.h>
@@ -51,6 +52,7 @@ DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
 DEFINE_string(mode, "opt", "view mode (opt/preview)");
 DEFINE_string(facemodel, "pin", "FaceModel to use");
+DEFINE_string(fm_path, "", "face model path");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
 DEFINE_string(loader, "", "Loader (image file, video, integer(live stream), or empty");
@@ -367,6 +369,9 @@ void GUI::init(int w, int h)
         session.face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelFACS.bin", "pin_facs");
     else if( FLAGS_facemodel.find("bv") != std::string::npos )
         session.face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
+    else if(FLAGS_facemodel.find("mesh") != std::string::npos ){
+        session.face_model_ = LinearFaceModel::LoadMesh(FLAGS_fm_path);
+    }
     else if(FLAGS_facemodel.find("deepls") != std::string::npos ){
         int start = FLAGS_facemodel.find("deepls") + 6;
         int len = FLAGS_facemodel.size()-6;
@@ -396,6 +401,8 @@ void GUI::init(int w, int h)
         session.renderer_.addRenderer("DeepLS", DeepLSRenderer::Create("DeepLS Rendering", true));
     if( renderers.find("ls") != renderers.end() )
         session.renderer_.addRenderer("LS", LSRenderer::Create("LS Rendering", true));
+    if( renderers.find("differedls") != renderers.end() )
+        session.renderer_.addRenderer("DifferedLS", DifferedLSRenderer::Create("DifferedLS Rendering", true));
     if( renderers.find("lsgeo") != renderers.end() )
         session.renderer_.addRenderer("LSGeo", LSGeoRenderer::Create("LSGeo Rendering", true));
     if( renderers.find("pmrec") != renderers.end() )
@@ -456,12 +463,15 @@ void GUI::init(int w, int h)
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_path, FLAGS_fd_begin_id, FLAGS_fd_end_id);
-    else if(FLAGS_mode == "brender"){
+    else if(FLAGS_mode == "brender1"){
         std::string root_dir = FLAGS_loader.substr(0,FLAGS_loader.find_last_of("/"));
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
                                                          root_dir, FLAGS_loader );
     }
+    else if(FLAGS_mode == "brender2")
+        session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
+                                                         session.result_queue_, session.face_control_queue_);
     else if(FLAGS_mode == "preview_vgpt"){
         std::vector<std::pair<std::string, int>> dof;
         dof.push_back(std::pair<std::string,int>("id",FLAGS_fd_dof_id));
@@ -517,11 +527,12 @@ void GUI::init(int w, int h)
 // for batch face fitting
 void save_result(FaceResult& result)
 {
-    std::cout << result.name << std::endl;
-    std::string filename = result.name;
+    auto& data = result.cap_data[0][0];
+    std::cout << "processing... " << data.name_ << std::endl;
+    std::string filename = data.name_;
     result.fd[0].saveObj(filename.substr(0,filename.size()-4) + ".obj");
-    cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", result.cap_data[0][0].seg_);
-    write_pts(filename.substr(0,filename.size()-4) + ".pts", result.cap_data[0][0].q2V_);
+    cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", data.seg_);
+    write_pts(filename.substr(0,filename.size()-4) + ".pts", data.q2V_);
     auto r = session.renderer_.renderer_["F2F"];
     auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
     std::vector<cv::Mat_<cv::Vec4f>> outs;
@@ -532,8 +543,8 @@ void save_result(FaceResult& result)
     f2f_r->param_.enable_inv_diffuse = 1;
     f2f_r->param_.enable_cull = 1;
     f2f_r->param_.cull_offset = -0.25;
-    f2f_r->updateSegment(result.cap_data[0][0].seg_);
-    f2f_r->programs_["f2f"].updateTexture("u_sample_texture", result.cap_data[0][0].img_);
+    f2f_r->updateSegment(data.seg_);
+    f2f_r->programs_["f2f"].updateTexture("u_sample_texture", data.img_);
     f2f_r->render(1024,1024,result.cameras[0], result.fd[0], outs);
     cv::Mat_<cv::Vec4f> tmp;
     cv::cvtColor(outs[2],tmp,CV_RGBA2BGRA);
@@ -597,10 +608,11 @@ void save_result(FaceResult& result)
 }
 
 // for batch rendering
-void save_render(FaceResult& result)
+void save_render1(FaceResult& result)
 {
-    std::cout << "processing... " << result.name << std::endl;
-    std::string filename = result.name;
+    auto& data = result.cap_data[0][0];
+    std::cout << "processing... " << data.name_ << std::endl;
+    std::string filename = data.name_;
     session.face_model_->maps_.resize(3);
     cv::Mat_<cv::Vec4f> disp;
     loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
@@ -613,7 +625,7 @@ void save_render(FaceResult& result)
     session.face_model_->maps_[2] = GLTexture::CreateTexture(spec);
     
     if (FLAGS_center_cam){
-        result.cameras[0] = Camera::craeteFromFOV(1024, 1024, 40);
+        result.cameras[0] = Camera::craeteFromFOV(FLAGS_cam_w, FLAGS_cam_h, 40);
         Eigen::Matrix4f RT;
         RT << 1, 0, 0, 0,
         0, -1, 0, 0,
@@ -651,6 +663,68 @@ void save_render(FaceResult& result)
     cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_disp.png", out);
 }
 
+void save_render2(FaceResult& result)
+{
+    auto& data = result.cap_data[0][0];
+    std::cout << "processing... " << data.name_ << std::endl;
+    std::string filename = data.name_;
+    session.face_model_->loadMeanFromObj(filename.substr(0,filename.find_last_of("/")) + "/mesh.obj");
+    session.face_model_->maps_.resize(3);
+    cv::Mat_<cv::Vec4f> disp;
+    loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
+    session.face_model_->maps_[0] = GLTexture::CreateTexture(disp);
+    cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
+    cv::flip(diff,diff,0);
+    session.face_model_->maps_[1] = GLTexture::CreateTexture(diff);
+    cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
+    cv::flip(spec,spec,0);
+    session.face_model_->maps_[2] = GLTexture::CreateTexture(spec);
+    
+    result.cameras[0] = Camera::parseCameraParams(filename.substr(0,filename.find_last_of("/")) + "/KRT.txt", true);
+    std::cout << result.cameras[0] << std::endl;
+    result.fd[0].RT = Eigen::Matrix4f::Identity();
+    result.fd[0].updateAll();
+    auto r1 = session.renderer_.renderer_["DifferedLS"];
+    auto dls_r = std::static_pointer_cast<DifferedLSRenderer>(r1);
+    
+    std::vector<cv::Mat_<cv::Vec4f>> outs;
+    cv::Mat out;
+    std::cout << "rendering data" << std::endl;
+    dls_r->render(result);
+    std::cout << "retrieving FBO" << std::endl;
+    dls_r->fb_->RetrieveFBO(outs);
+    std::cout << "FBO size: " << outs.size() << std::endl;
+    std::cout << "converting FBOs" << std::endl;
+    cv::cvtColor(outs[0],outs[0],CV_RGBA2BGRA);
+    cv::cvtColor(outs[1],outs[1],CV_RGBA2BGRA);
+    cv::cvtColor(outs[2],outs[2],CV_RGBA2BGRA);
+    cv::cvtColor(outs[3],outs[3],CV_RGBA2BGRA);
+    outs[0] = 255.0*outs[0];
+    outs[1] = 255.0*outs[1];
+    cv::Mat bgra[4];
+    cv::split(outs[2],bgra);
+    bgra[0] = 255.0*(0.5*bgra[0]+0.5);
+    bgra[1] = 255.0*(0.5*bgra[1]+0.5);
+    bgra[2] = 255.0*(0.5*bgra[2]+0.5);
+    bgra[3] = 255.0*bgra[3];
+    cv::merge(bgra,4,outs[2]);
+    outs[3] = 255.0*outs[3];
+    std::cout << "saving FBOs" << std::endl;
+    std::cout << "saving " << filename.substr(0,filename.find_last_of("/")) + "/render_diff.png" << std::endl;
+    outs[0].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_diff.png", out);
+    std::cout << "saving " << filename.substr(0,filename.find_last_of("/")) + "/render_spec.png" << std::endl;
+    outs[1].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_spec.png", out);
+    std::cout << "saving " << filename.substr(0,filename.find_last_of("/")) + "/render_specnorm.png" << std::endl;
+    outs[2].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_specnorm.png", out);
+    std::cout << "saving " << filename.substr(0,filename.find_last_of("/")) + "/render_uv.png" << std::endl;
+    outs[3].convertTo(out, CV_8UC4);
+    cv::imwrite(filename.substr(0,filename.find_last_of("/")) + "/render_uv.png", out);
+    std::cout << "done" << std::endl;
+}
+
 
 void GUI::loop()
 {
@@ -666,6 +740,7 @@ void GUI::loop()
         ;
     // update lookat
     session.result_ = *session.result_queue_->front();
+    
     lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT,getCenter(session.result_.fd[frame_id_].pts_));
     bool init_frame = true;
     while(!glfwWindowShouldClose(session.windows_[MAIN]))
@@ -686,16 +761,18 @@ void GUI::loop()
 
             session.result_queue_->pop();
             session.result_.fd[frame_id_].updateAll();
-            
-            if(session.result_.processed_ && (FLAGS_mode == "brender" || FLAGS_mode == "bopt")){
-                if(session.result_.frame_id == 0){
+            if( FLAGS_mode.find("brender") != std::string::npos ||
+                FLAGS_mode.find("bopt") != std::string::npos ){
+                if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == 0){
                     if(init_frame)
                         init_frame = false;
                     else
                         break;
                 }
-                if(FLAGS_mode == "brender")
-                    save_render(session.result_);
+                if(FLAGS_mode == "brender1")
+                    save_render1(session.result_);
+                if(FLAGS_mode == "brender2")
+                    save_render2(session.result_);
                 if(FLAGS_mode == "bopt")
                     save_result(session.result_);
             }
@@ -734,9 +811,9 @@ void GUI::loop()
         if(FLAGS_fd_record && session.result_.processed_){
             cv::Mat img;
             screenshot(img, session.windows_[MAIN]);
-            cv::imwrite(std::to_string(session.result_.frame_id) + ".png", img);
+            cv::imwrite(std::to_string(session.result_.cap_data[cam_id_][frame_id_].frame_id_) + ".png", img);
         }
-        if(session.result_.frame_id == FLAGS_fd_end_id) break;
+        if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == FLAGS_fd_end_id) break;
         
         glDeleteSync(tsync);
         tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);

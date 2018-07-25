@@ -43,11 +43,7 @@ void FaceOptModule::Process()
             FaceResult result;
             // TODO: make it general so that we can take multi-view/multi-frame input
             result.cameras[0] = input_frame_queue_->front()->camera;
-            result.cap_data[0][0].img_ = input_frame_queue_->front()->img;
-            result.cap_data[0][0].q2V_ = input_frame_queue_->front()->p2d;
-            result.cap_data[0][0].seg_ = input_frame_queue_->front()->seg;
-            result.name = input_frame_queue_->front()->name;
-            result.frame_id = input_frame_queue_->front()->frame_id;
+            result.cap_data[0][0] = input_frame_queue_->front()->data;
 
             if(result.cap_data[0][0].img_.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
@@ -219,12 +215,8 @@ void FacePreviewModule::Process()
             FaceResult result;
             // TODO: make it general so that we can take multi-view/multi-frame input
             result.cameras[0] = input_frame_queue_->front()->camera;
-            result.cap_data[0][0].img_ = input_frame_queue_->front()->img;
-            result.cap_data[0][0].q2V_ = input_frame_queue_->front()->p2d;
-            result.cap_data[0][0].seg_ = input_frame_queue_->front()->seg;
-            result.name = input_frame_queue_->front()->name;
-            result.frame_id = input_frame_queue_->front()->frame_id;
-            
+            result.cap_data[0][0] = input_frame_queue_->front()->data;
+
             if(result.cap_data[0][0].img_.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
@@ -286,14 +278,16 @@ void FacePreviewModule::init(std::string data_dir,
 void FacePreviewModule::update(FaceResult& result)
 {
     result.fd = fd_;
-    if(flist_.size() != 0 && result.frame_id >= 0 && dof_.empty()){
-        result.loadFromTXT(flist_[result.frame_id%(int)flist_.size()]);
+    // TODO: make it general so that we can take multi-view/multi-frame input
+    const int idx = result.cap_data[0][0].frame_id_;
+    if(flist_.size() != 0 && idx >= 0 && dof_.empty()){
+        result.loadFromTXT(flist_[idx%(int)flist_.size()]);
         result.processed_ = true;
     }
-    if(flist_.size() != 0 && result.frame_id >= 0 && !dof_.empty()){
-        std::ifstream infile(flist_[result.frame_id%(int)flist_.size()]);
+    if(flist_.size() != 0 && idx >= 0 && !dof_.empty()){
+        std::ifstream infile(flist_[idx%(int)flist_.size()]);
         if(!infile.is_open()){
-            std::cout << "Warning: failed parsing face data from " << flist_[result.frame_id%(int)flist_.size()] << std::endl;
+            std::cout << "Warning: failed parsing face data from " << flist_[idx%(int)flist_.size()] << std::endl;
             return;
         }
         std::string line;

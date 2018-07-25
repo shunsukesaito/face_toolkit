@@ -123,6 +123,9 @@ struct BaseFaceModel
     Eigen::MatrixX3i tri_pts_;
     Eigen::MatrixX3i tri_uv_;
     
+    // base vertex positions
+    Eigen::VectorXf mu_id_;
+    
     // for rendering 
     std::vector<unsigned int> maps_;
 
@@ -130,6 +133,7 @@ struct BaseFaceModel
     std::vector<std::vector<int>> cont_candi_;
     
     void loadContourList(std::string file);
+    void loadMeanFromObj(const std::string& filename);
     
     virtual void updateExpression(FaceData& data){ throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
     virtual void updateIdentity(FaceData& data){ throw std::runtime_error( "Error: Base class (FaceModel) is called..."); }
@@ -162,7 +166,6 @@ struct BaseFaceModel
 struct LinearFaceModel : public BaseFaceModel
 {
     // identity basis
-    Eigen::VectorXf mu_id_;
     Eigen::VectorXf sigma_id_;
     Eigen::MatrixXf w_id_;
     
@@ -220,11 +223,11 @@ struct LinearFaceModel : public BaseFaceModel
     
     static FaceModelPtr LoadModel(const std::string& file, const std::string& fm_type);
     static FaceModelPtr LoadLSData(const std::string& data_dir, bool deep = false);
+    static FaceModelPtr LoadMesh(const std::string& file);
 };
 
 struct BiLinearFaceModel : public BaseFaceModel
 {
-    Eigen::VectorXf mu_id_;
     Eigen::VectorXf sigma_id_;
     
     Eigen::MatrixXf w_mu_ex_;

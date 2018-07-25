@@ -54,8 +54,8 @@ void LSRenderParams::updateIMGUI()
     ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
     ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
     
-    const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal"};
-    ImGui::ListBox("RenderTarget", &location, listbox_items, 7);
+    const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal", "uv"};
+    ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
 }
 #endif
 
@@ -184,16 +184,15 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
 
 void LSRenderer::render(const Camera& camera, const FaceData& fd)
 {
-    int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
+    int w = camera.width_;
+    int h = camera.height_;
+
     if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
         fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, RT_NAMES::count);
     if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))
         fb_depth_->Resize(param_.sub_samp*w, param_.sub_samp*h, 0);
-    
+
     // render parameters update
     auto& prog_main = programs_["main"];
     auto& prog_pl = programs_["plane"];

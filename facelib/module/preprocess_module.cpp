@@ -47,11 +47,9 @@ void PreprocessModule::Process()
     {
         if(input_frame_queue_->front()){
             CaptureResult result;
-            result.img = input_frame_queue_->front()->img;
+            result.data = input_frame_queue_->front()->data;
             result.camera = input_frame_queue_->front()->camera;
-            result.frame_id = input_frame_queue_->front()->frame_id;
-            result.name = input_frame_queue_->front()->name;
-            if(result.img.empty()){
+            if(result.data.img_.empty()){
                 std::cout << "Warning: Frame drop!" << std::endl;
                 input_frame_queue_->pop();
                 continue;
@@ -86,34 +84,34 @@ void PreprocessModule::update(CaptureResult& result)
 {
     if(param_->update_land_ || param_->onetime_land_){
         if(FLAGS_land_type.find("cpm") != std::string::npos){
-            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect_, false, true);
+            fdetector_->GetFaceLandmarks(result.data.img_, result.data.q2V_, rect_, false, true);
         }
         else if(FLAGS_land_type.find("dlib") != std::string::npos){
-            fdetector_->GetFaceLandmarks(result.img, result.p2d, rect_, false, false);
+            fdetector_->GetFaceLandmarks(result.data.img_, result.data.q2V_, rect_, false, false);
         }
         else if(FLAGS_land_type.find("pts") != std::string::npos){
-            result.p2d = load_pts(FLAGS_land_type);
-            rect_ = GetBBoxFromLandmarks(result.p2d);
+            result.data.q2V_ = load_pts(FLAGS_land_type);
+            rect_ = GetBBoxFromLandmarks(result.data.q2V_);
         }
-        p2d_ = result.p2d;
+        p2d_ = result.data.q2V_;
 //        cv::Mat tmp;
 //        crop_image(result.img, tmp, rect_);
 //        cv::imwrite("rect.png", tmp);
         if(param_->onetime_land_) param_->onetime_land_ = false;
     }
     else{
-        result.p2d = p2d_;
+        result.data.q2V_ = p2d_;
     }
     
     bool hasface = true;
     if(param_->update_seg_ || param_->onetime_seg_){
         if (!param_->update_land_)
-            hasface = fdetector_->GetFaceRect(result.img, rect_, false);
+            hasface = fdetector_->GetFaceRect(result.data.img_, rect_, false);
         
         if(hasface){
-            seg_tcp_->sendImage(result.img, rect_, 1.8);
-            seg_tcp_->getSegmentation(result.seg);
-            seg_ = result.seg.clone();
+            seg_tcp_->sendImage(result.data.img_, rect_, 1.8);
+            seg_tcp_->getSegmentation(result.data.seg_);
+            seg_ = result.data.seg_.clone();
         }
         if(param_->onetime_seg_) param_->onetime_seg_ = false;
     }

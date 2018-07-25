@@ -6,19 +6,33 @@
 #include <shape_model/face_model.h>
 
 #include "base_renderer.h"
-#include "LS_renderer.h"
 
-struct DeepLSRenderer : public BaseRenderer
+struct DifferedLSRenderParams{
+    bool enable_mask = 0;
+    
+    float mesomap_size = 6000.0;
+    
+    float alpha = 1.0;
+    
+    int location = 0;
+    
+    int sub_samp = 1; // subsampling rate for depth map (higher, more accurate, but maybe slower)
+    
+    void init(GLProgram& prog);
+    void update(GLProgram& prog);
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
+};
+
+struct DifferedLSRenderer : public BaseRenderer
 {
     enum RT_NAMES
-    {        
-        all = 0,
-        diff,
-        spec,
-        diff_albedo,
+    {
+        diff_albedo = 0,
         spec_albedo,
-        spec_normal,
-        diff_normal,
+        normal,
         uv,
         count
     };
@@ -26,15 +40,10 @@ struct DeepLSRenderer : public BaseRenderer
     glMesh mesh_;
     glPlane plane_;
     FramebufferPtr fb_;
-    FramebufferPtr fb_depth_;
-    LSRenderParams param_;
+    DifferedLSRenderParams param_;
     
-    std::vector<GLuint> diff_env_locations_;
-    std::vector<GLuint> spec_env1_locations_;
-    std::vector<GLuint> spec_env2_locations_;
-    
-    DeepLSRenderer(){}
-    DeepLSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
+    DifferedLSRenderer(){}
+    DifferedLSRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr model);
     void render(const Camera& camera,

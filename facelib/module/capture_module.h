@@ -8,19 +8,15 @@
 #include <Eigen/Core>
 
 #include <utility/frame_loader.h>
+#include <utility/capture_data.h>
 #include <gl_utility/camera.h>
 
 #include "module.h"
 
 struct CaptureResult
 {
-    std::string name;
-    int frame_id;
-    cv::Mat img;
     Camera camera;
-
-    cv::Mat seg;
-    std::vector<Eigen::Vector3f> p2d;
+    CaptureData data;
 
     int mode = 0; // 0: nothing, 1: p2d, 2: seg, 3: both 
 };

@@ -183,7 +183,7 @@ Camera Camera::craeteFromFOV(int w, int h, int FOV)
     return camera;
 }
 
-Camera Camera::parseCameraParams(std::string filename)
+Camera Camera::parseCameraParams(std::string filename, bool c2w)
 {
     std::ifstream fin(filename);
     Camera camera;
@@ -197,6 +197,17 @@ Camera Camera::parseCameraParams(std::string filename)
             {
                 fin >> camera.extrinsic_(i,j);
             }
+        }
+        
+        if(c2w){
+            Eigen::Matrix3f Rt = camera.extrinsic_.block<3,3>(0,0).transpose();
+            camera.extrinsic_.block(0, 3, 3, 1) = -Rt * camera.extrinsic_.block(0, 3, 3, 1);
+            camera.extrinsic_.block(0, 0, 3, 3) = Rt;
+            
+            Eigen::Matrix4f flip; flip.setIdentity();
+            flip.block(0, 0, 3, 3) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
+            
+            camera.extrinsic_ = flip * camera.extrinsic_;
         }
     
         camera.intrinsic_.setIdentity();
@@ -231,7 +242,7 @@ Camera Camera::parseCameraParams(std::string filename)
     else{
         std::cout << "Warning: file does not exist. " << filename << std::endl;
     }
-    
+
     return camera;
 }
 

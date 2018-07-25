@@ -532,8 +532,7 @@ void LinearFaceModel::loadMMBinaryModel(const std::string& modelfile)
 
 void LinearFaceModel::loadModelFromObj(const std::string& obj_dir, int id_size, int ex_size)
 {
-    Eigen::MatrixX3f nml;
-    loadObjFile(obj_dir + "/neutral.obj", mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    loadMeanFromObj(obj_dir+"/neutral.obj");
     
     Eigen::MatrixXf w_id(mu_id_.size(),id_size);
     Eigen::MatrixXf w_ex(mu_id_.size(),ex_size);
@@ -542,6 +541,7 @@ void LinearFaceModel::loadModelFromObj(const std::string& obj_dir, int id_size, 
     Eigen::MatrixX2f uvs;
     Eigen::MatrixX3i tri_pts;
     Eigen::MatrixX3i tri_uv;
+    Eigen::MatrixX3f nml;
     for(int i = 0; i < id_size; ++i)
     {
         char tmp[256];
@@ -576,6 +576,19 @@ FaceModelPtr LinearFaceModel::LoadModel(const std::string& file, const std::stri
     std::cout << "Face Model Info:" << std::endl;
     std::cout << "#Vert: " << model->mu_id_.size()/3 << " #Tri: " << model->tri_pts_.rows() << std::endl;
 
+    return FaceModelPtr(model);
+}
+
+FaceModelPtr LinearFaceModel::LoadMesh(const std::string& file)
+{
+    auto model = new LinearFaceModel();
+    
+    model->fm_type_ = "mesh";
+    model->loadMeanFromObj(file);
+    
+    std::cout << "Face Model Info:" << std::endl;
+    std::cout << "#Vert: " << model->mu_id_.size()/3 << " #Tri: " << model->tri_pts_.rows() << std::endl;
+    
     return FaceModelPtr(model);
 }
 

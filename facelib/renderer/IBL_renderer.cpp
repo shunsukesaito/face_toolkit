@@ -172,11 +172,10 @@ void IBLRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
 
 void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sphere)
 {
-    int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    
+    int w = camera.width_;
+    int h = camera.height_;
+
     if((param_.sub_samp*w != fb_->width()) || (param_.sub_samp*h != fb_->height()))
         fb_->Resize(param_.sub_samp*w, param_.sub_samp*h, 1);
     if((param_.sub_samp*w != fb_depth_->width()) || (param_.sub_samp*h != fb_depth_->height()))

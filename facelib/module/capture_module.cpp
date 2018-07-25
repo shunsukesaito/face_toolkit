@@ -10,6 +10,7 @@
 DEFINE_string(camera_file, "", "camera file name");
 DEFINE_uint32(camera_fov, 60, "default camera fov");
 DEFINE_bool(weak_persp, false, "use weak perspective model");
+DEFINE_bool(cam_c2w, false, "convert camera space to world");
 
 // initializes this module and the basic module
 CaptureModule::CaptureModule(const std::string &name)
@@ -32,9 +33,9 @@ void CaptureModule::Process()
     while(command != "stop")
     {
         CaptureResult cap;
-        frame_loader_->load_frame(cap.img, frame_id_, cap.name, command);
+        frame_loader_->load_frame(cap.data.img_, frame_id_, cap.data.name_, command);
         cap.camera = camera_;
-        cap.frame_id = frame_id_;
+        cap.data.frame_id_ = frame_id_;
         output_frame_queue_->push(cap);
         
         if(command_queue_->front()){
@@ -85,16 +86,12 @@ ModuleHandle CaptureModule::Create(const std::string &name,
     if(FLAGS_camera_file.empty())
         module->camera_ = Camera::craeteFromFOV(w, h, FLAGS_camera_fov);
     else
-        module->camera_ = Camera::parseCameraParams(data_dir + FLAGS_camera_file);
+        module->camera_ = Camera::parseCameraParams(data_dir + FLAGS_camera_file, FLAGS_cam_c2w);
     
     module->camera_.weakPersp_ = FLAGS_weak_persp;
     
-    std::cout << "Camera Info:" << std::endl;
-    std::cout << "Intrinsic:" << std::endl;
-    std::cout << module->camera_.intrinsic_ << std::endl;
-    std::cout << "Extrinsic:" << std::endl;
-    std::cout << module->camera_.extrinsic_ << std::endl;
-    
+    std::cout << module->camera_ << std::endl;
+
     ModuleHandle handle(module);
     ModuleRegistry::RegisterModule(handle);
     return handle;

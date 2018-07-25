@@ -52,6 +52,7 @@ layout(location = 3) out vec4 frag_diff_albedo;
 layout(location = 4) out vec4 frag_spec_albedo;
 layout(location = 5) out vec4 frag_spec_normal;
 layout(location = 6) out vec4 frag_diff_normal;
+layout(location = 7) out vec4 frag_texcoord;
 
 void main(void)
 {
@@ -189,4 +190,5 @@ void main(void)
     frag_spec_albedo = gammaCorrection(frag_spec_albedo, 2.2);
     frag_spec_normal = vec4(specNormal,1.0);
     frag_diff_normal = vec4(diffNormalR,1.0);
+	frag_texcoord = vec4(uv, 0.0, 1.0);
 }
