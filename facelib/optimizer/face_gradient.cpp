@@ -214,7 +214,6 @@ void computeVertexWiseGradPosition3D(std::vector<Eigen::Vector3f>& pV,
     // compute position term per vertex
     Eigen::Matrix4f RTf = Eigen::EulerAnglesPoseToMatrix(rt);
     const Eigen::Matrix3f& R = RTf.block<3,3>(0, 0);
-    const Eigen::Vector3f& t = RTf.block<3,1>(0,3);
     
     Eigen::Matrix3f dR[3];
     gradRotEuler(rt[0], rt[1], rt[2], dR);

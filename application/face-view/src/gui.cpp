@@ -50,8 +50,8 @@ DEFINE_bool(center_cam, false, "rendering with face center");
 
 DEFINE_bool(fd_record, false, "dumping out frames for facedata");
 DEFINE_bool(no_imgui, false, "disable IMGUI");
-DEFINE_string(mode, "opt", "view mode (opt/preview)");
-DEFINE_string(facemodel, "pin", "FaceModel to use");
+DEFINE_string(mode, "preview", "view mode (opt/preview)");
+DEFINE_string(facemodel, "pinfacs", "FaceModel to use");
 DEFINE_string(fm_path, "", "face model path");
 DEFINE_string(renderer, "geo", "Renderer to use");
 DEFINE_string(fd_path, "", "FaceData path");
@@ -70,8 +70,8 @@ DEFINE_int32(fd_dof_sh, 27, "FaceData TCP dof of SH");
 
 DEFINE_double(loader_scale, 1.0, "image loader scale");
 
-DEFINE_uint32(cam_w, 0, "camera width");
-DEFINE_uint32(cam_h, 0, "camera height");
+DEFINE_uint32(cam_w, 512, "camera width");
+DEFINE_uint32(cam_h, 512, "camera height");
 
 struct Session{
     ModuleHandle capture_module_;

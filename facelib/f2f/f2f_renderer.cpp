@@ -70,7 +70,6 @@ float F2FRenderer::computeJacobianColor(Eigen::VectorXf& Jtr,
 {
     // compute gradient for each pixel
     // since the interpolated normal is normalized again, compute jacobian based on normalized normal
-    const float c1 = 0.429043f, c2 = 0.511664f, c3 = 0.743125f, c4 = 0.886227f, c5 = 0.247708f;
     
     Eigen::MatrixXf JtJc = Eigen::MatrixXf::Zero(dof.all(), dof.all());
     Eigen::MatrixXf Jtrc = Eigen::MatrixXf::Zero(dof.all(), 1);

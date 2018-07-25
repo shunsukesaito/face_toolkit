@@ -141,41 +141,40 @@ static Mat4f PerspectiveFromVision(const Mat4f& K, unsigned int width, unsigned 
     flip(1, 1) = -1.f;
     flip(1, 2) = static_cast<float>(height);
     
-    Mat4f intrinsics = flip * K;
+    Mat4f intrinsics = flip*K;
     const float L = 0.f;   // left
     const float R = static_cast<float>(width); // right
-    const float B = 0.f;   // bottom
-    const float T = static_cast<float>(height);// top
+    const float T = 0.f;// top
+    const float B = static_cast<float>(height);   // bottom
     
     // orthographic projection
     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205347(v=vs.85).aspx
     Mat4f ortho = Mat4f::Zero();
     ortho(0, 0) = 2.0f / (R - L); ortho(0, 3) = (R + L) / (R - L);
-    ortho(1, 1) = 2.0f / (T - B); ortho(1, 3) = (T + B) / (T - B);
-    ortho(2, 2) = 1.0f / (zFar - zNear); ortho(2, 3) = zNear / (zNear - zFar);
+    ortho(1, 1) = -2.0f / (T - B); ortho(1, 3) = -(T + B) / (T - B);
+    ortho(2, 2) = 2.0f / (zFar - zNear); ortho(2, 3) = (zNear + zFar) / (zNear - zFar);
     ortho(3, 3) = 1.f;
-    
+
     // perspective projection
     Mat4f tp = Mat4f::Zero();
     tp(0, 0) = intrinsics(0, 0); tp(0, 1) = intrinsics(0, 1); tp(0, 2) = -(width - intrinsics(0, 2));
     tp(1, 1) = intrinsics(1, 1); tp(1, 2) = -(height - intrinsics(1, 2));
     tp(2, 2) = zNear + zFar; tp(2, 3) = - zNear * zFar;
     tp(3, 2) = 1.0f;
-    
     return ortho * tp;
 }
 
 static Mat4f OrthogonalProjection(unsigned int width, unsigned int height, float zNear, float zFar) {
     const float L = 0.f;   // left
     const float R = static_cast<float>(width); // right
-    const float B = 0.f;   // bottom
-    const float T = static_cast<float>(height);// top
+    const float T = 0.f;// top
+    const float B = static_cast<float>(height);   // bottom
     
     // orthographic projection
     // https://msdn.microsoft.com/en-us/library/windows/desktop/bb205347(v=vs.85).aspx
     Mat4f ortho = Mat4f::Zero();
     ortho(0, 0) = 2.0f / (R - L); ortho(0, 3) = -(R + L) / (R - L);
-    ortho(1, 1) = -2.0f / (T - B); ortho(1, 3) = (T + B) / (T - B);
+    ortho(1, 1) = 2.0f / (T - B); ortho(1, 3) = -(T + B) / (T - B);
     ortho(2, 2) = 2.0f / (zFar - zNear); ortho(2, 3) = (zNear + zFar) / (zNear - zFar);
     ortho(3, 3) = 1.f;
 

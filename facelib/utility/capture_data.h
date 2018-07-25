@@ -20,7 +20,7 @@ struct BaseCaptureData
 };
 
 // single frame capture data
-struct CaptureData : public BaseCaptureData
+struct CaptureData
 {
     std::vector<Eigen::Vector3f> q2V_;
     std::vector<Eigen::Vector4f> q3V_;
@@ -32,7 +32,7 @@ struct CaptureData : public BaseCaptureData
 };
 
 // multi-frame capture data
-struct MVCaptureData : public BaseCaptureData
+struct MVCaptureData
 {
     std::vector<CaptureData> val_;
     MVCaptureData(){
@@ -53,7 +53,7 @@ struct MVCaptureData : public BaseCaptureData
 };
 
 // multi-view + multi-frame capture data
-struct MFMVCaptureData : public BaseCaptureData
+struct MFMVCaptureData
 {
     std::vector<MVCaptureData> frames_;
     

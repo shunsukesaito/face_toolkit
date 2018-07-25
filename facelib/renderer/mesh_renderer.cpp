@@ -96,7 +96,7 @@ void MeshRenderer::render(const Camera& camera,
 
     auto& prog = programs_["mesh"];
     auto& prog_pl = programs_["plane"];
-    
+        
     camera.updateUniforms(prog, RT, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_position(pts);
