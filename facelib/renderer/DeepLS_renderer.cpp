@@ -175,6 +175,7 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     mesh_.update_position(fd.pts_, fd.tripts());
     mesh_.update_tangent(tan, btan, fd.tripts());
     mesh_.update_normal(fd.nml_, fd.tripts());
+    mesh_.update_uv(fd.uvs(), fd.triuv());
 
     mesh_.update(prog_main, AT_POSITION | AT_NORMAL | AT_UV | AT_TAN);
     mesh_.update(prog_depth, AT_POSITION);

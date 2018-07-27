@@ -385,6 +385,8 @@ void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
     if(tri_pts.size() != 0){
         assert(tri_uv.size() == tri_pts.size());
         assert(pts_.size() != 0);
+        // NOTE: assuming no need to update uv if topology doesn't change
+        if(uvs_.size() == pts_.size()) return;
         uvs_.resize(pts_.size());
         for(int i = 0; i < tri_pts.rows(); ++i)
         {
@@ -402,6 +404,8 @@ void glMesh::update_uv(const Eigen::MatrixX2f& uvs,
         }
     }
     else{
+        // NOTE: assuming no need to update uv if topology doesn't change
+        if(uvs_.size() == tri_uv.size()) return;
         uvs_.resize(tri_uv.size());
         for(int i = 0; i < tri_uv.rows(); ++i)
         {

@@ -201,7 +201,8 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     mesh_.update_position(fd.pts_, fd.tripts());
     mesh_.update_color(fd.clr_, fd.tripts());
     mesh_.update_normal(fd.nml_, fd.tripts());
-    
+    mesh_.update_uv(fd.uvs(), fd.triuv());
+
     mesh_.update(prog_IBL, AT_POSITION | AT_COLOR | AT_NORMAL | AT_UV);
     mesh_.update(prog_depth, AT_POSITION);
     
