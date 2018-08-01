@@ -9,8 +9,6 @@
 
 #include <opencv2/flann/flann.hpp>
 
-#include <gl_utility/camera.h>
-
 #include "regressor.h"
 
 namespace cao{

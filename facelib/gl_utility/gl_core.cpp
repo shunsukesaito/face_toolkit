@@ -14,18 +14,6 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
-const char *fragment_depth_shader_code = "\
-#version 330 core\n\
-//in VertexData {\n\
-vec4 normal;\n\
-vec4 pos;\n\
-vec2 proj_texcoord;\n\
-vec2 texcoord;\n\
-} VertexIn;\n\
-void main()\n\
-{\n\
-}\n\
-";
 
 static char* textFileRead(const char* fileName)
 {

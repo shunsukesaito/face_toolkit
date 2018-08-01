@@ -10,8 +10,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-#include <shape_model/face_model.h>
-
 namespace cao{
     
 struct ContourPoint
