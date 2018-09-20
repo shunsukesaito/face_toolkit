@@ -55,15 +55,15 @@ void MeshRenderer::render(const Camera& camera,
     
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL);
+    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
     
     prog.setUniformData("u_tessinner", (float)tessInner_);
     prog.setUniformData("u_tessouter", (float)tessOuter_);
     prog.setUniformData("u_tessalpha", tessAlpha_);
 
     prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", 0);
-    
+    prog_pl.updateTexture("u_texture", fb_->color(0));
+
     fb_->Bind();
     glViewport(0, 0, fb_->width(), fb_->height());
     clearBuffer(COLOR::COLOR_ALPHA);

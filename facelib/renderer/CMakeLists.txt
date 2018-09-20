@@ -8,8 +8,7 @@ FaceToolkitModuleBegin(renderer DEPENDS
                     utility/imgui
                     facelib/utility
                     facelib/gl_utility
-                    facelib/shape_model
-                    facelib/optimizer)
+                    facelib/shape_model)
 
 file(GLOB_RECURSE all_sources *.cpp)
 file(GLOB_RECURSE all_headers *.h)
@@ -22,6 +21,7 @@ if(WITH_IMGUI)
     target_compile_definitions(renderer PUBLIC "WITH_IMGUI")
 endif()
 if(FACE_TOOLKIT)
+    FaceToolkitModuleBegin(renderer DEPENDS facelib/optimizer)
     target_link_libraries(renderer FTM::optimizer)
     target_compile_definitions(renderer PUBLIC "FACE_TOOLKIT")
 endif()

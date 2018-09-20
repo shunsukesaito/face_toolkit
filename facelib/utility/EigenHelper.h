@@ -17,6 +17,9 @@
 
 Eigen::Vector3f getCenter(Eigen::VectorXf& pts);
 
+void computeAABB(const Eigen::VectorXf& pts, Eigen::Vector3f& vMin, Eigen::Vector3f& vMax);
+
+
 void calcNormal(Eigen::MatrixX3f& nml,
                 const Eigen::VectorXf& pts,
                 const Eigen::MatrixX3i& tri);
@@ -65,5 +68,48 @@ namespace Eigen{
         {
             std::cout << "Warning: " << "LDLT decomposition is failed." << std::endl;
         }
+    }
+    
+    template <class T>
+    Eigen::SparseMatrix<T> load_sparse_matrix(FILE* fp)
+    {
+        int property[3];
+        fread(&property[0], sizeof(int), 3, fp);
+        //std::cout << property[0] << " " << property[1] << " " << property[2] << std::endl;
+        std::vector<T> data(property[2]);
+        std::vector<int> row(property[2]), col(property[2]);
+        
+        fread(&row[0], sizeof(int), property[2], fp);
+        fread(&col[0], sizeof(int), property[2], fp);
+        fread(&data[0], sizeof(T), property[2], fp);
+        
+        std::vector< Eigen::Triplet<T> > triplets;
+        for(int i = 0; i < property[2]; ++i)
+            triplets.push_back(Eigen::Triplet<T>(row[i],col[i],data[i]));
+        Eigen::SparseMatrix<T> sp(property[0],property[1]);
+        sp.setFromTriplets(triplets.begin(), triplets.end());
+        
+        return sp;
+    }
+    
+    template <class T>
+    Eigen::Matrix<T,-1,-1> load_matrix(FILE* fp)
+    {
+        int property[2];
+        fread(&property[0], sizeof(int), 2, fp);
+        //std::cout << property[0] << " " << property[1] << std::endl;
+        Eigen::Matrix<T,-1,-1> mat(property[0],property[1]);
+        fread(mat.data(), sizeof(T), property[0]*property[1], fp);
+        
+        return mat;
+    }
+    
+    template <class T>
+    std::vector< Eigen::Triplet<T> > to_triplets(Eigen::SparseMatrix<T> & M){
+        std::vector< Eigen::Triplet<T> > v;
+        for(int i = 0; i < M.outerSize(); i++)
+            for(typename Eigen::SparseMatrix<T>::InnerIterator it(M,i); it; ++it)
+                v.push_back(Eigen::Triplet<T>(it.row(),it.col(),it.value()));
+        return v;
     }
 }

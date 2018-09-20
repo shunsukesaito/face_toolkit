@@ -7,6 +7,14 @@ Eigen::Vector3f getCenter(Eigen::VectorXf& pts)
     return p.rowwise().mean();
 }
 
+void computeAABB(const Eigen::VectorXf& pts, Eigen::Vector3f& vMin, Eigen::Vector3f& vMax)
+{
+    Eigen::Map<const Eigen::Matrix3Xf> p(pts.data(), 3, pts.size()/3);
+    
+    vMin = p.rowwise().minCoeff();
+    vMax = p.rowwise().maxCoeff();
+}
+
 void calcNormal(Eigen::MatrixX3f& nml,
                        const Eigen::VectorXf& pts,
                        const Eigen::MatrixX3i& tri)

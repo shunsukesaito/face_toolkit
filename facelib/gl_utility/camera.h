@@ -38,7 +38,7 @@ struct Camera
     
     Eigen::VectorXf distCoeff_;
     
-    float zNear_ = 1.f;
+    float zNear_ = 0.1f;
     float zFar_ = 400.f;
     int width_;
     int height_;
