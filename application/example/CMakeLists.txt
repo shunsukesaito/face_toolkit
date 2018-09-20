@@ -13,7 +13,6 @@ FaceToolkitModuleBegin(example DEPENDS
 					utility/glm 
 					utility/cereal 
 					utility/tcpstream
-                    utility/face2d-detector 
 					utility/minitrace
 					utility/tiny_obj_loader
 					utility/SPSCQueue

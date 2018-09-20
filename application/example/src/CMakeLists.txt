@@ -58,14 +58,14 @@ set(BUILD_EXECUTABLE 0 CACHE BOOL "build library if not, it build executable")
 if(BUILD_EXECUTABLE)
   add_custom_target(create-folder
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/cache/"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/logs/faceview/")
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/logs/example/")
 
   add_executable(example main.cpp example.cpp gui.h)
   set_target_properties(example PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(example create-folder)
   
 else(BUILD_EXECUTABLE)
-  add_library(faceview STATIC ${all_sources} ${all_headers})
+  add_library(example STATIC ${all_sources} ${all_headers})
 endif(BUILD_EXECUTABLE)
 
 set(OPENMP_LIB "")
