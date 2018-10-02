@@ -325,7 +325,6 @@ void GUI::init(int w, int h)
 void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    glfwHideWindow(session.windows_[MAIN]);
     lookat = Eigen::ApplyTransform(session.data_.RT,getCenter(session.data_.pts_));
     session.camera_.extrinsic_.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
     session.camera_.extrinsic_.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,2.0);
@@ -353,10 +352,10 @@ void GUI::loop()
         session.renderer_.render(session.camera_, session.data_.pts_, session.data_.nml_);
         
         // retrieve framebuffer object
-        cv::Mat_<cv::Vec4f> render_output;
-        session.renderer_.fb_->RetrieveFBO(render_output, 0);
-        cv::imshow("output", render_output);
-        cv::waitKey(1);
+//        cv::Mat_<cv::Vec4f> render_output;
+//        session.renderer_.fb_->RetrieveFBO(render_output, 0);
+//        cv::imshow("output", render_output);
+//        cv::waitKey(1);
         
 #ifdef WITH_IMGUI
         if(!FLAGS_no_imgui){
