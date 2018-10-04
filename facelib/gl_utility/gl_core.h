@@ -79,6 +79,7 @@ struct GLUniform {
     bool hasBeenSet = false;
     
     void setData(const Eigen::Matrix4f& val);
+    void setData(const glm::vec2& val);
     void setData(const glm::vec3& val);
     void setData(float val);
     void setData(uint val);
@@ -148,18 +149,22 @@ public:
     void updateTexture(std::string textureName, const cv::Mat& img);
     void updateElementIndex(const std::vector<unsigned int>& vals);
     
-    void setAttributeData(std::string attributeName, const std::vector<float> &vals);
-    void setAttributeData(std::string attributeName, const std::vector<glm::vec4> &vals);
-    void setAttributeData(std::string attributeName, const std::vector<glm::vec3> &vals);
-    void setAttributeData(std::string attributeName, const std::vector<glm::vec2> &vals);
-    void setUniformData(std::string uniformName, const Eigen::Matrix4f& val);
-    void setUniformData(std::string uniformName, const glm::vec3& val);
-    void setUniformData(std::string uniformName, float val);
-    void setUniformData(std::string uniformName, uint val);
-    void setUniformData(std::string uniformName, const std::vector<Eigen::Matrix4f>& val);
-    void setUniformData(std::string uniformName, const std::vector<glm::vec3>& val);
-    void setUniformData(std::string uniformName, const std::vector<float>& val);
-    void setUniformData(std::string uniformName, const std::vector<uint>& val);
+    template <class T>
+    void setAttributeData(std::string attributeName, const std::vector<T> &vals)
+    {
+        if(attributeMap.find(attributeName) == attributeMap.end()){
+            throw std::runtime_error("Attempted to set attribute which does not exist: " + attributeName);
+        }
+        
+        attributeMap[attributeName].setData(vals);
+    }
+    template <class T>
+    void setUniformData(std::string uniformName, const T& val){
+        if(uniformMap.find(uniformName) == uniformMap.end()){
+            throw std::runtime_error("Attempted to set uniform which does not exist: " + uniformName);
+        }
+        uniformMap[uniformName].setData(val);
+    }
     
     inline void setDrawMode(DrawMode mode){ drawMode = mode;}
 private:

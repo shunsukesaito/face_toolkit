@@ -1,0 +1,119 @@
+#version 400
+//TessEvaluation
+
+//The built-in gl_TessCoord variable lets us know where we are within the patch. 
+//In this case, the primitive mode is triangles, so gl_TessCoord is a barycentric coordinate. 
+//If we were performing quad subdivision, then it would be a UV coordinate and we’d ignore the Z component.
+layout(triangles, fractional_odd_spacing, ccw) in;
+
+// in / out
+
+uniform mat4 u_mvp;
+uniform mat4 u_modelview;
+
+uniform float u_tessalpha;
+
+in vec3 tcPosition[];
+in vec3 tcNormal[];
+in vec4 tcColor[];
+
+out vec4 normalWorld;
+out vec4 normalModel;
+out vec4 position;
+out vec4 color;
+
+vec3 curvePNPts(vec3 p1, vec3 p2, vec3 p3, vec3 n1, vec3 n2, vec3 n3, float u, float v, float w)
+{
+	vec3 b300 = p1;
+	vec3 b030 = p2;
+	vec3 b003 = p3;
+
+	float w12 = dot(p2 - p1, n1);
+	float w21 = dot(p1 - p2, n2);
+	float w13 = dot(p3 - p1, n1);
+	float w31 = dot(p1 - p3, n3);
+	float w23 = dot(p3 - p2, n2);
+	float w32 = dot(p2 - p3, n3);
+
+	vec3 b210 = (2.0 * p1 + p2 - w12 * n1) / 3.0;
+	vec3 b120 = (2.0 * p2 + p1 - w21 * n2) / 3.0;
+	vec3 b021 = (2.0 * p2 + p3 - w23 * n2) / 3.0;
+	vec3 b012 = (2.0 * p3 + p2 - w32 * n3) / 3.0;
+	vec3 b102 = (2.0 * p3 + p1 - w31 * n3) / 3.0;
+	vec3 b201 = (2.0 * p1 + p3 - w13 * n1) / 3.0;
+
+	vec3 ee = (b210 + b120 + b021 + b012 + b102 + b201) / 6.0;
+	vec3 vv = (p1 + p2 + p3) / 3.0;
+	vec3 b111 = ee + (ee - vv) / 2.0;
+
+	return 1.0*b300*u*u*u + 1.0*b030*v*v*v + 1.0*b003*w*w*w +
+		3.0*b210*v*u*u + 3.0*b120*v*v*u + 3.0*b201*w*u*u +
+		3.0*b021*v*v*w + 3.0*b102*w*w*u + 3.0*b012*v*w*w +
+		6.0*b111*u*v*w;
+}
+
+vec3 curvePNNml(vec3 p1, vec3 p2, vec3 p3, vec3 n1, vec3 n2, vec3 n3, float u, float v, float w)
+{
+	float v12 = 2.0 * dot(p2 - p1, n1 + n2) / dot(p2 - p1, p2 - p1);
+	float v23 = 2.0 * dot(p3 - p2, n2 + n3) / dot(p3 - p2, p3 - p2);
+	float v31 = 2.0 * dot(p1 - p3, n3 + n1) / dot(p1 - p3, p1 - p3);
+
+	vec3 n200 = n1;
+	vec3 n020 = n2;
+	vec3 n002 = n3;
+
+	vec3 n110 = normalize(n1 + n2 - v12 * (p2 - p1));
+	vec3 n011 = normalize(n2 + n3 - v23 * (p3 - p2));
+	vec3 n101 = normalize(n3 + n1 - v31 * (p1 - p3));
+ 
+	return normalize(n200*u*u + n020*v*v + n002*w*w + n110*u*v + n011*v*w + n101*u*w);
+}
+
+vec3 phongBasis(vec3 q, vec3 p, vec3 n)
+{
+	return q - dot(q-p,n)*n;
+}
+
+vec3 phongPts(vec3 p1, vec3 p2, vec3 p3, vec3 n1, vec3 n2, vec3 n3, float u, float v, float w)
+{
+	vec3 p = u * p1 + v * p2 + w * p3;
+	return u * phongBasis(p, p1, n1) + v * phongBasis(p, p2, n2) + w * phongBasis(p, p3, n3);
+}
+
+vec3 interpAttrib(vec3 a1, vec3 a2, vec3 a3, float u, float v, float w)
+{
+	return u * a1 + v * a2 + w * a3;
+}
+
+vec4 interpAttrib(vec4 a1, vec4 a2, vec4 a3, float u, float v, float w)
+{
+	return u * a1 + v * a2 + w * a3;
+}
+
+void main(void)
+{
+	vec3 p1 = tcPosition[0];
+	vec3 p2 = tcPosition[1];
+	vec3 p3 = tcPosition[2];
+
+	vec3 n1 = normalize(tcNormal[0]);
+	vec3 n2 = normalize(tcNormal[1]);
+	vec3 n3 = normalize(tcNormal[2]);
+
+	float u = gl_TessCoord.x;
+	float v = gl_TessCoord.y;
+	float w = gl_TessCoord.z;
+
+	vec3 pnPos = curvePNPts(p1,p2,p3,n1,n2,n3,u,v,w);
+
+	vec3 n = interpAttrib(n1,n2,n3,u,v,w);
+	normalModel = vec4(n,0.0);
+	normalWorld = u_modelview * normalModel;
+
+	// compute interpolated pos
+    vec3 barPos = interpAttrib(p1,p2,p3,u,v,w);
+    position = vec4((1.0 - u_tessalpha) * barPos + u_tessalpha * pnPos,1.0);
+
+	color = interpAttrib(tcColor[0],tcColor[1],tcColor[2],u,v,w);
+    gl_Position = u_mvp * position;
+}

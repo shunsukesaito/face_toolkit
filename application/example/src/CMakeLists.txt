@@ -63,7 +63,12 @@ if(BUILD_EXECUTABLE)
   add_executable(example main.cpp example.cpp gui.h)
   set_target_properties(example PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(example create-folder)
-  
+
+  add_executable(example2 main.cpp example2.cpp gui.h)
+  set_target_properties(example2 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(example2 create-folder)
+
+
 else(BUILD_EXECUTABLE)
   add_library(example STATIC ${all_sources} ${all_headers})
 endif(BUILD_EXECUTABLE)
@@ -74,6 +79,16 @@ if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
 endif()
 
 target_link_libraries(example
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
+                      ${DLIB_LIBRARIES}
+                      Threads::Threads
+                      ${CMAKE_DL_LIBS}
+                      ${OPENMP_LIB})
+
+target_link_libraries(example2
                       FTM::renderer
                       FTM::utility
                       FTM::gflags

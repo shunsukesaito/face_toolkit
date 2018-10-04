@@ -1,0 +1,43 @@
+#version 400
+//TessControl
+
+uniform float u_tessinner;
+uniform float u_tessouter;
+
+layout(vertices = 3) out;
+
+// in / out
+in vec4 position[];
+in vec4 normalWorld[];
+in vec4 normalModel[];
+in vec4 color[];
+
+out vec3 tcPosition[];
+out vec3 tcNormal[];
+out vec4 tcColor[];
+
+#define ID gl_InvocationID
+
+//Note that per-patch outputs (such as gl_TessLevelInner) only need to be written once. 
+//We enclose them in an if so that we only bother writing to them from a single execution thread. 
+//Incidentally, you can create custom per-patch variables if you’d like; 
+//simply use the patch out qualifier when declaring them.
+void main(void)
+{
+    float TessLevelInner = u_tessinner;
+    float TessLevelOuter = u_tessouter;
+
+	// Set the control points of the output patch
+	tcPosition[ID] = position[ID].xyz;
+	tcColor[ID] = color[ID];
+
+	tcNormal[ID] = normalize(normalModel[ID].xyz);
+	gl_out[ID].gl_Position = gl_in[ID].gl_Position;
+	if(ID == 0)
+	{
+		gl_TessLevelInner[0] = TessLevelInner;
+		gl_TessLevelOuter[0] = TessLevelOuter;
+		gl_TessLevelOuter[1] = TessLevelOuter;
+		gl_TessLevelOuter[2] = TessLevelOuter;
+	}
+}
