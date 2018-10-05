@@ -14,7 +14,7 @@
 
 void LinearFaceModel::loadLightStageData(const std::string& data_dir)
 {
-    // 0: obj, 1: diff_albedo, 2: diff_normal, 3: spec_albedo, 4: spec_normal, 5: displacement
+    // 0: obj, 1: displacement, 2: diff_albedo, 3: spec_albedo, 4: diff_normal, 5: spec_normal
     std::string files[6];
     std::ifstream fin(data_dir + "list.txt");
     if(fin.is_open()){
@@ -38,7 +38,7 @@ void LinearFaceModel::loadLightStageData(const std::string& data_dir)
 
 void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
 {
-    // 0: obj, 1: diff_albedo(png), 2: spec_albedo(png), 3: displacement
+    // 0: obj, 1: displacement, 2: diff_albedo(png), 3: spec_albedo(png), 
     std::string files[4];
     std::ifstream fin(data_dir + "list.txt");
     if(fin.is_open()){
