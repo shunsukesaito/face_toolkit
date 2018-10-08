@@ -50,10 +50,12 @@ void LSRenderParams::updateIMGUI()
     ImGui::SliderFloat("cullOffset", &cull_offset, -1.0, 0.0);
     ImGui::SliderFloat("specScale", &spec_scale, 0.0, 1.0);
     ImGui::SliderFloat("diffScale", &diff_scale, 0.0, 1.0);
-    ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
-    ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
-    ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
-    
+    if (use_pointlight)
+        ImGui::SliderFloat3("light pos", &light_pos[0], -100.0, 100.0);
+    else{
+        ImGui::SliderFloat("light rot", &light_rot, -3.14, 3.14);
+        ImGui::SliderInt("env ID", &env_id, 0, env_size-1);
+    }
     const char* listbox_items[] = {"all", "diffuse", "specular", "diff albedo", "spec albedo", "spec normal", "diff normal", "uv"};
     ImGui::ListBox("RenderTarget", &location, listbox_items, 8);
 }
@@ -92,7 +94,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
 
     std::vector<std::string> env_list;
     {
-        std::ifstream fin(data_dir + "LS/env_list.txt");
+        std::ifstream fin(data_dir + "env/env_list.txt");
         if(fin.is_open()){
             while(!fin.eof())
             {
@@ -102,7 +104,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
             }
         }
         else{
-            std::cout << "Error: failed to open " << data_dir << "env_list.txt" << std::endl;
+            std::cout << "Error: failed to open " << data_dir << "LS/env/env_list.txt" << std::endl;
         }
     }
     
@@ -120,7 +122,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
         /*
          **Apply diffuse convolution to the map for lambertian rendering
          */
-        std::string filename = data_dir + "LS/env/diff_" + env_list[i] + ".exr";
+        std::string filename = data_dir + "env/Diffuse/" + env_list[i] + ".exr";
         TinyExrImage diffuseEnv;
         int ret = LoadEXR(&diffuseEnv.buf, &diffuseEnv.width, &diffuseEnv.height, filename.c_str(), &err);
         if (ret != 0)
@@ -132,7 +134,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
 
         std::cout << " diffuse done...";
 
-        filename = data_dir + "LS/env/ward0.15_" + env_list[i] + ".hdr.exr";
+        filename = data_dir + "env/Specular/ward0.15_" + env_list[i] + ".exr";
         TinyExrImage specularEnv1;
         ret = LoadEXR(&specularEnv1.buf, &specularEnv1.width, &specularEnv1.height, filename.c_str(), &err);
         if (ret != 0)
@@ -142,7 +144,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
         }
         specularEnv1.FlipVertical();
         
-        filename = data_dir + "LS/env/ward0.37_" + env_list[i] + ".hdr.exr";
+        filename = data_dir + "env/Specular/ward0.37_" + env_list[i] + ".exr";
         TinyExrImage specularEnv2;
         ret = LoadEXR(&specularEnv2.buf, &specularEnv2.width, &specularEnv2.height, filename.c_str(), &err);
         if (ret != 0)
