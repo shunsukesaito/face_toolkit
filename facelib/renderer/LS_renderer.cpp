@@ -236,6 +236,9 @@ void LSRenderer::render(const Camera& camera, const FaceData& fd)
     fb_depth_->Bind();
     glViewport(0, 0, fb_depth_->width(), fb_depth_->height());
     clearBuffer(COLOR::COLOR_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
     prog_depth.draw();
     fb_depth_->Unbind();
     

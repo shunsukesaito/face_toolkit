@@ -167,67 +167,7 @@ void Framebuffer::RetrieveFBO(int w, int h, cv::Mat& mat, int attachID)
 
 void Framebuffer::RetrieveFBO(cv::Mat& mat, int attachID)
 {
-    if(mat.rows != height_ || mat.cols != width_)
-        mat.create(height_, width_, mat.type());
-    
-    Bind();
-    
-    CHECK_GL_ERROR();
-    
-    glViewport(0, 0, width_, height_);
-    
-    CHECK_GL_ERROR();
-    
-    glReadBuffer(GL_COLOR_ATTACHMENT0 + attachID);
-    
-    CHECK_GL_ERROR();
-    
-    // This is needed because RGB buffer is not 32-bit aligned
-    
-    //use fast 4-byte alignment (default anyway) if possible
-    glPixelStorei(GL_PACK_ALIGNMENT, (mat.step & 3) ? 1 : 4);
-    
-    //set length of one complete row in destination data (doesn't need to equal img.cols)
-    glPixelStorei(GL_PACK_ROW_LENGTH, mat.step/mat.elemSize());
-    
-    // Warning: This is a bit adhoc.
-    GLint rgbmode;
-    if (mat.channels() == 4)
-    {
-        rgbmode = GL_RGBA;
-    }
-    else if (mat.channels() == 3)
-    {
-        rgbmode = GL_BGR;
-    }
-    else if (mat.channels() == 1)
-    {
-        rgbmode = GL_DEPTH_COMPONENT;
-    }
-    else
-    {
-        throw std::runtime_error("Error, texture formap unknown.");
-    }
-    
-    GLint type;
-    if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_8U)
-    {
-        type = GL_UNSIGNED_BYTE;
-    }
-    else if ((mat.type() & CV_MAT_DEPTH_MASK) == CV_32F)
-    {
-        type = GL_FLOAT;
-    }
-    else
-    {
-        throw std::runtime_error("Error, texture type unknown.");
-    }
-    
-    glReadPixels(0, 0, width_, height_, rgbmode, type, mat.data );
-    cv::flip(mat, mat, 0);
-    CHECK_GL_ERROR();
-    
-    Unbind();
+    RetrieveFBO(width_, height_, mat, attachID);
 }
 
 void Framebuffer::ApplyBuffers()
