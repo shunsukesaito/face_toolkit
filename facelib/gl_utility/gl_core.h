@@ -81,11 +81,13 @@ struct GLUniform {
     void setData(const Eigen::Matrix4f& val);
     void setData(const glm::vec2& val);
     void setData(const glm::vec3& val);
+    void setData(const glm::vec4& val);
     void setData(float val);
     void setData(uint val);
     
     void setData(const std::vector<Eigen::Matrix4f>& val);
     void setData(const std::vector<glm::vec3>& val);
+    void setData(const std::vector<glm::vec4>& val);
     void setData(const std::vector<float>& val);
     void setData(const std::vector<uint>& val);
 };

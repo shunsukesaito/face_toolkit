@@ -36,13 +36,19 @@ endif()
 add_subdirectory(src)
 
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
-copyFolder(COPY_data ../../data assets)
-copyFolder(COPY_shaders ../../shaders assets/shaders)
 
-set_property(TARGET COPY_data PROPERTY FOLDER "COPY/ASSETS")
-set_property(TARGET COPY_shaders PROPERTY FOLDER "COPY/ASSETS")
+#copyFolder(COPY_data ../../data assets)
+#copyFolder(COPY_shaders ../../shaders assets/shaders)
+copyData(../../data assets)
+createSymlink(../../shaders assets/shaders)
 
-add_dependencies(example COPY_data COPY_shaders)
+#set_property(TARGET COPY_data PROPERTY FOLDER "COPY/ASSETS")
+#set_property(TARGET COPY_shaders PROPERTY FOLDER "COPY/ASSETS")
+
+#add_dependencies(example COPY_data COPY_shaders)
+#add_dependencies(example2 COPY_data COPY_shaders)
+#add_dependencies(example3 COPY_data COPY_shaders)
+#add_dependencies(example4 COPY_data COPY_shaders)
 
 set(_all_target example)
 

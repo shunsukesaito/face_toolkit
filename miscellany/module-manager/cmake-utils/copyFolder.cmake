@@ -28,3 +28,15 @@ macro(copyFolder NAME SOURCE TARGET)
     DEPENDS "${NAME}.stamp"
     )
 endmacro(copyFolder)
+
+macro(copyData SOURCE TARGET)
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}/"
+     DESTINATION "${CMAKE_BINARY_DIR}/${TARGET}"
+     ${ARGN})
+endmacro(copyData)
+
+macro(createSymlink SOURCE TARGET)
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink
+                    "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}/"
+                    "${CMAKE_BINARY_DIR}/${TARGET}")
+endmacro(createSymlink)

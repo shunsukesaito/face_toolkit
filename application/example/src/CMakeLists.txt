@@ -68,6 +68,13 @@ if(BUILD_EXECUTABLE)
   set_target_properties(example2 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(example2 create-folder)
 
+  add_executable(example3 main.cpp example3.cpp gui.h)
+  set_target_properties(example3 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(example3 create-folder)
+
+  add_executable(example4 main.cpp example4.cpp gui.h)
+  set_target_properties(example4 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(example4 create-folder)
 
 else(BUILD_EXECUTABLE)
   add_library(example STATIC ${all_sources} ${all_headers})
@@ -98,6 +105,26 @@ target_link_libraries(example2
                       ${CMAKE_DL_LIBS}
                       ${OPENMP_LIB})
 
+target_link_libraries(example3
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
+                      ${DLIB_LIBRARIES}
+                      Threads::Threads
+                      ${CMAKE_DL_LIBS}
+                      ${OPENMP_LIB})
+
+target_link_libraries(example4
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
+                      ${DLIB_LIBRARIES}
+                      Threads::Threads
+                      ${CMAKE_DL_LIBS}
+                      ${OPENMP_LIB})
+                                            
 install(TARGETS example
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib)

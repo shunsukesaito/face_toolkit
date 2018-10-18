@@ -101,8 +101,11 @@ void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sec
         float const x = cos(2.0*M_PI * s * S) * sin( M_PI * r * R );
         float const z = sin(2.0*M_PI * s * S) * sin( M_PI * r * R );
         
-        (*t)[0] = s*S;
-        (*t)[1] = r*R;
+//        (*t)[0] = s*S;
+//        (*t)[1] = r*R;
+        float len = sqrt(x * x + y * y + z * z);
+        (*t)[1] = acos(y / len) / M_PI;
+        (*t)[0] = (atan2(z, x) / M_PI + 1.0f) * 0.5f;
         *t++;
         
         (*v)[0] = x * radius;
@@ -122,13 +125,15 @@ void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sec
         int curRow = r * sectors;
         int nextRow = (r+1) * sectors;
         
-        tri.push_back(curRow + s);
-        tri.push_back(nextRow + s);
-        tri.push_back(nextRow + (s+1));
-        
-        tri.push_back(curRow + s);
-        tri.push_back(nextRow + (s+1));
-        tri.push_back(curRow + (s+1));
+        if(s != sectors - 1 && r != rings - 1){
+            tri.push_back(curRow + s);
+            tri.push_back(nextRow + s);
+            tri.push_back(nextRow + (s+1));
+            
+            tri.push_back(curRow + s);
+            tri.push_back(nextRow + (s+1));
+            tri.push_back(curRow + (s+1));
+        }
     }
     
     if(with_idx){
@@ -150,6 +155,34 @@ void glSphere::generateSphere(float radius, unsigned int rings, unsigned int sec
             nml_.push_back(nml[i]);
             uvs_.push_back(uvs[i]);
             clr_.push_back(clr[i]);
+        }
+        for(int i = 0; i < uvs_.size(); i+=3)
+        {
+            glm::vec2 t1 =uvs_[i];
+            glm::vec2 t2 =uvs_[i+1];
+            glm::vec2 t3 =uvs_[i+2];
+            // fix the mirrored uv
+            if(t1[0]-t2[0]>0.25)
+                uvs_[i][0] = 1.0 - t1[0];
+            else if(t2[0]-t1[0]>0.25)
+                uvs_[i+1][0] = 1.0 - t2[0];
+            if(t2[0]-t3[0]>0.25)
+                uvs_[i+1][0] = 1.0 - t2[0];
+            else if(t3[0]-t2[0]>0.25)
+                uvs_[i+2][0] = 1.0 - t3[0];
+            if(t1[0]-t3[0]>0.25)
+                uvs_[i][0] = 1.0 - t1[0];
+            else if(t3[0]-t1[0]>0.25)
+                uvs_[i+2][0] = 1.0 - t3[0];
+            
+            // fix polar cases
+            if(t1[1] > 0.99 || t1[1] < 0.01)
+                uvs_[i][0] = 0.5;
+            if(t2[1] > 0.99 || t2[1] < 0.01)
+                uvs_[i+1][0] = 0.5;
+            if(t3[1] > 0.99 || t3[1] < 0.01)
+                uvs_[i+2][0] = 0.5;
+            
         }
     }
 }

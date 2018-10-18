@@ -19,7 +19,7 @@ void createCircleXSlits(float radius, const Eigen::Vector3f& q1, const Eigen::Ve
     {
         p1 << radius*cos((float)i*unit), h, radius*sin((float)i*unit);
         p2 << radius*cos((float)(i+1)*unit), h, radius*sin((float)(i+1)*unit);
-        cameras.push_back(XSlitCamera(p1,p2,q1,q2,0.5f,0.97f,width,height));
+        cameras.push_back(XSlitCamera(p1,p2,q1,q2,0.01f,0.99f,width,height));
     }
 }
 
@@ -65,7 +65,7 @@ void XSlitCamera::updateTransform(Eigen::Matrix4f& T, Eigen::Vector2f& d1, Eigen
     float lq = (q1_-q2_).norm();
     Eigen::Vector3f nx = -(p1_-p2_).normalized();
     Eigen::Vector3f ny = -(q1_-q2_).normalized();
-    Eigen::Vector3f nz = -nx.cross(ny);
+    Eigen::Vector3f nz = -(nx.cross(ny)).normalized();
     
     Eigen::Vector3f cp = 0.5f*(p1_+p2_);
     float z = ((q1_-cp).cross(q2_-cp)).norm()/lq;

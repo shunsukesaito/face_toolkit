@@ -563,6 +563,19 @@ void GLUniform::setData(const std::vector<glm::vec3> &val)
     hasBeenSet = true;
 }
 
+void GLUniform::setData(const std::vector<glm::vec4> &val)
+{
+    if(type != DataType::VECTOR4){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with Vector4 data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniform3fv(location, val.size(), (float*)&val[0][0]);
+    
+    hasBeenSet = true;
+}
+
+
 void GLUniform::setData(const std::vector<float> &val)
 {
     if(type != DataType::FLOAT){
@@ -620,6 +633,18 @@ void GLUniform::setData(const glm::vec3 &val)
     
     glUseProgram(parentProgram->programHandle);
     glUniform3f(location, val[0], val[1], val[2]);
+    
+    hasBeenSet = true;
+}
+
+void GLUniform::setData(const glm::vec4 &val)
+{
+    if(type != DataType::VECTOR4){
+        throw std::runtime_error("Attempted to set uniform of type " + std::to_string(static_cast<int>(type)) + " with Vector4 data");
+    }
+    
+    glUseProgram(parentProgram->programHandle);
+    glUniform4f(location, val[0], val[1], val[2], val[3]);
     
     hasBeenSet = true;
 }
