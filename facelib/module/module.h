@@ -8,6 +8,10 @@
 
 #include <SPSCQueue.h>
 
+#ifdef WITH_IMGUI
+#include <imgui.h>
+#endif
+
 using namespace rigtorp;
 
 class Module;
@@ -83,6 +87,10 @@ public:
     // Provides a way to interrupt the process.
     // Default implementation does nothing.
     virtual void Stop();
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI(){}
+#endif
 
     // construct a default module
     static ModuleHandle Create(const std::string &name);

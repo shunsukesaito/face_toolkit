@@ -10,11 +10,8 @@
 #include <gl_utility/camera.h>
 #include <shape_model/face_model.h>
 
-#include <f2f/f2f_renderer.h>
-
-#include <optimizer/p2d_optimizer.h>
-#include <f2f/f2f_optimizer.h>
 #include <optimizer/face_result.h>
+#include <optimizer/base_optimizer.h>
 
 #include <param_stream.h>
 
@@ -31,11 +28,15 @@ public:
     // destructor
     ~FaceOptModule();
     
+//    void init(std::string data_dir,
+//              FaceModelPtr face_model,
+//              P2DFitParamsPtr p2d_param,
+//              F2FParamsPtr f2f_param);
+
     void init(std::string data_dir,
-              FaceModelPtr face_model,
-              P2DFitParamsPtr p2d_param,
-              F2FParamsPtr f2f_param);
-    
+              FaceModelPtr fm,
+              std::map<std::string, OptimizerHandle> optimizers);
+
     void update(FaceResult& result);
     
     // does module specific work
@@ -44,6 +45,10 @@ public:
     // Provides a way to interrupt the process.
     // Default implementation does nothing.
     virtual void Stop();
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
     
     inline void reset(){ for(auto& f : fd_){f.init();} }
     
@@ -63,12 +68,20 @@ public:
     // construct a default module
     static ModuleHandle Create(const std::string &name,
                                const std::string &data_dir,
-                               FaceModelPtr face_model,
-                               P2DFitParamsPtr p2d_param,
-                               F2FParamsPtr f2f_param,
+                               FaceModelPtr fm,
+                               std::map<std::string, OptimizerHandle> optimizers,
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue);
+
+//    static ModuleHandle Create(const std::string &name,
+//                               const std::string &data_dir,
+//                               FaceModelPtr face_model,
+//                               P2DFitParamsPtr p2d_param,
+//                               F2FParamsPtr f2f_param,
+//                               CapQueueHandle input_frame_queue,
+//                               FaceQueueHandle output_result_queue,
+//                               CmdQueueHandle command_queue);
 private:
     std::string data_dir_;
     
@@ -76,18 +89,20 @@ private:
     FaceQueueHandle output_result_queue_;
     CmdQueueHandle command_queue_;
     
-    F2FRenderer f2f_renderer_;
+    std::map<std::string, OptimizerHandle> optimizers_;
     
-    FaceModelPtr face_model_;
+//    F2FRenderer f2f_renderer_;
+    
+    FaceModelPtr fm_;
     std::vector<FaceData> fd_ = std::vector<FaceData>(1);
         
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
     
-    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
+//    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
     
-    P2DFitParamsPtr p2d_param_;
-    F2FParamsPtr f2f_param_;    
+//    P2DFitParamsPtr p2d_param_;
+//    F2FParamsPtr f2f_param_;
 };
 
 class FacePreviewModule : public Module
@@ -118,6 +133,10 @@ public:
     // Provides a way to interrupt the process.
     // Default implementation does nothing.
     virtual void Stop();
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI(){}
+#endif
     
     inline void reset(){ for(auto& f : fd_){f.init();} }
     
@@ -195,8 +214,6 @@ private:
     
     std::vector<P2P2DC> c_p2p_;
     std::vector<P2L2DC> c_p2l_;
-    
-    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
 };
 
 

@@ -535,3 +535,63 @@ void F2FHierarchicalGaussNewton(std::vector<FaceData>& fd,
     }
 }
 
+void F2FOptimizer::init(std::string data_dir, FaceModelPtr fm)
+{
+    param_.loadParamFromTxt("f2f.ini");
+    
+    fm_ = fm;
+    param_.dof.ID = std::min(param_.dof.ID, fm_->n_id());
+    param_.dof.EX = std::min(param_.dof.EX, fm_->n_exp());
+    param_.dof.AL = std::min(param_.dof.AL, fm_->n_clr());
+
+    // OpenGL cannot share context across different threads...
+    // TODO: multi-thread use only
+    {
+        glfwWindowHint(GLFW_VISIBLE, false);
+        glfwWindowHint(GLFW_FOCUSED, false);
+        auto window = Window(1, 1, 1, "F2F Window");
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1);
+    }
+    
+    renderer_.init(data_dir, data_dir + "shaders", fm_);
+}
+
+void F2FOptimizer::solve(FaceResult &result)
+{
+    // param check (especially dof)
+    {
+        param_.dof.ID = std::max(0,std::min((int)result.fd[0].idCoeff.size(),param_.dof.ID));
+        param_.dof.EX = std::max(0,std::min((int)result.fd[0].exCoeff.size(),param_.dof.EX));
+        param_.dof.AL = std::max(0,std::min((int)result.fd[0].alCoeff.size(),param_.dof.AL));
+    }
+    
+    if((param_.run_ || param_.onetime_run_) &&
+       result.fd[0].idCoeff.size() != 0 && result.fd[0].exCoeff.size() != 0 && result.fd[0].alCoeff.size() != 0){
+        
+        // update segmentation mask
+        // TODO: support multi-view/multi-frame for segmentation update
+        if(!result.cap_data[0][0].seg_.empty())
+            renderer_.updateSegment(result.cap_data[0][0].seg_);
+
+        F2FHierarchicalGaussNewton(result.fd, result.cameras, renderer_, result.cap_data, result.c_p2p, result.c_p2l, param_, logger_);
+        
+        result.processed_ = true;
+        if(param_.onetime_run_) param_.onetime_run_ = false;
+    }
+}
+
+#ifdef WITH_IMGUI
+void F2FOptimizer::updateIMGUI()
+{
+    param_.updateIMGUI();
+}
+#endif
+
+OptimizerHandle F2FOptimizer::Create(std::string name)
+{
+    auto opt = new F2FOptimizer(name);
+    
+    return OptimizerHandle(opt);
+}
+

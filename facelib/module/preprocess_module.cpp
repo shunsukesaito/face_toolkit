@@ -71,23 +71,21 @@ void PreprocessModule::Stop()
     // nothing to do
 }
 
-void PreprocessModule::init(PProParamsPtr param,
-                            Face2DDetectorPtr face_detector)
+void PreprocessModule::init(Face2DDetectorPtr face_detector)
 {
     seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
-    param_ = param;
     
     fdetector_ = face_detector;    
 }
 
 void PreprocessModule::update(CaptureResult& result)
 {
-    if(param_->update_land_ || param_->onetime_land_){
+    if(param_.update_land_ || param_.onetime_land_){
         if(FLAGS_land_type.find("cpm") != std::string::npos){
             fdetector_->GetFaceLandmarks(result.data.img_, result.data.q2V_, rect_, false, true);
         }
         else if(FLAGS_land_type.find("dlib") != std::string::npos){
-            fdetector_->GetFaceLandmarks(result.data.img_, result.data.q2V_, rect_, false, false);
+            fdetector_->GetFaceLandmarks(result.data.img_, result.data.q2V_, rect_, true, false);
         }
         else if(FLAGS_land_type.find("pts") != std::string::npos){
             result.data.q2V_ = load_pts(FLAGS_land_type);
@@ -97,15 +95,15 @@ void PreprocessModule::update(CaptureResult& result)
 //        cv::Mat tmp;
 //        crop_image(result.img, tmp, rect_);
 //        cv::imwrite("rect.png", tmp);
-        if(param_->onetime_land_) param_->onetime_land_ = false;
+        if(param_.onetime_land_) param_.onetime_land_ = false;
     }
     else{
         result.data.q2V_ = p2d_;
     }
     
     bool hasface = true;
-    if(param_->update_seg_ || param_->onetime_seg_){
-        if (!param_->update_land_)
+    if(param_.update_seg_ || param_.onetime_seg_){
+        if (!param_.update_land_)
             hasface = fdetector_->GetFaceRect(result.data.img_, rect_, false);
         
         if(hasface){
@@ -113,7 +111,7 @@ void PreprocessModule::update(CaptureResult& result)
             seg_tcp_->getSegmentation(result.data.seg_);
             seg_ = result.data.seg_.clone();
         }
-        if(param_->onetime_seg_) param_->onetime_seg_ = false;
+        if(param_.onetime_seg_) param_.onetime_seg_ = false;
     }
 }
 
@@ -132,8 +130,16 @@ void PreprocessModule::set_command_queue(CmdQueueHandle queue)
     command_queue_ = queue;
 }
 
+#ifdef WITH_IMGUI
+void PreprocessModule::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader("Preprocess Module")){
+        param_.updateIMGUI();
+    }
+}
+#endif
+
 ModuleHandle PreprocessModule::Create(const std::string &name,
-                                      PProParamsPtr param,
                                       Face2DDetectorPtr face_detector,
                                       CapQueueHandle input_frame_queue,
                                       CapQueueHandle output_frame_queue,
@@ -142,7 +148,7 @@ ModuleHandle PreprocessModule::Create(const std::string &name,
     auto module = new PreprocessModule(name);
     // add this module to the global registry
     
-    module->init(param,face_detector);
+    module->init(face_detector);
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_frame_queue);
     module->set_command_queue(command_queue);

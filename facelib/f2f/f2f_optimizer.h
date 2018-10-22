@@ -7,6 +7,7 @@
 #include <shape_model/face_model.h>
 #include <optimizer/face_gradient.h>
 #include <optimizer/face_result.h>
+#include <optimizer/base_optimizer.h>
 
 #include "f2f_renderer.h"
 
@@ -76,3 +77,24 @@ void F2FHierarchicalGaussNewton(std::vector<FaceData>& fd,
                                 std::vector<P2L2DC>& C_P2L,
                                 const F2FParams& params,
                                 std::shared_ptr<spdlog::logger> logger = spdlog::stdout_color_mt("console"));
+
+struct F2FOptimizer : public BaseOptimizer
+{
+    F2FParams param_;
+    FaceModelPtr fm_;
+    F2FRenderer renderer_;
+    
+    std::shared_ptr<spdlog::logger> logger_ = spdlog::stdout_color_mt("console");
+    
+    F2FOptimizer(){}
+    F2FOptimizer(std::string name) : BaseOptimizer(name){}
+
+    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void solve(FaceResult& result);
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
+    
+    static OptimizerHandle Create(std::string name);
+};

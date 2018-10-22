@@ -28,15 +28,10 @@ void FaceOptModule::Process()
 {
     std::string command = "";
     
-    // OpenGL cannot share context across different threads...
-    glfwWindowHint(GLFW_VISIBLE, false);
-    glfwWindowHint(GLFW_FOCUSED, false);
-    auto window = Window(1, 1, 1, "F2F Window");
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-    
-    f2f_renderer_.init(data_dir_, data_dir_ + "shaders", face_model_);
-    
+    // optimizers need to be initialized here for thread-depedent functions
+    for(auto&& opt : optimizers_)
+        opt.second->init(data_dir_, fm_);
+
     while(command != "stop")
     {
         if(input_frame_queue_->front()){
@@ -68,33 +63,21 @@ void FaceOptModule::Stop()
 }
 
 void FaceOptModule::init(std::string data_dir,
-                      FaceModelPtr face_model,
-                      P2DFitParamsPtr p2d_param,
-                      F2FParamsPtr f2f_param)
+                         FaceModelPtr fm,
+                         std::map<std::string, OptimizerHandle> optimizers)
 {
     data_dir_ = data_dir;
     
-    face_model_ = face_model;
-    p2d_param_ = p2d_param;
-    f2f_param_ = f2f_param;
+    fm_ = fm;
     
-    p2d_param_->loadParamFromTxt("p2d.ini");
-    f2f_param_->loadParamFromTxt("f2f.ini");
+    optimizers_ = optimizers;
     
-    p2d_param_->dof.ID = std::min(p2d_param_->dof.ID, face_model->n_id());
-    p2d_param_->dof.EX = std::min(p2d_param_->dof.EX, face_model->n_exp());
-    
-    f2f_param_->dof.ID = std::min(f2f_param_->dof.ID, face_model->n_id());
-    f2f_param_->dof.EX = std::min(f2f_param_->dof.EX, face_model->n_exp());
-    f2f_param_->dof.AL = std::min(f2f_param_->dof.AL, face_model->n_clr());
-    
-    fd_[0].setFaceModel(face_model_);
+    fd_[0].setFaceModel(fm_);
 
-    P2P2DC::parseConstraints(data_dir + "p2p_const_" + face_model->fm_type_ + ".txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "p2l_const_" + face_model->fm_type_ + ".txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "p2p_const_" + fm->fm_type_ + ".txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "p2l_const_" + fm->fm_type_ + ".txt", c_p2l_);
     
-    face_model_->loadContourList(data_dir + "cont_list_" + face_model->fm_type_ + ".txt");
-    CHECK_GL_ERROR();
+    fm_->loadContourList(data_dir + "cont_list_" + fm->fm_type_ + ".txt");
 }
 
 void FaceOptModule::update(FaceResult& result)
@@ -106,7 +89,7 @@ void FaceOptModule::update(FaceResult& result)
            std::isnan(fd_[i].alCoeff.sum()) ||
            std::isnan(fd_[i].RT.sum()) ||
            std::isnan(fd_[i].SH.sum())){
-            std::cout << "Warning: face gets nan..." << std::endl;
+            std::cerr << "FaceOptModule::update() - face gets nan..." << std::endl;
             fd_[i].init();
         }
         
@@ -118,33 +101,14 @@ void FaceOptModule::update(FaceResult& result)
             c_p2l_[j].v_idx = fd_[i].cont_idx_[j];
         }
     }
-
-    if(p2d_param_->run_ || p2d_param_->onetime_run_){
-        // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
-        P2DFitParams opt_param = *p2d_param_;
-        
-        P2DGaussNewton(fd_, result.cameras, result.cap_data, c_p2p_, c_p2l_, opt_param);
-        result.processed_ = true;
-        if(p2d_param_->onetime_run_) p2d_param_->onetime_run_ = false;
-    }
-    if(f2f_param_->run_ || f2f_param_->onetime_run_){
-        // it's not completely thread safe, but copy should be brazingly fast so hopefully it dones't matter
-        F2FParams opt_param = *f2f_param_;
-
-        // update segmentation mask
-        // TODO: support multi-view/multi-frame for segmentation update
-        if(!result.cap_data[0][0].seg_.empty())
-            f2f_renderer_.updateSegment(result.cap_data[0][0].seg_);
-        
-        F2FHierarchicalGaussNewton(fd_, result.cameras, f2f_renderer_, result.cap_data, c_p2p_, c_p2l_, opt_param, logger_);
-        result.processed_ = true;
-        
-        if(f2f_param_->onetime_run_) f2f_param_->onetime_run_ = false;
-    }
-
     result.fd = fd_;
     result.c_p2p = c_p2p_;
-    result.c_p2l = c_p2l_;
+    result.c_p2l = c_p2l_;    
+    
+    for(auto&& opt : optimizers_)
+        opt.second->solve(result);
+    
+    fd_ = result.fd;
 }
 
 void FaceOptModule::set_input_queue(CapQueueHandle queue)
@@ -162,11 +126,21 @@ void FaceOptModule::set_command_queue(CmdQueueHandle queue)
     command_queue_ = queue;
 }
 
+#ifdef WITH_IMGUI
+void FaceOptModule::updateIMGUI()
+{
+    if (ImGui::CollapsingHeader("Optimization Module"))
+    {
+        for(auto&& opt : optimizers_)
+            opt.second->updateIMGUI();
+    }
+}
+#endif
+
 ModuleHandle FaceOptModule::Create(const std::string &name,
                                 const std::string &data_dir,
-                                FaceModelPtr face_model,
-                                P2DFitParamsPtr p2d_param,
-                                F2FParamsPtr f2f_param,
+                                FaceModelPtr fm,
+                                std::map<std::string, OptimizerHandle> optimizers,
                                 CapQueueHandle input_frame_queue,
                                 FaceQueueHandle output_result_queue,
                                 CmdQueueHandle command_queue)
@@ -174,7 +148,7 @@ ModuleHandle FaceOptModule::Create(const std::string &name,
     auto module = new FaceOptModule(name);
     // add this module to the global registry
     
-    module->init(data_dir,face_model,p2d_param,f2f_param);
+    module->init(data_dir,fm,optimizers);
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_result_queue);
     module->set_command_queue(command_queue);
@@ -201,13 +175,6 @@ FacePreviewModule::~FacePreviewModule()
 void FacePreviewModule::Process()
 {
     std::string command = "";
-    
-    // OpenGL cannot share context across different threads...
-    glfwWindowHint(GLFW_VISIBLE, false);
-    glfwWindowHint(GLFW_FOCUSED, false);
-    auto window = Window(1, 1, 1, "F2F Window");
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
     
     while(command != "stop")
     {

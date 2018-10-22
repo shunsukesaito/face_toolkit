@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
-FaceToolkitModuleBegin(faceview DEPENDS 
+FaceToolkitModuleBegin(mp_demo DEPENDS 
 					library/Eigen3 
 					library/GLEW 
 					library/glfw3 
@@ -51,7 +51,7 @@ createSymlink(../../shaders assets/shaders)
 
 #add_dependencies(faceview COPY_data COPY_shaders)
 
-set(_all_target faceview)
+set(_all_target mp_demo)
 
 install(DIRECTORY "${CMAKE_BINARY_DIR}/assets/" USE_SOURCE_PERMISSIONS DESTINATION assets)
 
@@ -62,12 +62,12 @@ if(BUILD_EXECUTABLE)
 
 	# link openmp and fix rpath
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
-		set_property(TARGET faceview APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
+		set_property(TARGET mp_demo APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
 	endif()
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "linux")
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp")
-		set_property(TARGET faceview APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
+		set_property(TARGET mp_demo APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
 	endif()
 else(BUILD_EXECUTABLE)
-	add_library(FTM::faceview ALIAS faceview)
+	add_library(FTM::mp_demo ALIAS mp_demo)
 endif()

@@ -213,6 +213,9 @@ void GLProgram::draw(bool wire)
         case DrawMode::POINTS:
             glDrawArrays(GL_POINTS, 0, (GLsizei)dataLen);
             break;
+        case DrawMode::POINTS_IDX:
+            glDrawElements(GL_POINTS, attributeMap["index"].dataSize, GL_UNSIGNED_INT, NULL);
+            break;
         case DrawMode::PATCHES:
             glPatchParameteri(GL_PATCH_VERTICES, 3);
             glDrawArrays(GL_PATCHES, 0, (GLsizei)dataLen);

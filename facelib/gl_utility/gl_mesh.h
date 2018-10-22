@@ -105,4 +105,5 @@ struct glMesh
                    const Eigen::MatrixX3i& tri_pts = Eigen::MatrixX3i());
     
     void update_tri(const Eigen::MatrixX3i& tri);
+    void update_tri(const std::vector<unsigned int>& tri);
 };

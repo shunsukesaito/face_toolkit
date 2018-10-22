@@ -4,6 +4,7 @@
 #include <gl_utility/camera.h>
 #include <shape_model/face_model.h>
 
+#include "base_optimizer.h"
 #include "face_gradient.h"
 #include "face_result.h"
 
@@ -59,3 +60,21 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
                     const std::vector<P2P2DC>& CP2P,
                     std::vector<P2L2DC>& CP2L,
                     const P2DFitParams& params = P2DFitParams());
+
+struct P2DOptimizer : public BaseOptimizer
+{
+    P2DFitParams param_;
+    FaceModelPtr fm_;
+    
+    P2DOptimizer(){}
+    P2DOptimizer(std::string name) : BaseOptimizer(name){}
+    
+    virtual void init(std::string data_dir, FaceModelPtr fm);
+    virtual void solve(FaceResult& result);
+    
+#ifdef WITH_IMGUI
+    void updateIMGUI();
+#endif
+    
+    static OptimizerHandle Create(std::string name);
+};

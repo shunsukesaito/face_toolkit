@@ -36,8 +36,7 @@ public:
     // destructor
     ~PreprocessModule();
 
-    void init(PProParamsPtr param,
-              Face2DDetectorPtr face_detector);
+    void init(Face2DDetectorPtr face_detector);
     
     void update(CaptureResult& result);
 
@@ -47,6 +46,10 @@ public:
     // Provides a way to interrupt the process.
     // Default implementation does nothing.
     virtual void Stop();
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
 
     // Set input queue. The input queue is automatically set in Create().
     // Not thread safe.
@@ -62,7 +65,6 @@ public:
     
     // construct a default module
     static ModuleHandle Create(const std::string &name,
-                               PProParamsPtr param,
                                Face2DDetectorPtr face_detector,
                                CapQueueHandle in_frame_queue,
                                CapQueueHandle out_frame_queue,
@@ -73,7 +75,7 @@ private:
     CapQueueHandle output_frame_queue_;
     CmdQueueHandle command_queue_;
 
-    PProParamsPtr param_;
+    PProParams param_;
     
     Face2DDetectorPtr fdetector_;
     

@@ -10,7 +10,7 @@
 #include <gflags/gflags.h>
 
 DEFINE_string(cpm_ip, "csloadbalancer-dev-746798469.us-east-1.elb.amazonaws.com", "IP for CPM net");
-
+DEFINE_string(sp_name, DLIB_68_FACEALIGNMENT_MODEL, "facial landmark model name");
 cv::Rect ScaleRect(const cv::Rect& rect,float scale)
 {
     int cx = rect.x + rect.width/2;
@@ -49,12 +49,11 @@ cv::Rect GetBBoxFromLandmarks(std::vector<Eigen::Vector3f>& shape)
 Face2DDetector::Face2DDetector(std::string data_dir){
     cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
 
-    dlib::deserialize(data_dir + DLIB_68_FACEALIGNMENT_MODEL) >> sp_;
+    dlib::deserialize(data_dir + FLAGS_sp_name) >> sp_;
     gab_detector_.LoadModel(data_dir + NPD_MODEL);
     gab_detector_.DetectSize = 200;
     
     detector_ = dlib::get_frontal_face_detector();
-    
 }
 
 bool Face2DDetector::GetFaceRect(const cv::Mat &img,
@@ -74,10 +73,10 @@ bool Face2DDetector::GetFaceRect(const cv::Mat &img,
         dets = detector_(img_sml_dlib,-0.2);
         
         if(dets.size()!=0){
-            dets[0].set_bottom(invscale*(float)(dets[0].height()+dets[0].top()));
+            dets[0].set_bottom(invscale*(float)dets[0].bottom());
             dets[0].set_top(invscale*(float)dets[0].top());
             dets[0].set_left(invscale*(float)dets[0].left());
-            dets[0].set_right(invscale*(float)(dets[0].left()+dets[0].width()));
+            dets[0].set_right(invscale*(float)dets[0].right());
         }
     }
 
@@ -219,12 +218,11 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
     
     if(enable_dlib){
         dets = detector_(img_sml_dlib,-0.2);
-        
         if(dets.size()!=0){
-            dets[0].set_bottom(invscale*(float)(dets[0].height()+dets[0].top()));
+            dets[0].set_bottom(invscale*(float)dets[0].bottom());
             dets[0].set_top(invscale*(float)dets[0].top());
             dets[0].set_left(invscale*(float)dets[0].left());
-            dets[0].set_right(invscale*(float)(dets[0].left()+dets[0].width()));
+            dets[0].set_right(invscale*(float)dets[0].right());
         }
     }
 
@@ -630,7 +628,6 @@ bool Face2DBoxTracker::detectFacesTemplateMatching(const cv::Mat &frame)
 {
     templateMatchingCurrentTime_ = cv::getTickCount();
     double duration = (double)(templateMatchingCurrentTime_ - templateMatchingStartTime_) / cv::getTickFrequency();
-    std::cout << duration << std::endl;
     // If template matching lasts for more than 2 seconds face is possibly lost
     // so disable it and redetect using cascades
     if (duration > templateMatchingMaxDuration_) {

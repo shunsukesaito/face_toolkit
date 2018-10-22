@@ -38,6 +38,10 @@ public:
     // Default implementation does nothing.
     virtual void Stop();
     
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI(){}
+#endif
+    
     // Set output queue. The output queue is automatically set in Create().
     // Not thread safe.
     void set_output_queue(CapQueueHandle queue);

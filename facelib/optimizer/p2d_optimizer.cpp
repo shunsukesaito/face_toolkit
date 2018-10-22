@@ -285,6 +285,7 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
     
     err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, start_id, dof.ID, params.w_reg_pca_id_);
     err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, start_ex, dof.EX, params.w_reg_pca_ex_);
+    
 }
 
 void P2DGaussNewton(std::vector<FaceData>& fd,
@@ -296,7 +297,10 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
 {
     MTR_SCOPE("LandmarkFitter", "Landmark2DFittingMultiView");
     assert(fd.size() == data.frames_.size());
+    
+    // FIXME: if dof is outside range, program just crashes
     const DOF& dof = params.dof;
+    
     const int n_frame = data.frames_.size();
     const int n_camera = cameras.size();
     const int dof_all = dof.tvar()*n_frame+dof.ftinv()+dof.camera()*n_camera;
@@ -392,4 +396,64 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
         
         if (dX.norm() < params.gn_thresh_) break;
     }
+}
+
+void P2DOptimizer::init(std::string data_dir, FaceModelPtr fm)
+{
+    param_.loadParamFromTxt("p2d.ini");
+    fm_ = fm;
+    
+    param_.dof.ID = std::max(0,std::min(fm_->n_id(),param_.dof.ID));
+    param_.dof.EX = std::max(0,std::min(fm_->n_exp(),param_.dof.EX));
+}
+
+void P2DOptimizer::solve(FaceResult &result)
+{
+    // param check (especially dof)
+    {
+        param_.dof.ID = std::max(0,std::min((int)result.fd[0].idCoeff.size(),param_.dof.ID));
+        param_.dof.EX = std::max(0,std::min((int)result.fd[0].exCoeff.size(),param_.dof.EX));
+    }
+    
+    if((param_.run_ || param_.onetime_run_) && result.fd[0].idCoeff.size() != 0 && result.fd[0].exCoeff.size() != 0){
+        // it may slow down th
+        if(param_.dof.ID != 0 && param_.dof.EX == 0)
+            for(int i = 0; i < result.fd.size(); ++i)
+            {
+                result.fd[i].opt_id_only_ = true;
+                result.fd[i].updateExpression();
+            }
+        if(param_.dof.ID == 0 && param_.dof.EX != 0)
+            for(int i = 0; i < result.fd.size(); ++i)
+            {
+                result.fd[i].opt_ex_only_ = true;
+                result.fd[i].updateIdentity();
+            }
+
+        P2DGaussNewton(result.fd, result.cameras, result.cap_data, result.c_p2p, result.c_p2l, param_);
+
+        result.processed_ = true;
+        if(param_.onetime_run_) param_.onetime_run_ = false;
+        
+        // w_id update for bilinear model is not neccesary for rendering
+        for(int i = 0; i < result.fd.size(); ++i)
+        {
+            result.fd[i].opt_id_only_ = false;
+            result.fd[i].opt_ex_only_ = false;
+        }
+    }
+}
+
+#ifdef WITH_IMGUI
+void P2DOptimizer::updateIMGUI()
+{
+    param_.updateIMGUI();
+}
+#endif
+
+OptimizerHandle P2DOptimizer::Create(std::string name)
+{
+    auto opt = new P2DOptimizer(name);
+    
+    return OptimizerHandle(opt);
 }

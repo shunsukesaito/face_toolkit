@@ -468,3 +468,8 @@ void glMesh::update_tri(const Eigen::MatrixX3i& tri)
         tri_[i*3+2] = idx2;
     }
 }
+
+void glMesh::update_tri(const std::vector<unsigned int> &tri)
+{
+    tri_ = tri;
+}

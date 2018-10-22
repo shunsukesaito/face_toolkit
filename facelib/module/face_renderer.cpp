@@ -36,8 +36,11 @@ void FaceRenderer::draw(const FaceResult& result, int cam_id, int frame_id)
 #ifdef WITH_IMGUI
 void FaceRenderer::updateIMGUI()
 {
-    for(auto&& r : renderer_)
-        r.second->updateIMGUI();
+    if (ImGui::CollapsingHeader("Rendering Module"))
+    {
+        for(auto&& r : renderer_)
+            r.second->updateIMGUI();
+    }
 }
 #endif
 

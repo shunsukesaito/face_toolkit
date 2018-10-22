@@ -83,8 +83,15 @@ ModuleHandle CaptureModule::Create(const std::string &name,
     module->set_frame_loader(frame_loader);
     module->set_output_queue(out_frame_queue);
     module->set_command_queue(command_queue);
-    if(FLAGS_camera_file.empty())
+    if(FLAGS_camera_file.empty() && w > 0 && h > 0)
         module->camera_ = Camera::craeteFromFOV(w, h, FLAGS_camera_fov);
+    else if (FLAGS_camera_file.empty()){
+        cv::Mat img;
+        std::string name;
+        int frame_id = 0;
+        frame_loader->load_frame(img, frame_id, name, "");
+        module->camera_ = Camera::craeteFromFOV(img.cols, img.rows, FLAGS_camera_fov);
+    }
     else
         module->camera_ = Camera::parseCameraParams(data_dir + FLAGS_camera_file, FLAGS_cam_c2w);
     

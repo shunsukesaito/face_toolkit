@@ -39,7 +39,7 @@ void main()
     float den = determinant(z*u_d1[0]+u_d1[1],z*u_d1[2]+u_d1[3],1.f,
                             z*u_d2[0]+u_d2[1],z*u_d2[2]+u_d2[3],1.f,
                             z*u_d3[0]+u_d3[1],z*u_d3[2]+u_d3[3],1.f);
-    //if (abs(den) < 1.e-4) den = den > 0 ? 1.e-4 : -1.e-4;
+    if (abs(den) < 1.e-8) den = den > 0 ? 1.e-8 : -1.e-8;
     float u = determinant(z*u_d1[0]+u_d1[1],z*u_d1[2]+u_d1[3],1.f,
                           x,y,1.f,
                           z*u_d3[0]+u_d3[1],z*u_d3[2]+u_d3[3],1.f)/den;

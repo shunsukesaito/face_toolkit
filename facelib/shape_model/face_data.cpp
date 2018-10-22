@@ -126,33 +126,45 @@ void FaceData::updateIdentity()
 {
     assert(model_ != NULL);
     model_->updateIdentity(*this);
+    idCoeff_prev = idCoeff;
 }
 
 void FaceData::updateExpression()
 {
     assert(model_ != NULL);
     model_->updateExpression(*this);
+    exCoeff_prev = exCoeff;
 }
 
 void FaceData::updateColor()
 {
     assert(model_ != NULL);
     model_->updateColor(*this);
+    alCoeff_prev = alCoeff;
 }
 
 void FaceData::updateAll()
 {
     assert(model_ != NULL);
-    model_->updateColor(*this);
-    model_->updateIdentity(*this);
-    model_->updateExpression(*this);
+    if(idCoeff.size() != idCoeff_prev.size() || !idCoeff.isApprox(idCoeff_prev)){
+        updateIdentity();
+        updateExpression();
+    }
+    else if(exCoeff.size() != exCoeff_prev.size() || !exCoeff.isApprox(exCoeff_prev))
+        updateExpression();
+    if(alCoeff.size() != alCoeff_prev.size() || !alCoeff.isApprox(alCoeff_prev))
+        updateColor();
 }
 
 void FaceData::updateShape()
 {
     assert(model_ != NULL);
-    model_->updateIdentity(*this);
-    model_->updateExpression(*this);
+    if(idCoeff.size() != idCoeff_prev.size() || !idCoeff.isApprox(idCoeff_prev)){
+        updateIdentity();
+        updateExpression();
+    }
+    else if(exCoeff.size() != exCoeff_prev.size() || !exCoeff.isApprox(exCoeff_prev))
+        updateExpression();
 }
 
 Eigen::Vector3f FaceData::computeV(int vidx) const
@@ -463,7 +475,6 @@ void FaceData::updateIMGUI()
             ImGui::TreePop();
         }
     }
-
 }
 #endif
 

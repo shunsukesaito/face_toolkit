@@ -114,7 +114,7 @@ void SphereRenderer::render(const Camera& camera,
 #ifdef FACE_TOOLKIT
 void SphereRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(shader_dir);
+    init(data_dir, shader_dir);
 }
 
 void SphereRenderer::render(const FaceResult& result, int cam_id, int frame_id)

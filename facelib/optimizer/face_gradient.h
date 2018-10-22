@@ -6,7 +6,7 @@
 #include <gl_utility/camera.h>
 #include <shape_model/face_model.h>
 
-#include "base_gradient.h"
+#include "basic_gradient.h"
 #include "regularizer.h"
 #include "constraints.h"
 

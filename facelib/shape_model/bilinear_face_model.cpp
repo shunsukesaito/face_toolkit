@@ -37,7 +37,7 @@ void BiLinearFaceModel::updateExpression(FaceData& data)
     data.d_ex_ = data.w_ex_ * data.exCoeff;
     data.pts_ = data.neu_ + data.d_ex_;
     
-    if(data.id_opt_){
+    if(data.opt_id_only_){
         if(data.w_id_.rows() != mu_id_.size() || data.w_id_.cols() != n_id())
             data.w_id_.resize(mu_id_.size(), n_id());
      
@@ -51,31 +51,70 @@ void BiLinearFaceModel::updateExpression(FaceData& data)
 
 Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dID(int vidx, int size, const FaceData& data) const
 {
-    assert(vidx < mu_id_.size()/3 && vidx >= 0);
+    if (vidx > mu_id_.size()/3 || vidx < 0){
+        std::cerr << "BilinearFaceModel::dID() - vidx is invalid. " << vidx
+        << " #v: " << mu_id_.size()/3 << "\n";
+        throw std::runtime_error("BilinearFaceModel::dID() - invalid vidx");
+    }
+    if ( size < 0 || (data.opt_id_only_ && size > data.w_id_.cols())){
+        std::cerr << "BilinearFaceModel::dID() - size is invalid. " << size
+        << " Wid = [" << data.w_id_.rows() << "," << data.w_id_.cols() << "]\n";
+        throw std::runtime_error("BilinearFaceModel::dID() - invalid size");
+    }
     
-    return data.w_id_.block(vidx*3, 0, 3, size);
+    // faster computation if optimizing for identity only
+    if(data.opt_id_only_)
+        return data.w_id_.block(vidx*3, 0, 3, size);
+    else{
+        Eigen::MatrixXf did = Eigen::MatrixXf::Zero(3,size);
+        for(int i = 0; i < n_exp(); ++i)
+        {
+            did += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,n_id());
+        }
+        return did;
+    }
 }
 
 Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dEX(int vidx, int size, const FaceData& data) const
 {
-    assert(vidx < mu_id_.size()/3 && vidx >= 0);
+    if (vidx > mu_id_.size()/3 || vidx < 0){
+        std::cerr << "BilinearFaceModel::dEX() - vidx is invalid. " << vidx
+        << " #v: " << mu_id_.size()/3 << "\n";
+        throw std::runtime_error("BilinearFaceModel::dEX() - invalid vidx");
+    }
+    if (size < 0 || (data.opt_ex_only_ && size > data.w_ex_.cols())){
+        std::cerr << "BilinearFaceModel::dEX() - size is invalid. " << size
+        << " Wex = [" << data.w_ex_.rows() << "," << data.w_ex_.cols() << "]\n";
+        throw std::runtime_error("BilinearFaceModel::dEX() - invalid size");
+    }
     
-    return data.w_ex_.block(vidx*3, 0, 3, size);
+    // faster computation if optimzing for expression only
+    if(data.opt_ex_only_)
+        return w_mu_ex_.block(vidx*3, 0, 3, size) + data.w_ex_.block(vidx*3, 0, 3, size);
+    else{
+        Eigen::MatrixXf dex = w_mu_ex_.block(vidx*3, 0, 3, size);
+        for(int i = 0; i < size; ++i)
+        {
+            dex.block(0,i,3,1) += Cshape_[i+1].block(vidx*3,0,3,n_id())*data.idCoeff;
+        }
+        return dex;
+    }
 }
 
 Eigen::Vector3f BiLinearFaceModel::computeV(int vidx, const FaceData& data) const
 {
-    Eigen::Vector3f p = mu_id_.b3(vidx) + w_mu_ex_.block(vidx*3, 0, 3, n_id())*data.exCoeff;
+    Eigen::Vector3f p = mu_id_.b3(vidx) + w_mu_ex_.block(vidx*3, 0, 3, n_exp())*data.exCoeff;
     
-    if(data.id_opt_){
+    if(data.opt_id_only_)
+        p += data.w_id_.block(vidx*3,0,3,n_id())*data.idCoeff;
+    else if(data.opt_ex_only_)
+        p += data.w_ex_.block(vidx*3,0,3,n_exp())*data.exCoeff;
+    else{
         p += Cshape_[0].block(vidx*3,0,3,n_id())*data.idCoeff;
         for(int i = 0; i < n_exp(); ++i)
         {
             p += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,n_id())*data.idCoeff;
         }
-    }
-    else{
-        p += data.w_ex_.block(vidx*3,0,3,n_exp()) * data.exCoeff;
     }
 
     return p;

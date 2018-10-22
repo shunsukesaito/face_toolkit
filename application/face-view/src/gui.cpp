@@ -18,6 +18,7 @@
 #include <renderer/base_renderer.h>
 #include <renderer/bg_renderer.h>
 #include <renderer/mesh_renderer.h>
+#include <renderer/mp_renderer.h>
 #include <renderer/IBL_renderer.h>
 #include <renderer/LS_renderer.h>
 #include <renderer/LSGeo_renderer.h>
@@ -395,6 +396,8 @@ void GUI::init(int w, int h)
         session.renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
     if( renderers.find("geo") != renderers.end() )
         session.renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
+    if( renderers.find("mp") != renderers.end() )
+        session.renderer_.addRenderer("MP", MPRenderer::Create("MP Rendering", true));
     if( renderers.find("ibl") != renderers.end() )
         session.renderer_.addRenderer("IBL", IBLRenderer::Create("IBL Rendering", true));
     if( renderers.find("deepls") != renderers.end() )
@@ -758,9 +761,10 @@ void GUI::loop()
                 session.result_.cap_data = result.cap_data;
                 session.result_.processed_ = false;
             }
-
             session.result_queue_->pop();
+        
             session.result_.fd[frame_id_].updateAll();
+            
             if( FLAGS_mode.find("brender") != std::string::npos ||
                 FLAGS_mode.find("bopt") != std::string::npos ){
                 if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == 0){
@@ -795,8 +799,10 @@ void GUI::loop()
             ImGui::Begin("Control Panel", &show_control_panel_);
             if(FLAGS_mode.find("opt") != std::string::npos){
                 session.pp_param_->updateIMGUI();
-                session.p2d_param_->updateIMGUI();
-                session.f2f_param_->updateIMGUI();
+                if(session.face_model_->n_id() > 0 && session.face_model_->n_exp() > 0)
+                    session.p2d_param_->updateIMGUI();
+                if(session.face_model_->n_id() > 0 && session.face_model_->n_exp() > 0 && session.face_model_->n_clr() > 0)
+                    session.f2f_param_->updateIMGUI();
             }
             session.renderer_.updateIMGUI();
             session.result_.cameras[cam_id_].updateIMGUI();

@@ -48,6 +48,11 @@ struct FaceData
     Eigen::VectorXf exCoeff;
     Eigen::VectorXf alCoeff;
     
+    // for IMGUI update check
+    Eigen::VectorXf idCoeff_prev;
+    Eigen::VectorXf exCoeff_prev;
+    Eigen::VectorXf alCoeff_prev;
+    
 //    float scale = 1.0f;
     
     Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
@@ -66,8 +71,9 @@ struct FaceData
 
     std::vector<int> cont_idx_;
         
-    bool id_opt_ = false; // for bilinear identity optimization
-    
+    bool opt_id_only_ = false; // it should be true only for id opt
+    bool opt_ex_only_ = false; // it should be true only for ex opt
+
     void updateParams(const FaceParams& fp);
     
     void updateIdentity();

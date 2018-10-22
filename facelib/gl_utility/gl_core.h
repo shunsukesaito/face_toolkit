@@ -42,7 +42,7 @@
 
 
 enum class DataType { UINT, FLOAT, VECTOR4, VECTOR3, VECTOR2, MATRIX44, INDEX};
-enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS, PATCHES, PATCHES_IDX};
+enum class DrawMode { TRIANGLES, TRIANGLES_IDX, POINTS, POINTS_IDX, PATCHES, PATCHES_IDX};
 class GLProgram;
 
 struct GLAttribute {
