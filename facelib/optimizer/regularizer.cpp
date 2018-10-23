@@ -86,11 +86,20 @@ float computeJacobianLMixReg(Eigen::Ref<Eigen::VectorXf> Jtr,
     assert(Jtr.size() == JtJ.cols() && Jtr.size() == JtJ.rows());
     assert(X.size() >= start + size);
     
-    float a;
+    if(w <= 0.0 || size <= 0) return 0.f;
+    if(l < 0){
+        std::cerr << "computeJacobianLMixReg() - l should be above 0" << std::endl;
+        return 0.f;
+    }
+    float a,b,c,d;
     float error = 0.0;
     for(int i = 0; i < size; ++i)
     {
         const float& x = X[start + i];
+        a = 0.5f / l;
+        b = a * l * l - l;
+        c = 1.f-2.f * lambda * u;
+        d = u + b - lambda * u * u - c * u;
         if(x < 0){
             JtJ(start + i, start + i) += w * lambda;
             Jtr[start + i] += w * lambda * x;
@@ -98,24 +107,22 @@ float computeJacobianLMixReg(Eigen::Ref<Eigen::VectorXf> Jtr,
             error += w * lambda * x * x;
         }
         else if(x < l){
-            a = 0.5f / l;
             JtJ(start + i, start + i) += w * a;
             Jtr[start + i] += w * a * x;
             
             error += w * a * x * x;
         }
         else if(x > u){
-            a = 0.5 * (1.0 + lambda) / u;
-            JtJ(start + i, start + i) += w * a;
-            Jtr[start + i] += w * (a * x + 0.5 * lambda);
+            JtJ(start + i, start + i) += w * lambda;
+            Jtr[start + i] += w * (lambda * x + 0.5 * c);
             
-            error += w * (a * x * x + 0.5 * lambda * x);
+            error += w * (lambda * x * x + c * x + d);
         }
         else{
-            JtJ(start + i, start + i) += w * 0.25f / (fabs(X[start + i]) + EPSILON);
+            JtJ(start + i, start + i) += w * 0.25f / (fabs(x) + EPSILON);
             Jtr[start + i] += (x >= 0) ? 0.5f * w : -0.5f * w;
             
-            error += w * (fabs(X[start + i]) + EPSILON);
+            error += w * (fabs(x) + EPSILON + b);
         }
     }
     

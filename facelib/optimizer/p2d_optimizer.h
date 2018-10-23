@@ -35,6 +35,11 @@ struct P2DFitParams
     float w_reg_pca_id_ = 1.e-1f;
     float w_reg_pca_ex_ = 1.e-1f;
     
+    float w_reg_lmix_ = 1.e-1f;
+    float lmix_l_ = 0.01;
+    float lmix_u_ = 0.9;
+    float lmix_lambda_ = 1.0;
+    
     bool loadParamFromTxt(std::string file);
     bool saveParamToTxt(std::string file);
     

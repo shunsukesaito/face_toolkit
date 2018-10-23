@@ -15,6 +15,9 @@
 
 #include "face_model.h"
 
+// FIXME: current hack get crashed in multithreading env
+static Eigen::MatrixXf g_did, g_dex;
+
 void BiLinearFaceModel::updateIdentity(FaceData& data)
 {
     if(sigma_id_.size() == 0) return;
@@ -66,12 +69,12 @@ Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dID(int vidx, int size, con
     if(data.opt_id_only_)
         return data.w_id_.block(vidx*3, 0, 3, size);
     else{
-        Eigen::MatrixXf did = Eigen::MatrixXf::Zero(3,size);
+        g_did = Eigen::MatrixXf::Zero(3,size);
         for(int i = 0; i < n_exp(); ++i)
         {
-            did += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,n_id());
+            g_did += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,size);
         }
-        return did;
+        return g_did;
     }
 }
 
@@ -89,15 +92,19 @@ Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dEX(int vidx, int size, con
     }
     
     // faster computation if optimzing for expression only
-    if(data.opt_ex_only_)
-        return w_mu_ex_.block(vidx*3, 0, 3, size) + data.w_ex_.block(vidx*3, 0, 3, size);
+    if(data.opt_ex_only_){
+        g_dex = w_mu_ex_.block(vidx*3, 0, 3, size) + data.w_ex_.block(vidx*3, 0, 3, size);
+        return g_dex;
+    }
     else{
-        Eigen::MatrixXf dex = w_mu_ex_.block(vidx*3, 0, 3, size);
+        // without static, the returned value could be destroyed in the middle
+        g_dex = w_mu_ex_.block(vidx*3, 0, 3, size);
         for(int i = 0; i < size; ++i)
         {
-            dex.block(0,i,3,1) += Cshape_[i+1].block(vidx*3,0,3,n_id())*data.idCoeff;
+            g_dex.block(0,i,3,1) += Cshape_[i+1].block(vidx*3,0,3,n_id())*data.idCoeff;
         }
-        return dex;
+
+        return g_dex;
     }
 }
 

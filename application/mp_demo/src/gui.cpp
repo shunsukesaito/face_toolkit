@@ -343,7 +343,7 @@ void GUI::init(int w, int h)
     session.renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
     session.renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
     session.renderer_.addRenderer("MP", MPRenderer::Create("MP Rendering", true));
-    session.renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
+//    session.renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
     
     session.renderer_.init(session.face_model_, data_dir);
     

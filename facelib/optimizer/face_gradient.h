@@ -60,6 +60,13 @@ struct DOF
     inline int tvar() const {
         return EX + fROT + fTR + SH;
     }
+    
+    friend std::ostream& operator<<(std::ostream& os, const DOF& dof)
+    {
+        os << "ID: " << dof.ID << " EX: " << dof.EX << " AL: " << dof.AL << " fROT: " << dof.fROT << " fTR: " << dof.fTR;
+        os << "cROT: " << dof.cROT << " cTR: " << dof.cTR << " SH: " << dof.SH << " CAM: " << dof.CAM;
+        return os;
+    }
 };
 
 void computeV(const FaceData& fd,

@@ -15,11 +15,12 @@ struct ErrP2D
     float p2l = 0.0;
     float pca_id = 0.0;
     float pca_ex = 0.0;
+    float lmix = 0.0;
     
     friend std::ostream& operator<<(std::ostream& os, const ErrP2D& err)
     {
-        os << "errTot: " << err.p2p + err.p2l + err.pca_id + err.pca_ex << " errP2P: " << err.p2p << " errP2L: " << err.p2l;
-        os << " errPCAID: " << err.pca_id << " errPCAEX: " << err.pca_ex;
+        os << "errTot: " << err.p2p + err.p2l + err.pca_id + err.pca_ex + err.lmix << " errP2P: " << err.p2p << " errP2L: " << err.p2l;
+        os << " errPCAID: " << err.pca_id << " errPCAEX: " << err.pca_ex << " errLmix: " << err.lmix;
         return os;
     }
 };
@@ -136,9 +137,13 @@ void P2DFitParams::updateIMGUI()
         ImGui::InputFloat("w P2L", &w_p2l_);
         ImGui::InputFloat("w PCA ex", &w_reg_pca_ex_);
         ImGui::InputFloat("w PCA id", &w_reg_pca_id_);
+        ImGui::InputFloat("w Lmix", &w_reg_lmix_);
+        ImGui::InputFloat("Lmix l", &lmix_l_);
+        ImGui::InputFloat("Lmix u", &lmix_u_);
+        ImGui::InputFloat("Lmix lambda", &lmix_lambda_);
         ImGui::InputFloat("GN threshold", &gn_thresh_);
         ImGui::InputFloat("MC threshold", &mclose_thresh_);
-        ImGui::InputFloat("Ang threshold", &angle_thresh_);
+        ImGui::InputFloat("Ang threshold", &angle_thresh_);        
     }
 }
 #endif
@@ -286,6 +291,8 @@ static void computeRegularizerJacobian(Eigen::VectorXf& Jtr,
     err.pca_id += computeJacobianPCAReg(Jtr, JtJ, X, sigma_id, start_id, dof.ID, params.w_reg_pca_id_);
     err.pca_ex += computeJacobianPCAReg(Jtr, JtJ, X, sigma_ex, start_ex, dof.EX, params.w_reg_pca_ex_);
     
+    err.lmix += computeJacobianLMixReg(Jtr, JtJ, X, params.lmix_l_, params.lmix_u_, params.lmix_lambda_,
+                                       start_ex, dof.EX, params.w_reg_lmix_);
 }
 
 void P2DGaussNewton(std::vector<FaceData>& fd,
@@ -300,7 +307,7 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
     
     // FIXME: if dof is outside range, program just crashes
     const DOF& dof = params.dof;
-    
+
     const int n_frame = data.frames_.size();
     const int n_camera = cameras.size();
     const int dof_all = dof.tvar()*n_frame+dof.ftinv()+dof.camera()*n_camera;
@@ -376,6 +383,10 @@ void P2DGaussNewton(std::vector<FaceData>& fd,
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<float>> ldlt;
         factorizeLDLTSolver(JtJsp, ldlt);
         dX = ldlt.solve(Jtr);
+        if(std::isnan(dX.sum())){
+            std::cerr << "P2DGaussNewton() - warning: update goes to nan." << std::endl;
+            return;
+        }
         X -= dX;
         
         {

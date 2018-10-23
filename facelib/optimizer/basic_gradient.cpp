@@ -31,7 +31,6 @@ void gradV(Eigen::Ref<Eigen::MatrixXf> dout,
     assert(dv.rows() == din.cols());
     assert(dout.rows() == din.rows());
     assert(dout.cols() == dv.cols());
-
     if(din.size() != 0)
         dout = din * dv;
     else
