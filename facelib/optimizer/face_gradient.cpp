@@ -170,7 +170,6 @@ void computeVertexWiseGradPosition2D(std::vector<Eigen::Vector2f>& pV,
         RTRTv = ApplyTransform(RTc, RTv);
         RTRTv(2) = (fabs(RTRTv(2)) > EPSILON) ? RTRTv(2) : (RTRTv(2)>0?EPSILON:-EPSILON);
         IRTRTv = I.block<3,3>(0,0) * RTRTv;
-        IRTRTv(2) = (fabs(IRTRTv(2)) > EPSILON) ? IRTRTv(2) : (IRTRTv(2)>0?EPSILON:-EPSILON);
         
         dPi << 1.0/IRTRTv(2), 0 , -IRTRTv(0)/IRTRTv(2)/IRTRTv(2), 0, 1.0/IRTRTv(2), -IRTRTv(1)/IRTRTv(2)/IRTRTv(2);
         dI = dPi * I.block<3,3>(0,0);

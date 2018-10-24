@@ -8,7 +8,7 @@ FaceToolkitModuleBegin(utility DEPENDS
                     utility/tiny_obj_loader
                     utility/tinyexr)
 
-file(GLOB_RECURSE all_sources *.cpp)
+file(GLOB_RECURSE all_sources *.cpp *.c)
 file(GLOB_RECURSE all_headers *.h)
 add_library(utility ${all_sources} ${all_headers})
 
