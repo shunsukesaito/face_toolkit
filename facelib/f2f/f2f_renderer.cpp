@@ -349,8 +349,10 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
 
 void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd, std::vector<cv::Mat_<cv::Vec4f>>& out)
 {
+    if(w != fb_->width() || h != fb_->height()){
+        fb_->Resize(w, h, RT_NAMES::count);
+    }
     if(camera.width_ != fb_->width() || camera.height_ != fb_->height()){
-        fb_->Resize(camera.width_, camera.height_, RT_NAMES::count);
         fb_depth_->Resize(camera.width_, camera.height_, 0);
     }
     

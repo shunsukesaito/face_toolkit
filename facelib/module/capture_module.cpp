@@ -71,8 +71,8 @@ void CaptureModule::set_frame_loader(FrameLoaderPtr loader)
 // Creates a new modules and returns its handle to user
 ModuleHandle CaptureModule::Create(const std::string &name,
                                    const std::string &data_dir,
-                                   int w,
-                                   int h,
+                                   int &w,
+                                   int &h,
                                    FrameLoaderPtr frame_loader,
                                    CapQueueHandle out_frame_queue,
                                    CmdQueueHandle command_queue)
@@ -91,6 +91,8 @@ ModuleHandle CaptureModule::Create(const std::string &name,
         int frame_id = 0;
         frame_loader->load_frame(img, frame_id, name, "");
         module->camera_ = Camera::craeteFromFOV(img.cols, img.rows, FLAGS_camera_fov);
+        w = img.cols;
+        h = img.rows;
     }
     else
         module->camera_ = Camera::parseCameraParams(data_dir + FLAGS_camera_file, FLAGS_cam_c2w);

@@ -1,11 +1,26 @@
-//
-//  camera.cpp
-//  RenderingTemplate
-//
-//  Created by Shunsuke Saito on 6/10/17.
-//  Copyright © 2017 Shunsuke Saito. All rights reserved.
-//
-
+/*
+ MIT License
+ 
+ Copyright (c) 2018 Shunsuke Saito
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 #include "camera.h"
 
 // for sphere rendering
@@ -63,37 +78,26 @@ void Camera::initializeUniforms(GLProgram& program, int flag)
         program.createUniform("u_camera_pos", DataType::VECTOR3);
 }
 
-void Camera::updateUniforms(GLProgram& program, int flag) const
+Eigen::Matrix4f Camera::getMVP(Eigen::Matrix4f RT) const
 {
-    static const Eigen::Matrix4f biasMatrix =
-    (Eigen::Matrix4f() << 0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1.0).finished();
-    
     Eigen::Matrix4f MVP, MV;
     Eigen::Matrix4f perspective;
     if(weakPersp_){
         perspective = OrthogonalProjection(width_, height_, zNear_, zFar_);
+        RT.block(0,0,3,3) *= RT(2,3);
+        RT(2,3) = 500.0;
+        MV = RT;
     }
-    else
+    else{
         perspective = PerspectiveFromVision(intrinsic_, width_, height_, zNear_, zFar_);
-    
-    MV = extrinsic_;
-    MVP = perspective * MV;
-    
-    Eigen::Matrix4f inv_extrinsic = extrinsic_.inverse();
-    glm::vec3 pos(inv_extrinsic(0,3),inv_extrinsic(1,3),inv_extrinsic(2,3));
-    
-    Eigen::Matrix4f shadowMVP = biasMatrix * MVP;
-    
-    if(flag & U_CAMERA_MVP)
-        program.setUniformData("u_mvp", MVP);
-    if(flag & U_CAMERA_MV)
-        program.setUniformData("u_modelview", MV);
-    if(flag & U_CAMERA_WORLD)
-        program.setUniformData("u_world", Eigen::Matrix4f::Identity());
-    if(flag & U_CAMERA_SHADOW)
-        program.setUniformData("u_shadow_mvp", shadowMVP);
-    if(flag & U_CAMERA_POS)
-        program.setUniformData("u_camera_pos", pos);
+        MV = extrinsic_ * RT;
+    }
+    return perspective * MV;
+}
+
+void Camera::updateUniforms(GLProgram& program, int flag) const
+{
+    updateUniforms(program, Eigen::Matrix4f::Identity(), flag);
 }
 
 void Camera::updateUniforms(GLProgram& program, Eigen::Matrix4f RT, int flag) const

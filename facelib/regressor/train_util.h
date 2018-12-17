@@ -140,11 +140,21 @@ struct Data
     void updateLandmarks(bool add_disp=true);
 };
   
-    void augmentRotation(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dR, const DOF& dof);
-    void augmentTranslation(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dTxy, float dTz, const DOF& dof);
-    void augmentExpression(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, const DOF& dof);
-    void augmentFocalLength(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, float dF, const DOF& dof);
-    void augmentIdentity(std::vector<Data>& out, const std::vector<Data>& in, int idx, int size, const DOF& dof);
+    void augmentRotation(std::vector<Data>& out, const std::vector<Data>& in,
+                         int idx, int size, float dR, const DOF& dof);
+    
+    void augmentTranslation(std::vector<Data>& out, const std::vector<Data>& in,
+                            int idx, int size, float dTxy, float dTz, const DOF& dof);
+    
+    void augmentExpression(std::vector<Data>& out, const std::vector<Data>& in,
+                           int idx, int size, const DOF& dof);
+    
+    void augmentFocalLength(std::vector<Data>& out, const std::vector<Data>& in,
+                            int idx, int size, float dF, const DOF& dof);
+    
+    void augmentIdentity(std::vector<Data>& out, const std::vector<Data>& in,
+                         int idx, int size, const DOF& dof);
+    
     void augmentOcclusion(std::vector<Data>& in);
     
     void augmentData(std::vector<Data>& out, const std::vector<Data>& in, const TrainParams& params);

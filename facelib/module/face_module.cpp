@@ -30,7 +30,7 @@ void FaceOptModule::Process()
     
     // optimizers need to be initialized here for thread-depedent functions
     for(auto&& opt : optimizers_)
-        opt.second->init(data_dir_, fm_);
+        opt->init(data_dir_, fm_);
 
     while(command != "stop")
     {
@@ -64,7 +64,7 @@ void FaceOptModule::Stop()
 
 void FaceOptModule::init(std::string data_dir,
                          FaceModelPtr fm,
-                         std::map<std::string, OptimizerHandle> optimizers)
+                         std::vector<OptimizerHandle> optimizers)
 {
     data_dir_ = data_dir;
     
@@ -106,7 +106,7 @@ void FaceOptModule::update(FaceResult& result)
     result.c_p2l = c_p2l_;    
     
     for(auto&& opt : optimizers_)
-        opt.second->solve(result);
+        opt->solve(result);
     
     fd_ = result.fd;
 }
@@ -132,18 +132,18 @@ void FaceOptModule::updateIMGUI()
     if (ImGui::CollapsingHeader("Optimization Module"))
     {
         for(auto&& opt : optimizers_)
-            opt.second->updateIMGUI();
+            opt->updateIMGUI();
     }
 }
 #endif
 
 ModuleHandle FaceOptModule::Create(const std::string &name,
-                                const std::string &data_dir,
-                                FaceModelPtr fm,
-                                std::map<std::string, OptimizerHandle> optimizers,
-                                CapQueueHandle input_frame_queue,
-                                FaceQueueHandle output_result_queue,
-                                CmdQueueHandle command_queue)
+                                   const std::string &data_dir,
+                                   FaceModelPtr fm,
+                                   std::vector<OptimizerHandle> optimizers,
+                                   CapQueueHandle input_frame_queue,
+                                   FaceQueueHandle output_result_queue,
+                                   CmdQueueHandle command_queue)
 {
     auto module = new FaceOptModule(name);
     // add this module to the global registry

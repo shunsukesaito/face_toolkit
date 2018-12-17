@@ -71,11 +71,16 @@ void PreprocessModule::Stop()
     // nothing to do
 }
 
-void PreprocessModule::init(Face2DDetectorPtr face_detector)
+void PreprocessModule::init(Face2DDetectorPtr face_detector, bool run)
 {
     seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
     
-    fdetector_ = face_detector;    
+    fdetector_ = face_detector;
+    
+    if(run){
+        param_.update_land_ = true;
+        param_.update_seg_ = true;
+    }
 }
 
 void PreprocessModule::update(CaptureResult& result)
@@ -143,12 +148,13 @@ ModuleHandle PreprocessModule::Create(const std::string &name,
                                       Face2DDetectorPtr face_detector,
                                       CapQueueHandle input_frame_queue,
                                       CapQueueHandle output_frame_queue,
-                                      CmdQueueHandle command_queue)
+                                      CmdQueueHandle command_queue,
+                                      bool run)
 {
     auto module = new PreprocessModule(name);
     // add this module to the global registry
     
-    module->init(face_detector);
+    module->init(face_detector, run);
     module->set_input_queue(input_frame_queue);
     module->set_output_queue(output_frame_queue);
     module->set_command_queue(command_queue);

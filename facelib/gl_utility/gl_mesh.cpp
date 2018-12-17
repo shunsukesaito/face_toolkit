@@ -1,11 +1,26 @@
-//
-//  gl_mesh.cpp
-//  RenderingTemplate
-//
-//  Created by Shunsuke Saito on 6/10/17.
-//  Copyright © 2017 Shunsuke Saito. All rights reserved.
-//
-
+/*
+ MIT License
+ 
+ Copyright (c) 2018 Shunsuke Saito
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 #include "gl_mesh.h"
 
 void glPlane::init(GLProgram &program, float z)
@@ -297,6 +312,31 @@ void glMesh::update_position(const std::vector<Eigen::Vector3f>& pts,
         for(int i = 0; i < pts_.size(); ++i)
         {
             pts_[i] = glm::vec3(pts[i](0),pts[i](1),pts[i](2));
+        }
+    }
+}
+
+void glMesh::update_normal(const Eigen::VectorXf& nml,
+                           const Eigen::MatrixX3i& tri)
+{
+    if(tri.size() != 0){
+        nml_.resize(tri.size());
+        for(int i = 0; i < tri.rows(); ++i)
+        {
+            const int& idx0 = tri(i, 0);
+            const int& idx1 = tri(i, 1);
+            const int& idx2 = tri(i, 2);
+            
+            nml_[i * 3 + 0] = glm::vec3(nml(idx0*3+0), nml(idx0*3+1), nml(idx0*3+2));
+            nml_[i * 3 + 1] = glm::vec3(nml(idx1*3+0), nml(idx1*3+1), nml(idx1*3+2));
+            nml_[i * 3 + 2] = glm::vec3(nml(idx2*3+0), nml(idx2*3+1), nml(idx2*3+2));
+        }
+    }
+    else{
+        nml_.resize(nml.size()/3);
+        for(int i = 0; i < nml_.size(); ++i)
+        {
+            nml_[i] = glm::vec3(nml(i*3+0),nml(i*3+1),nml(i*3+2));
         }
     }
 }

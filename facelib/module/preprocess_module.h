@@ -36,7 +36,7 @@ public:
     // destructor
     ~PreprocessModule();
 
-    void init(Face2DDetectorPtr face_detector);
+    void init(Face2DDetectorPtr face_detector, bool run);
     
     void update(CaptureResult& result);
 
@@ -68,7 +68,8 @@ public:
                                Face2DDetectorPtr face_detector,
                                CapQueueHandle in_frame_queue,
                                CapQueueHandle out_frame_queue,
-                               CmdQueueHandle command_queue);
+                               CmdQueueHandle command_queue,
+                               bool run = false);
     
 private:
     CapQueueHandle input_frame_queue_;

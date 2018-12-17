@@ -29,6 +29,9 @@
 #include <renderer/posmap_renderer.h>
 #include <f2f/f2f_renderer.h>
 
+#include <optimizer/p2d_optimizer.h>
+#include <f2f/f2f_optimizer.h>
+
 #include <utility/str_utils.h>
 #include <utility/obj_loader.h>
 #include <utility/exr_loader.h>
@@ -71,8 +74,8 @@ DEFINE_int32(fd_dof_sh, 27, "FaceData TCP dof of SH");
 
 DEFINE_double(loader_scale, 1.0, "image loader scale");
 
-DEFINE_uint32(cam_w, 512, "camera width");
-DEFINE_uint32(cam_h, 512, "camera height");
+DEFINE_uint32(cam_w, 0, "camera width");
+DEFINE_uint32(cam_h, 0, "camera height");
 
 struct Session{
     ModuleHandle capture_module_;
@@ -94,9 +97,6 @@ struct Session{
     std::map<WINDOW, Window> windows_;
     
     FaceModelPtr face_model_;
-    P2DFitParamsPtr p2d_param_;
-    F2FParamsPtr f2f_param_;
-    PProParamsPtr pp_param_;
     
     std::mutex result_mutex_;
     FaceResult result_;
@@ -424,10 +424,6 @@ void GUI::init(int w, int h)
     
     session.renderer_.init(session.face_model_, data_dir);
     
-    session.p2d_param_ = P2DFitParamsPtr(new P2DFitParams());
-    session.f2f_param_ = F2FParamsPtr(new F2FParams());
-    session.pp_param_ = PProParamsPtr(new PProParams());
-    
     auto frame_loader = EmptyLoader::Create();
     
     if( FLAGS_loader.find("%") != std::string::npos &&
@@ -458,10 +454,14 @@ void GUI::init(int w, int h)
         frame_loader = VideoLoader::Create(vid, FLAGS_loader_scale);
     }
     
-    int cam_w = FLAGS_cam_w != 0 ? FLAGS_cam_w : w;
-    int cam_h = FLAGS_cam_h != 0 ? FLAGS_cam_h : h;
+    int cam_w = FLAGS_cam_w;// != 0 ? FLAGS_cam_w : w;
+    int cam_h = FLAGS_cam_h;// != 0 ? FLAGS_cam_h : h;
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
+    if( FLAGS_cam_w <= 0 || FLAGS_cam_w <= 0){
+        glfwSetWindowSize(session.windows_[MAIN], cam_w, cam_h);
+    }
+
     if(FLAGS_mode == "preview")
         session.face_module_ = FacePreviewModule::Create("face", data_dir, session.face_model_, session.capture_queue_,
                                                          session.result_queue_, session.face_control_queue_,
@@ -499,13 +499,30 @@ void GUI::init(int w, int h)
                                                          session.result_queue_, session.face_control_queue_,
                                                          FLAGS_fd_ip, FLAGS_fd_port,dof,256,false);
     }
-    else if(FLAGS_mode == "opt" || FLAGS_mode == "bopt"){
+    else if(FLAGS_mode == "opt"){
         auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
 
-        session.preprocess_module_ = PreprocessModule::Create("face", session.pp_param_, face_detector, session.capture_queue_,
+        session.preprocess_module_ = PreprocessModule::Create("face", face_detector, session.capture_queue_,
                                                               session.preprocess_queue_, session.preprocess_control_queue_);
 
-        session.face_module_ = FaceOptModule::Create("face", data_dir, session.face_model_, session.p2d_param_, session.f2f_param_,
+        std::vector<OptimizerHandle> optimizers;
+        optimizers.push_back(P2DOptimizer::Create("Landmark Fitting"));
+        if(session.face_model_->has_clr())
+            optimizers.push_back(F2FOptimizer::Create("F2F Fitting"));
+        session.face_module_ = FaceOptModule::Create("face", data_dir, session.face_model_, optimizers,
+                                                     session.preprocess_queue_, session.result_queue_, session.face_control_queue_);
+    }
+    else if(FLAGS_mode == "bopt"){
+        auto face_detector = std::shared_ptr<Face2DDetector>(new Face2DDetector(data_dir));
+        
+        session.preprocess_module_ = PreprocessModule::Create("face", face_detector, session.capture_queue_,
+                                                              session.preprocess_queue_, session.preprocess_control_queue_, true);
+        
+        std::vector<OptimizerHandle> optimizers;
+        optimizers.push_back(P2DOptimizer::Create("Landmark Fitting", true));
+        if(session.face_model_->has_clr())
+            optimizers.push_back(F2FOptimizer::Create("F2F Fitting", true));
+        session.face_module_ = FaceOptModule::Create("face", data_dir, session.face_model_, optimizers,
                                                      session.preprocess_queue_, session.result_queue_, session.face_control_queue_);
     }
     else
@@ -765,8 +782,9 @@ void GUI::loop()
         
             session.result_.fd[frame_id_].updateAll();
             
-            if( FLAGS_mode.find("brender") != std::string::npos ||
-                FLAGS_mode.find("bopt") != std::string::npos ){
+            if( session.result_.processed_ &&
+               (FLAGS_mode.find("brender") != std::string::npos ||
+                FLAGS_mode.find("bopt") != std::string::npos) ){
                 if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == 0){
                     if(init_frame)
                         init_frame = false;
@@ -797,13 +815,8 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            if(FLAGS_mode.find("opt") != std::string::npos){
-                session.pp_param_->updateIMGUI();
-                if(session.face_model_->n_id() > 0 && session.face_model_->n_exp() > 0)
-                    session.p2d_param_->updateIMGUI();
-                if(session.face_model_->n_id() > 0 && session.face_model_->n_exp() > 0 && session.face_model_->n_clr() > 0)
-                    session.f2f_param_->updateIMGUI();
-            }
+            session.preprocess_module_->updateIMGUI();
+            session.face_module_->updateIMGUI();
             session.renderer_.updateIMGUI();
             session.result_.cameras[cam_id_].updateIMGUI();
             session.result_.fd[frame_id_].updateIMGUI();

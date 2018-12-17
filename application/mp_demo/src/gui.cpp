@@ -20,17 +20,16 @@
 #include <renderer/bg_renderer.h>
 #include <renderer/mesh_renderer.h>
 #include <renderer/mp_renderer.h>
-#include <renderer/p3d_renderer.h>
-#include <renderer/p2d_renderer.h>
+#include <renderer/mp2_renderer.h>
 
 #include <optimizer/p2d_optimizer.h>
-#include <f2f/f2f_optimizer.h>
 
 #include <utility/str_utils.h>
 #include <utility/obj_loader.h>
 #include <utility/exr_loader.h>
 #include <utility/pts_loader.h>
 #include <utility/trackball.h>
+#include <utility/delaunator.h>
 
 #ifdef WITH_IMGUI
 #include <imgui.h>
@@ -65,6 +64,7 @@ struct Session{
     std::thread capture_thread, preprocess_thread, face_thread;
     
     FaceRenderer renderer_;
+    MP2Renderer mp2_renderer_;
     std::map<WINDOW, Window> windows_;
     
     FaceModelPtr face_model_;
@@ -169,11 +169,6 @@ void GUI::keyboard(int key, int s, int a, int m)
         screenshot(img, session.windows_[WINDOW::MAIN]);
         cv::imwrite("screenshot.png", img);
     }
-    if(key == GLFW_KEY_F2 && a == GLFW_PRESS){
-        cv::Mat img;
-        screenshot(img, session.windows_[WINDOW::MAIN]);
-        cv::imwrite("screenshot.png", img);
-    }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(session.result_mutex_);
         lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT, getCenter(session.result_.fd[frame_id_].pts_));
@@ -199,6 +194,12 @@ void GUI::keyboard(int key, int s, int a, int m)
         session.capture_control_queue_->push("");
         session.capture_control_queue_->push("pause");
     }
+//    if(key == GLFW_KEY_P && a == GLFW_PRESS){
+//        auto ren = std::static_pointer_cast<MPRenderer>(session.renderer_.renderer_["MP"]);
+//        cv::Mat_<cv::Vec4f> tmp;
+//        ren->fb_tex_->RetrieveFBO(tmp, 0);
+//        cv::imwrite("tex.png",255.0*tmp);
+//    }
 }
 
 void GUI::charMods(unsigned int c, int m)
@@ -343,9 +344,9 @@ void GUI::init(int w, int h)
     session.renderer_.addRenderer("BG", BGRenderer::Create("BG Rendering", true));
     session.renderer_.addRenderer("Geo", MeshRenderer::Create("Geo Rendering", true));
     session.renderer_.addRenderer("MP", MPRenderer::Create("MP Rendering", true));
-//    session.renderer_.addRenderer("P2D", P2DRenderer::Create("P2D Rendering", true));
     
     session.renderer_.init(session.face_model_, data_dir);
+    session.mp2_renderer_.init(data_dir,data_dir+"shaders",session.face_model_->tri_pts_);
     
     auto frame_loader = EmptyLoader::Create();
     
@@ -386,6 +387,133 @@ void GUI::init(int w, int h)
     glfwSetDropCallback(window,drop_callback);
 }
 
+void extractMask(FaceRenderer& renderer, FaceResult& result, int grid_size)
+{
+    auto ren = std::static_pointer_cast<MPRenderer>(renderer.renderer_["MP"]);
+    
+    ren->render(result, 0, 0);
+    
+    cv::Mat_<cv::Vec4f> mat;
+    ren->fb_plane_->RetrieveFBO(mat, 0);
+    
+    cv::Mat_<uchar> mask(mat.size(),0);
+    for(int i = 0; i < mat.rows; ++i)
+    {
+        for(int j = 0; j < mat.cols; ++j)
+        {
+            if(mat(i,j)[3] == 0.0)
+                mask(i,j) = 255;
+        }
+    }
+    
+    int erosion_type = cv::MORPH_ELLIPSE;
+    int erosion_size = 10;
+    cv::Mat element = cv::getStructuringElement( erosion_type,
+                                                 cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                                 cv::Point( erosion_size, erosion_size ) );
+    cv::erode(mask, mask, element);
+    
+    auto pts = result.fd[0].pts_;
+    auto nml = result.fd[0].nml_;
+    auto uvs = result.fd[0].uvs();
+    std::vector<bool> flags(pts.size()/3,true);
+    auto tripts = result.fd[0].tripts();
+    auto triuvs = result.fd[0].triuv();
+    const cv::Mat_<uchar>& uv_mask = ren->mask_;
+    for(int i = 0; i < tripts.rows(); ++i)
+    {
+        for(int j = 0; j < 3; ++j)
+        {
+            int ux = (int)((float)uv_mask.cols*uvs(triuvs(i,j),0));
+            int uy = (int)((float)uv_mask.rows*uvs(triuvs(i,j),1));
+            if(uv_mask(uy,ux) == 0)
+                flags[tripts(i,j)] = false;
+        }
+    }
+    Eigen::Vector4f p, n;
+    Eigen::Matrix4f RT = result.cameras[0].extrinsic_ * result.fd[0].RT;
+    Eigen::Matrix4f K = result.cameras[0].intrinsic_;
+    std::vector<unsigned int> vidx;
+    std::vector<double> pnts;
+    for(int i = 0; i < pts.size()/3; ++i)
+    {
+        if(!flags[i])
+            continue;
+        n << nml.row(i).transpose(), 0.0;
+        p << pts.b3(i), 1.0;
+        
+        n = RT * n;
+        p = RT * p;
+        if(n.dot(p) >= 0.0)
+            continue;
+        p = K * p;
+        double px = p[0]/p[2];
+        double py = p[1]/p[2];
+        pnts.push_back(px);
+        pnts.push_back(py);
+        vidx.push_back(i);
+    }
+    
+    int step_x = mask.cols / grid_size;
+    int step_y = mask.rows / grid_size;
+    int cnt = pts.size()/3;
+    std::vector<glm::vec3> pos;
+    double d_ave = 0.99;
+    for(int i = 0; i < mask.cols; i += step_x)
+    {
+        for(int j = 0; j < mask.rows; j += step_y)
+        {
+            if(j < mask.rows/2 && (j % 6 != 0 || i % 6 != 0))
+                continue;
+            if(mask(j,i) == 255){
+                pnts.push_back((double)i);
+                pnts.push_back((double)j);
+                vidx.push_back(cnt++);
+                pos.push_back(glm::vec3((double)i/(double)(mask.cols-1),(double)j/(double)(mask.rows-1),d_ave));
+                
+                if(i+step_x >= mask.cols && j+step_y >= mask.rows){
+                    pnts.push_back((double)(mask.cols-1));
+                    pnts.push_back((double)(mask.rows-1));
+                    vidx.push_back(cnt++);
+                    pos.push_back(glm::vec3(1.0,1.0,d_ave));
+
+                }
+                else if(i+step_x >= mask.cols){
+                    pnts.push_back((double)(mask.cols-1));
+                    pnts.push_back((double)j);
+                    vidx.push_back(cnt++);
+                    pos.push_back(glm::vec3(1.0,(double)j/(double)(mask.rows-1),d_ave));
+                }
+                else if(j+step_y >= mask.rows){
+                    pnts.push_back((double)i);
+                    pnts.push_back((double)(mask.rows-1));
+                    vidx.push_back(cnt++);
+                    pos.push_back(glm::vec3((double)i/(double)(mask.cols-1),1.0,d_ave));
+                }
+            }
+        }
+    }
+    
+    delaunator::Delaunator d(pnts);
+    std::vector<unsigned int> tri_list;
+    for(size_t i = 0; i < d.triangles.size(); i+=3) {
+        int t1 = d.triangles[i];
+        int t2 = d.triangles[i+1];
+        int t3 = d.triangles[i+2];
+        tri_list.push_back(vidx[d.triangles[i]]);
+        tri_list.push_back(vidx[d.triangles[i+1]]);
+        tri_list.push_back(vidx[d.triangles[i+2]]);
+        cv::line(mask,cv::Point(pnts[t1*2+0],pnts[t1*2+1]),cv::Point(pnts[t2*2+0],pnts[t2*2+1]),cv::Scalar(122));
+        cv::line(mask,cv::Point(pnts[t1*2+0],pnts[t1*2+1]),cv::Point(pnts[t3*2+0],pnts[t3*2+1]),cv::Scalar(122));
+        cv::line(mask,cv::Point(pnts[t3*2+0],pnts[t3*2+1]),cv::Point(pnts[t2*2+0],pnts[t2*2+1]),cv::Scalar(122));
+    }
+    
+    session.mp2_renderer_.render(result.cameras[0], result.fd[0].getRT(),
+                                 result.fd[0].pts_, tri_list, pos, result.cap_data[0][0].img_);
+
+    cv::imshow("mask",mask);
+}
+
 void GUI::loop()
 {
     GLsync tsync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -420,7 +548,6 @@ void GUI::loop()
         
             session.result_.fd[frame_id_].updateAll();
         }
-        
         char title[256];
         sprintf(title, "Main Window [fps: %.1f]", fps_.count());
         glfwSetWindowTitle(session.windows_[MAIN], title);
@@ -430,6 +557,7 @@ void GUI::loop()
         glfwGetFramebufferSize(session.windows_[MAIN], &w, &h);
         glViewport(0, 0, w, h);
         
+        extractMask(session.renderer_, session.result_, 40);
         session.renderer_.draw(session.result_,cam_id_,frame_id_);
         
 #ifdef WITH_IMGUI
@@ -439,6 +567,7 @@ void GUI::loop()
             session.preprocess_module_->updateIMGUI();
             session.face_module_->updateIMGUI();
             session.renderer_.updateIMGUI();
+            session.mp2_renderer_.updateIMGUI();
             session.result_.cameras[cam_id_].updateIMGUI();
             session.result_.fd[frame_id_].updateIMGUI();
             

@@ -1,5 +1,4 @@
-#ifndef HFM_UTILITIES_OPENMESHUTILITIES_H
-#define HFM_UTILITIES_OPENMESHUTILITIES_H
+#pragma once
 
 // std includes
 #include <vector>
@@ -185,6 +184,3 @@ void IntensityToRGBViaBCGYR(float _intensity, Eigen::Vector3f & _rgb);
 
 } // namespace hfm
 
-
-
-#endif // HFM_UTILITIES_OPENMESHUTILITIES_H

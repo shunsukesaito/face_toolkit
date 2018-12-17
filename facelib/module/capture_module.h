@@ -55,8 +55,8 @@ public:
     // construct a default module
     static ModuleHandle Create(const std::string &name,
                                const std::string &data_dir,
-                               int w,
-                               int h,
+                               int &w,
+                               int &h,
                                FrameLoaderPtr frame_loader,
                                CapQueueHandle out_frame_queue,
                                CmdQueueHandle command_queue);

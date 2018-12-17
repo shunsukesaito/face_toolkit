@@ -1,15 +1,32 @@
-//
-//  sh_optimizer.cpp
-//  RenderingTemplate
-//
-//  Created by Shunsuke Saito on 9/11/17.
-//  Copyright © 2017 Shunsuke Saito. All rights reserved.
-//
+/*
+ MIT License
+ 
+ Copyright (c) 2018 Shunsuke Saito
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 
 #include "sh_optimizer.h"
 #include <minitrace.h>
 
-void evaluateSHLeastSquare(Eigen::VectorXf& Crgb, Eigen::MatrixXf& CCrgb, const cv::Mat_<cv::Vec4f>& input, const cv::Mat_<cv::Vec4f>& albedo, const cv::Mat_<cv::Vec4f>& normal, unsigned int sampling_rate)
+void evaluateSHLeastSquare(Eigen::VectorXf& Crgb, Eigen::MatrixXf& CCrgb, const cv::Mat_<cv::Vec4f>& input,
+                           const cv::Mat_<cv::Vec4f>& albedo, const cv::Mat_<cv::Vec4f>& normal, unsigned int sampling_rate)
 {
     MTR_SCOPE("SH", "evaluateSHLeastSquare");
     assert(input.size() == albedo.size());

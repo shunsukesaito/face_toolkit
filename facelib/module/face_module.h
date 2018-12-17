@@ -35,7 +35,7 @@ public:
 
     void init(std::string data_dir,
               FaceModelPtr fm,
-              std::map<std::string, OptimizerHandle> optimizers);
+              std::vector<OptimizerHandle> optimizers);
 
     void update(FaceResult& result);
     
@@ -69,7 +69,7 @@ public:
     static ModuleHandle Create(const std::string &name,
                                const std::string &data_dir,
                                FaceModelPtr fm,
-                               std::map<std::string, OptimizerHandle> optimizers,
+                               std::vector<OptimizerHandle> optimizers,
                                CapQueueHandle input_frame_queue,
                                FaceQueueHandle output_result_queue,
                                CmdQueueHandle command_queue);
@@ -89,7 +89,7 @@ private:
     FaceQueueHandle output_result_queue_;
     CmdQueueHandle command_queue_;
     
-    std::map<std::string, OptimizerHandle> optimizers_;
+    std::vector<OptimizerHandle> optimizers_;
     
 //    F2FRenderer f2f_renderer_;
     

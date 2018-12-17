@@ -1,11 +1,26 @@
-//
-//  face_model.cpp
-//  RenderingTemplate
-//
-//  Created by Shunsuke Saito on 9/5/17.
-//  Copyright © 2017 Shunsuke Saito. All rights reserved.
-//
-
+/*
+ MIT License
+ 
+ Copyright (c) 2018 Shunsuke Saito
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -44,7 +59,7 @@ void BiLinearFaceModel::updateExpression(FaceData& data)
         if(data.w_id_.rows() != mu_id_.size() || data.w_id_.cols() != n_id())
             data.w_id_.resize(mu_id_.size(), n_id());
      
-        data.w_id_.setZero();
+        data.w_id_ = Cshape_[0];
         for(int i = 0; i < n_exp(); ++i)
             data.w_id_ += data.exCoeff[i]*Cshape_[i+1];
     }
@@ -69,7 +84,7 @@ Eigen::Ref<const Eigen::MatrixXf> BiLinearFaceModel::dID(int vidx, int size, con
     if(data.opt_id_only_)
         return data.w_id_.block(vidx*3, 0, 3, size);
     else{
-        g_did = Eigen::MatrixXf::Zero(3,size);
+        g_did = Cshape_[0].block(vidx*3, 0, 3, size);
         for(int i = 0; i < n_exp(); ++i)
         {
             g_did += data.exCoeff[i]*Cshape_[i+1].block(vidx*3,0,3,size);

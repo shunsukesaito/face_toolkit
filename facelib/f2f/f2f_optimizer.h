@@ -96,5 +96,5 @@ struct F2FOptimizer : public BaseOptimizer
     void updateIMGUI();
 #endif
     
-    static OptimizerHandle Create(std::string name);
+    static OptimizerHandle Create(std::string name, bool run = false);
 };

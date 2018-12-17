@@ -8,7 +8,8 @@
 
 #include "mp_renderer.h"
 
-void MPRenderer::init(std::string shader_dir,
+void MPRenderer::init(std::string data_dir,
+                      std::string shader_dir,
                       const Eigen::MatrixX3i& tripts,
                       const Eigen::MatrixX3i& triuv,
                       const Eigen::MatrixX2f& uv,
@@ -24,6 +25,9 @@ void MPRenderer::init(std::string shader_dir,
     
     fb_tex_ = Framebuffer::Create(4096, 4096, 1); // will be resized based on frame size
     fb_plane_ = Framebuffer::Create(1, 1, 1); // will be resized based on frame size
+    
+    mask_ = cv::imread(data_dir+"fw_mask.png",0);
+    prog_main.createTexture("u_mask",mask_);
     
     prog_pl.createUniform("u_alpha", DataType::FLOAT);
     
@@ -167,7 +171,7 @@ void MPRenderer::render(const Camera& camera,
 #ifdef FACE_TOOLKIT
 void MPRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr fm)
 {
-    init(shader_dir,fm->tri_pts_,fm->tri_uv_,fm->uvs_);
+    init(data_dir,shader_dir,fm->tri_pts_,fm->tri_uv_,fm->uvs_);
 }
 
 void MPRenderer::render(const FaceResult& result, int cam_id, int frame_id)

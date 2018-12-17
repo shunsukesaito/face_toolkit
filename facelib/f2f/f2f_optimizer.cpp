@@ -537,8 +537,6 @@ void F2FHierarchicalGaussNewton(std::vector<FaceData>& fd,
 
 void F2FOptimizer::init(std::string data_dir, FaceModelPtr fm)
 {
-    param_.loadParamFromTxt("f2f.ini");
-    
     fm_ = fm;
     param_.dof.ID = std::min(param_.dof.ID, fm_->n_id());
     param_.dof.EX = std::min(param_.dof.EX, fm_->n_exp());
@@ -588,9 +586,12 @@ void F2FOptimizer::updateIMGUI()
 }
 #endif
 
-OptimizerHandle F2FOptimizer::Create(std::string name)
+OptimizerHandle F2FOptimizer::Create(std::string name, bool run)
 {
     auto opt = new F2FOptimizer(name);
+    
+    opt->param_.loadParamFromTxt("f2f.ini");
+    opt->param_.run_ = run;
     
     return OptimizerHandle(opt);
 }
