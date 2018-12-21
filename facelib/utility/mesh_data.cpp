@@ -21,19 +21,15 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+#include "mesh_data.h"
 
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-#include <utility/obj_loader.h>
+#include "obj_loader.h"
 
-#include "mesh_data.h"
-
-// constants
-#include <gflags/gflags.h>
-
-void MeshData::saveObj(const std::string& filename, bool no_uv)
+void MeshData::saveObj(const std::string& filename, bool no_uv) const
 {
     std::ofstream fout(filename);
     if(fout.is_open()){
@@ -46,9 +42,9 @@ void MeshData::saveObj(const std::string& filename, bool no_uv)
             if(nml_.size() == pts_.size())
                 fout << "vn " << nml_(i,0) << " " << nml_(i,1) << " " << nml_(i,2) << std::endl;
         }
-        Eigen::MatrixX2f& uvs = uvs_;
-        Eigen::MatrixX3i& tri_pts = tri_pts_;
-        Eigen::MatrixX3i& tri_uv = tri_uv_;
+        const Eigen::MatrixX2f& uvs = this->uvs();
+        const Eigen::MatrixX3i& tri_pts = this->tripts();
+        const Eigen::MatrixX3i& tri_uv = this->triuv();
         
         if(no_uv){
             for(int i = 0; i < tri_pts.rows(); ++i)
@@ -85,18 +81,18 @@ void MeshData::loadObj(const std::string &filename)
 #ifdef WITH_IMGUI
 void MeshData::updateIMGUI()
 {
-    Eigen::Vector3f euler = Eigen::matToEulerAngle(RT.block<3,3>(0,0));
+    Eigen::Vector3f euler = Eigen::matToEulerAngle(RT_.block<3,3>(0,0));
     if (ImGui::CollapsingHeader("Mesh Parameters")){
         if (ImGui::Button("Reset")){
-            RT = Eigen::Matrix4f::Identity();
-            SH.setZero();
-            SH.col(0).setOnes();
+            RT_ = Eigen::Matrix4f::Identity();
+            SH_.setZero();
+            SH_.col(0).setOnes();
         }
         ImGui::InputFloat3("Rot", &euler(0), -1, ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat3("Tr", &RT(0,3));
+        ImGui::InputFloat3("Tr", &RT_(0,3));
         if (ImGui::TreeNode("SH")){
-            for(int i = 0; i < SH.cols(); ++i)
-                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &SH.col(i)[0]);
+            for(int i = 0; i < SH_.cols(); ++i)
+                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &SH_.col(i)[0]);
             ImGui::TreePop();
         }
     }

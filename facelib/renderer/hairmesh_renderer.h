@@ -32,13 +32,8 @@ struct HairMeshRenderer : public BaseRenderer
     void render(const Camera& camera,
                 const Eigen::VectorXf& pts_t,
                 const Eigen::VectorXf& pts_h,
-                const Eigen::MatrixX3f& nml_h);
-    
-    void render(const Camera& camera,
-                const Eigen::Matrix4f& RT,
-                const Eigen::VectorXf& pts_t,
-                const Eigen::VectorXf& pts_h,
-                const Eigen::MatrixX3f& nml);
+                const Eigen::MatrixX3f& nml,
+                const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity());
         
 #ifdef WITH_IMGUI
     virtual void updateIMGUI();

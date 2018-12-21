@@ -32,48 +32,12 @@ void SphereRenderer::init(std::string data_dir, std::string shader_dir)
     prog_pl.createTexture("u_texture", fb_->color(0), fb_->width(), fb_->height());
 }
 
-void SphereRenderer::render(const Camera& camera)
-{
-    GLFWwindow* window = glfwGetCurrentContext();
-    int w = camera.width_;
-    int h = camera.height_;
-
-    if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
-        fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
-    
-    auto& prog = programs_["mesh"];
-    auto& prog_pl = programs_["plane"];
-    
-    camera.updateUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
-    
-    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_UV);
-    
-    prog.setUniformData("u_uv_view", (uint)uvview_);
-    
-    prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", fb_->color(0));
-
-    fb_->Bind();
-    glViewport(0, 0, fb_->width(), fb_->height());
-    clearBuffer(COLOR::COLOR_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    prog.draw(wire_);
-    
-    fb_->Unbind();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    prog_pl.draw();
-}
-
 void SphereRenderer::render(const Camera& camera,
                             const Eigen::Matrix4f& RT)
 {
+    if(!show_)
+        return;
+    
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -119,8 +83,7 @@ void SphereRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
 
 void SphereRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id]);
+    render(result.cameras[cam_id]);
 }
 #endif
 

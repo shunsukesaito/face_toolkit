@@ -119,7 +119,7 @@ void PosMapRenderer::render(const Camera& camera, const FaceData& fd)
     prog_rec.setUniformData("u_tessinner", (float)tessInner_);
     prog_rec.setUniformData("u_tessouter", (float)tessOuter_);
     prog_rec.setUniformData("u_delta", delta_);
-    camera.updateUniforms(prog_rec, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog_rec, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV);
     
     // binding framebuffer
     fb_->Bind();
@@ -243,6 +243,9 @@ void PosMapReconRenderer::init(std::string data_dir,
 
 void PosMapReconRenderer::render(const Camera& camera, const FaceData& fd)
 {
+    if(!show_)
+        return;
+    
     if((sub_samp_*camera.width_ != fb_->width()) || (sub_samp_*camera.height_ != fb_->height()))
         fb_->Resize(sub_samp_*camera.width_, sub_samp_*camera.height_, 1);
     
@@ -257,7 +260,7 @@ void PosMapReconRenderer::render(const Camera& camera, const FaceData& fd)
     prog_pl.setUniformData("u_alpha", alpha_);
     prog_pl.updateTexture("u_texture", fb_->color(0));
     
-    camera.updateUniforms(prog, fd.RT, U_CAMERA_MVP | U_CAMERA_MV);
+    camera.updateUniforms(prog, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV);
     
     int w, h;
     GLFWwindow* window = glfwGetCurrentContext();
@@ -286,8 +289,7 @@ void PosMapReconRenderer::render(const Camera& camera, const FaceData& fd)
 #ifdef FACE_TOOLKIT
 void PosMapReconRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id]);
+    render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 

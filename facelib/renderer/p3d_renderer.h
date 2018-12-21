@@ -17,13 +17,10 @@ struct P3DRenderer : public BaseRenderer
     P3DRenderer(std::string name, bool show) : BaseRenderer(name,show){}
     
     void init(std::string shader_dir);
-    
+
     void render(const Camera& camera,
-                const std::vector<Eigen::Vector3f>& pts);
-    
-    void render(const Camera& camera,
-                const Eigen::Matrix4f& RT,
                 const std::vector<Eigen::Vector3f>& pts,
+                const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity(),
                 const Eigen::Vector4f& color = Eigen::Vector4f(0,0,1,1));
     
 #ifdef FACE_TOOLKIT

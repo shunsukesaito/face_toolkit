@@ -24,34 +24,56 @@
 
 #pragma once
 
+#include <iostream>
+#include <memory>
+
 #include <Eigen/Dense>
 
-#ifdef WITH_IMGUI
-#include <imgui.h>
-#endif
+struct Triangle;
+typedef std::shared_ptr<Triangle> TrianglePtr;
 
-struct MeshData{
-    Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
-    Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);
+struct Triangle
+{
+    Eigen::Vector3f v0_, v1_, v2_;
+    Eigen::Vector3f n_;
+    int idx_ = -1;
     
-    Eigen::VectorXf pts_;  // current shape
-    Eigen::MatrixX3f nml_; // current normal
-    Eigen::VectorXf clr_;  // current color
-    
-    Eigen::MatrixX2f uvs_;
-    
-    // triangle list
-    Eigen::MatrixX3i tri_pts_;
-    Eigen::MatrixX3i tri_uv_;
-    
-    // for texture maps
-    std::vector<unsigned int> maps_;
-    
-    void saveObj(const std::string& filename, bool no_uv = false);
-    void loadObj(const std::string& filename);
+    Triangle(){}
+    Triangle(const Eigen::Vector3f& v0, const Eigen::Vector3f& v1, const Eigen::Vector3f& v2, int idx)
+    : v0_(v0), v1_(v1), v2_(v2), idx_(idx){ n_ = (v1_-v0_).cross(v2_-v0_); n_.normalize(); }
+};
 
-#ifdef WITH_IMGUI
-    void updateIMGUI();
-#endif
+struct Ray
+{
+    Eigen::Vector3f o_; // origin
+    Eigen::Vector3f dir_; // direction
+    Eigen::Vector3f inv_;
+    
+    float tmin_;
+    float tmax_;
+    
+    float t_; // interection param
+    int idx_; // interection index
+    
+    Ray(){}
+    Ray(const Eigen::Vector3f& o, const Eigen::Vector3f& d, float tmin=0.0f, float tmax=1.e10f)
+    : o_(o), dir_(d), tmin_(tmin), tmax_(tmax)
+    {
+        normalize();
+    }
 
+    inline void normalize()
+    {
+        inv_ = dir_.array().inverse();
+        
+        t_ = 1.e10f;
+        float l = dir_.norm();
+        
+        if(fabs(l) <= 1.e-10f)
+            return;
+        
+        dir_ /= l;
+    }
+    
+    static bool rayTriangle(Ray& ray, const Triangle& f);
 };

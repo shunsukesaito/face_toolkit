@@ -32,10 +32,13 @@
 
 #include <opencv2/opencv.hpp>
 #include <utility/EigenHelper.h>
+#include <utility/mesh_data.h>
 
 #ifdef WITH_IMGUI
 #include <imgui.h>
 #endif
+
+struct MeshData;
 
 struct BaseFaceModel;
 typedef std::shared_ptr<BaseFaceModel> FaceModelPtr;
@@ -54,9 +57,9 @@ struct FaceParams
 };
 
 // all temporary data is stored in FaceData
-struct FaceData
+struct FaceData : public MeshData
 {
-    inline void setFaceModel(FaceModelPtr model){ model_ = model; init(); }
+    void setFaceModel(FaceModelPtr model);
     
     FaceModelPtr model_ = NULL;
     
@@ -69,15 +72,7 @@ struct FaceData
     Eigen::VectorXf exCoeff_prev;
     Eigen::VectorXf alCoeff_prev;
     
-//    float scale = 1.0f;
-    
-    Eigen::Matrix4f RT = Eigen::Matrix4f::Identity();
-    Eigen::Matrix3Xf SH = Eigen::Matrix3Xf::Zero(3,9);
-    
-    Eigen::VectorXf pts_;  // current shape
-    Eigen::MatrixX3f nml_; // current normal
     Eigen::VectorXf neu_;  // current neutral
-    Eigen::VectorXf clr_;  // current color
     
     Eigen::VectorXf d_ex_; // expression delta
     Eigen::VectorXf d_id_; // identity delta
@@ -89,6 +84,9 @@ struct FaceData
         
     bool opt_id_only_ = false; // it should be true only for id opt
     bool opt_ex_only_ = false; // it should be true only for ex opt
+    
+    FaceData(){}
+    virtual ~FaceData(){}
 
     void updateParams(const FaceParams& fp);
     
@@ -105,8 +103,6 @@ struct FaceData
     void updateContourPIN(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
     void updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc);
     
-    Eigen::Matrix4f getRT() const;
-    
     Eigen::Vector3f computeV(int vidx) const;
     Eigen::Ref<const Eigen::MatrixXf> dID(int vidx, int size) const;
     Eigen::Ref<const Eigen::MatrixXf> dEX(int vidx, int size) const;
@@ -117,20 +113,14 @@ struct FaceData
     
     void dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, Eigen::MatrixXf& dv) const;
     
-    const std::vector<unsigned int>& maps() const;
-    const Eigen::MatrixX2f& uvs() const;
-    const Eigen::MatrixX3i& tripts() const;
-    const Eigen::MatrixX3i& triuv() const;
-    
     // for Cao's tracker
     void updateLandmarks(const cv::Mat_<float>& x, Eigen::Matrix4f& K, cv::Mat_<cv::Vec2f>& p2d) const ;
     void updateLandmarks(const cv::Mat_<float>& x, Eigen::Matrix4f& K, const cv::Mat_<float>& xid, cv::Mat_<cv::Vec2f>& p2d) const;
 
     void init();
-    void saveObj(const std::string& filename);
     
 #ifdef WITH_IMGUI
-    void updateIMGUI();
+    virtual void updateIMGUI();
 #endif
 };
 

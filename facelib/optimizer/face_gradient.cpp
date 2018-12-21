@@ -444,7 +444,7 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
         }
         cur_dof += dof.EX;
         
-        Eigen::ConvertToEulerAnglesPose(fd.RT, rt);
+        Eigen::ConvertToEulerAnglesPose(fd.RT(), rt);
         if (dof.fROT == 3 || dof.fTR == 3){
             for (int i = 0; i < dof.fROT; ++i)
             {
@@ -460,6 +460,7 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
         }
         
         assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
+        const Eigen::Matrix3Xf& SH = fd.SH();
         switch(dof.SH)
         {
             case 27:
@@ -467,14 +468,14 @@ void setFaceVector(Eigen::Ref<Eigen::VectorXf> X,
                 {
                     for (int j = 0; j < 9; ++j)
                     {
-                        X[cur_dof + i * 9 + j] = fd.SH(i,j);
+                        X[cur_dof + i * 9 + j] = SH(i,j);
                     }
                 }
                 break;
             case 9:
                 for (int j = 0; j < 9; ++j)
                 {
-                    X[cur_dof + j] = fd.SH(0,j);
+                    X[cur_dof + j] = SH(0,j);
                 }
                 break;
             default:
@@ -590,7 +591,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
         cur_dof += dof.fTR;
 
         if (dof.fROT != 0 || dof.fTR != 0){
-            fd.RT = Eigen::EulerAnglesPoseToMatrix(rt);
+            fd.RT_ = Eigen::EulerAnglesPoseToMatrix(rt);
         }
         
         assert(dof.SH == 27 || dof.SH == 9 || dof.SH == 0);
@@ -602,7 +603,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
                 {
                     for (int j = 0; j < 9; ++j)
                     {
-                        fd.SH(i,j) = X[cur_dof + i * 9 + j];
+                        fd.SH_(i,j) = X[cur_dof + i * 9 + j];
                     }
                 }
                 break;
@@ -611,7 +612,7 @@ void loadFaceVector(const Eigen::VectorXf& X,
                 {
                     for (int j = 0; j < 9; ++j)
                     {
-                        fd.SH(i,j) = X[cur_dof + j];
+                        fd.SH_(i,j) = X[cur_dof + j];
                     }
                 }
                 break;

@@ -27,9 +27,7 @@ struct SphereRenderer : public BaseRenderer
     
     void init(std::string data_dir, std::string shader_dir);
     
-    void render(const Camera& camera);
-    
-    void render(const Camera& camera, const Eigen::Matrix4f& RT);
+    void render(const Camera& camera, const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity());
     
 #ifdef FACE_TOOLKIT
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);

@@ -303,7 +303,7 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
     
     if (params.w_pix_ != 0.f)
         err.pix += F2FRenderer::computeJacobianColor(Jtr, JtJ, fd, data.pV, data.dpV, data.nV, data.dnV,
-                                          fd.SH, data.renderTarget, inputRGB, dIx, dIy, dof, params.w_pix_);
+                                          fd.SH(), data.renderTarget, inputRGB, dIx, dIy, dof, params.w_pix_);
     
     if (q2V.size() != 0){
         if (params.verbose_)

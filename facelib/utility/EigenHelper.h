@@ -41,6 +41,11 @@ Eigen::Vector3f getCenter(Eigen::VectorXf& pts);
 
 void computeAABB(const Eigen::VectorXf& pts, Eigen::Vector3f& vMin, Eigen::Vector3f& vMax);
 
+void baryCentric(const Eigen::Vector3f& p,
+                 const Eigen::Vector3f& v1,
+                 const Eigen::Vector3f& v2,
+                 const Eigen::Vector3f& v3,
+                 float &u, float &v, float &w);
 
 void calcNormal(Eigen::MatrixX3f& nml,
                 const Eigen::VectorXf& pts,

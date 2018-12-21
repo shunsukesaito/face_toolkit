@@ -133,8 +133,8 @@ void FaceData::updateParams(const FaceParams& fp)
     this->exCoeff = fp.exCoeff;
     this->alCoeff = fp.alCoeff;
 
-    this->RT = fp.RT;
-    this->SH = fp.SH;
+    this->RT_ = fp.RT;
+    this->SH_ = fp.SH;
 }
 
 void FaceData::updateIdentity()
@@ -224,29 +224,16 @@ void FaceData::dSym(int symidx, int axis, int nid, int nex, Eigen::Vector3f& v, 
     model_->dSym(symidx, axis, nid, nex, v, dv, *this);
 }
 
-const std::vector<unsigned int>& FaceData::maps() const
+void FaceData::setFaceModel(FaceModelPtr model)
 {
-    return model_->maps_;
-}
-
-const Eigen::MatrixX2f& FaceData::uvs() const
-{
-    return model_->uvs_;
-}
-
-const Eigen::MatrixX3i& FaceData::tripts() const
-{
-    return model_->tri_pts_;
-}
-
-const Eigen::MatrixX3i& FaceData::triuv() const
-{
-    return model_->tri_uv_;
-}
-
-Eigen::Matrix4f FaceData::getRT() const
-{
-    return RT;
+    model_ = model;
+    
+    maps_ = model_->maps_;
+    uvs_ = model_->uvs_;
+    tri_pts_ = model_->tri_pts_;
+    tri_uv_ = model_->tri_uv_;
+    
+    init();
 }
 
 void FaceData::init()
@@ -256,48 +243,11 @@ void FaceData::init()
     exCoeff = Eigen::VectorXf::Zero(model_->n_exp());
     alCoeff = Eigen::VectorXf::Zero(model_->n_clr());
 
-    SH = Eigen::Matrix3Xf::Zero(3,9);
-    SH.col(0).setOnes();
-    RT.setIdentity();
+    SH_ = Eigen::Matrix3Xf::Zero(3,9);
+    SH_.col(0).setOnes();
+    RT_.setIdentity();
     
     updateAll();
-}
-
-void FaceData::saveObj(const std::string& filename)
-{
-    assert(model_ != NULL);
-    std::ofstream fout(filename);
-    if(fout.is_open()){
-        for(int i = 0; i < pts_.size()/3; ++i)
-        {
-            fout << "v " << pts_(i*3+0) << " " << pts_(i*3+1) << " " << pts_(i*3+2);
-            if(clr_.size() == pts_.size())
-                fout << " " << clr_(i*3+0) << " " << clr_(i*3+1) << " " << clr_(i*3+2) << std::endl;
-            else
-                fout << std::endl;
-            if(nml_.size() == pts_.size())
-                fout << "vn " << nml_(i,0) << " " << nml_(i,1) << " " << nml_(i,2) << std::endl;
-        }
-        Eigen::MatrixX2f& uvs = model_->uvs_;
-        Eigen::MatrixX3i& tri_pts = model_->tri_pts_;
-        Eigen::MatrixX3i& tri_uv = model_->tri_uv_;
-        if(uvs.size() != 0)
-            for(int i = 0; i < uvs.rows(); ++i)
-            {
-                fout << "vt " << uvs(i,0) << " " << uvs(i,1) << std::endl;
-            }
-        
-        for(int i = 0; i < tri_pts.rows(); ++i)
-        {
-            fout << "f " << tri_pts(i,0)+1 << "/" << tri_uv(i,0)+1 << "/" << tri_pts(i,0)+1;
-            fout << " " << tri_pts(i,1)+1 << "/" << tri_uv(i,1)+1 << "/" << tri_pts(i,1)+1;
-            fout << " " << tri_pts(i,2)+1 << "/" << tri_uv(i,2)+1 << "/" << tri_pts(i,2)+1 << std::endl;
-        }
-        fout.close();
-    }
-    else{
-        std::cout << "Error: cannot open the file :" << filename << std::endl;
-    }
 }
 
 void FaceData::updateContour(const Eigen::Matrix4f& K, const Eigen::Matrix4f& RTc)
@@ -314,7 +264,7 @@ void FaceData::updateContourBV(const Eigen::Matrix4f& K, const Eigen::Matrix4f& 
 {
     const auto& cont_lists = model_->cont_candi_;
     
-	Eigen::Matrix4f KRT = K*RTc*RT;
+	Eigen::Matrix4f KRT = K*RTc*RT();
     
     Eigen::Vector4f v;
     cont_idx_.clear();
@@ -351,8 +301,8 @@ void FaceData::updateContourPIN(const Eigen::Matrix4f& K, const Eigen::Matrix4f&
 {
     const auto& cont_lists = model_->cont_candi_;
     
-    Eigen::Matrix4f extRT = RTc*RT;
-    Eigen::Matrix4f KRT = K*RTc*RT;
+    Eigen::Matrix4f extRT = RTc*RT();
+    Eigen::Matrix4f KRT = K*RTc*RT();
     
     cont_idx_.clear();
     Eigen::Vector4f n, v;
@@ -404,8 +354,8 @@ void FaceData::updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& 
 {
     const auto& cont_lists = model_->cont_candi_;
     
-    Eigen::Matrix4f extRT = RTc*RT;
-	Eigen::Matrix4f KRT = K*RTc*RT;
+    Eigen::Matrix4f extRT = RTc*RT();
+	Eigen::Matrix4f KRT = K*RTc*RT();
     
     std::vector<int> contour_indices;
     Eigen::Vector4f n, v;
@@ -458,15 +408,15 @@ void FaceData::updateContourFW(const Eigen::Matrix4f& K, const Eigen::Matrix4f& 
 #ifdef WITH_IMGUI
 void FaceData::updateIMGUI()
 {
-    Eigen::Vector3f euler = Eigen::matToEulerAngle(RT.block<3,3>(0,0));
+    Eigen::Vector3f euler = Eigen::matToEulerAngle(RT_.block<3,3>(0,0));
     if (ImGui::CollapsingHeader("Face Parameters")){
         if (ImGui::Button("Reset")){
             idCoeff.setZero();
             exCoeff.setZero();
             alCoeff.setZero();
-            RT = Eigen::Matrix4f::Identity();
-            SH.setZero();
-            SH.col(0).setOnes();
+            RT_ = Eigen::Matrix4f::Identity();
+            SH_.setZero();
+            SH_.col(0).setOnes();
         }
         if(idCoeff.size() != 0)
         if (ImGui::TreeNode("ID")){
@@ -488,10 +438,10 @@ void FaceData::updateIMGUI()
         }
 //        ImGui::InputFloat("Scale", &scale);
         ImGui::InputFloat3("Rot", &euler(0), -1, ImGuiInputTextFlags_ReadOnly);
-        ImGui::InputFloat3("Tr", &RT(0,3));
+        ImGui::InputFloat3("Tr", &RT_(0,3));
         if (ImGui::TreeNode("SH")){
-            for(int i = 0; i < SH.cols(); ++i)
-                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &SH.col(i)[0]);
+            for(int i = 0; i < SH_.cols(); ++i)
+                ImGui::InputFloat3(("sh" + std::to_string(i)).c_str(), &SH_.col(i)[0]);
             ImGui::TreePop();
         }
     }

@@ -68,15 +68,15 @@ struct FaceResult
         // face rotation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd[0].RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
+        fd[0].RT_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(&tmp[0]);
         // face translation
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd[0].RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
+        fd[0].RT_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(&tmp[0]);
         // spherical hamonics
         std::getline(infile, line);
         tmp = string2arrayf(line);
-        fd[0].SH = Eigen::Map<Eigen::MatrixXf>(&tmp[0],3,9);
+        fd[0].SH_ = Eigen::Map<Eigen::MatrixXf>(&tmp[0],3,9);
         // camera rotation
         std::getline(infile, line);
         tmp = string2arrayf(line);
@@ -116,17 +116,17 @@ struct FaceResult
             }
             if(label.find("rf") != std::string::npos){
                 assert(dim == 9);
-                fd[0].RT.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
+                fd[0].RT_.block(0,0,3,3) = Eigen::Map<Eigen::Matrix3f>(p);
                 p += dim;
             }
             if(label.find("tf") != std::string::npos){
                 assert(dim == 3);
-                fd[0].RT.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
+                fd[0].RT_.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(p);
                 p += dim;
             }
             if(label.find("sh") != std::string::npos){
                 assert(dim == 27);
-                fd[0].SH = Eigen::Map<Eigen::MatrixXf>(p,3,9);
+                fd[0].SH_ = Eigen::Map<Eigen::MatrixXf>(p,3,9);
                 p += dim;
             }
             if(label.find("rc") != std::string::npos){
@@ -163,11 +163,11 @@ struct FaceResult
         fout << fd[0].idCoeff.transpose() << std::endl;
         fout << fd[0].exCoeff.transpose() << std::endl;
         fout << fd[0].alCoeff.transpose() << std::endl;
-        Eigen::Matrix3f Rf = fd[0].RT.block(0,0,3,3);
+        Eigen::Matrix3f Rf = fd[0].RT_.block(0,0,3,3);
         Eigen::Map<Eigen::RowVectorXf> Rfmap(Rf.data(), Rf.size());
         fout << Rfmap << std::endl;
-        fout << fd[0].RT.block(0,3,3,1).transpose() << std::endl;
-        Eigen::Map<Eigen::RowVectorXf> SHmap(fd[0].SH.data(), fd[0].SH.size());
+        fout << fd[0].RT_.block(0,3,3,1).transpose() << std::endl;
+        Eigen::Map<Eigen::RowVectorXf> SHmap(fd[0].SH_.data(), fd[0].SH_.size());
         fout << SHmap << std::endl;
         Eigen::Matrix3f Rc = cameras[0].extrinsic_.block(0,0,3,3);
         Eigen::Map<Eigen::RowVectorXf> Rcmap(Rc.data(), Rc.size());

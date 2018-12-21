@@ -53,66 +53,7 @@ void MPRenderer::render(const Camera& camera,
                         const Eigen::MatrixX3i& tri,
                         const Eigen::VectorXf& pts,
                         const Eigen::MatrixX3f& nml,
-                        const cv::Mat& img)
-{
-    GLFWwindow* window = glfwGetCurrentContext();
-    int w = camera.width_;
-    int h = camera.height_;
-
-    if((sub_samp_*w != fb_plane_->width()) || (sub_samp_*h != fb_plane_->height()))
-        fb_plane_->Resize(sub_samp_*w, sub_samp_*h, 1);
-    
-    auto& prog_init = programs_["mp_init"];
-    auto& prog_main = programs_["mp_main"];
-    auto& prog_pl = programs_["plane"];
-    
-    camera.updateUniforms(prog_init, U_CAMERA_MVP);
-    camera.updateUniforms(prog_main, U_CAMERA_MVP | U_CAMERA_MV);
-
-    mesh_.update_position(pts,tri);
-    mesh_.update_normal(nml,tri);
-    mesh_.update(prog_init, AT_POSITION);
-    mesh_.update(prog_main, AT_POSITION | AT_NORMAL);
-    
-    prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", fb_plane_->color(0));
-
-    if (texture_update_){
-        if(!img.empty())
-            prog_init.updateTexture("u_image", img);
-        fb_tex_->Bind();
-        glViewport(0, 0, fb_tex_->width(), fb_tex_->height());
-        clearBuffer(COLOR::COLOR_ALPHA);
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        prog_init.draw(wire_);
-        fb_tex_->Unbind();
-    }
-    
-    fb_plane_->Bind();
-    glViewport(0, 0, fb_plane_->width(), fb_plane_->height());
-    clearBuffer(COLOR::COLOR_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    prog_main.draw(wire_);
-    fb_plane_->Unbind();
-    
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    prog_pl.draw();
-}
-
-void MPRenderer::render(const Camera& camera,
                         const Eigen::Matrix4f& RT,
-                        const Eigen::MatrixX3i& tri,
-                        const Eigen::VectorXf& pts,
-                        const Eigen::MatrixX3f& nml,
                         const cv::Mat& img)
 {
     GLFWwindow* window = glfwGetCurrentContext();
@@ -176,9 +117,8 @@ void MPRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
 
 void MPRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id].getRT(), result.fd[frame_id].tripts(),
-               result.fd[frame_id].pts_, result.fd[frame_id].nml_, result.cap_data[frame_id][cam_id].img_);
+    render(result.cameras[cam_id], result.fd[frame_id].tripts(),
+           result.fd[frame_id].pts_, result.fd[frame_id].nml_, result.fd[frame_id].RT(), result.cap_data[frame_id][cam_id].img_);
 }
 #endif
 

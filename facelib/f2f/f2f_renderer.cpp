@@ -298,12 +298,12 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     std::vector<glm::vec3> sh;
     for(int i = 0; i < 9; ++i)
     {
-        sh.push_back(glm::vec3(fd.SH(0,i),fd.SH(1,i),fd.SH(2,i)));
+        sh.push_back(glm::vec3(fd.SH()(0,i),fd.SH()(1,i),fd.SH()(2,i)));
     }
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
+    camera.updateUniforms(prog_f2f, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
     
     // update mesh attributes
     mesh_.update_position(fd.pts_);
@@ -313,7 +313,7 @@ void F2FRenderer::render(const Camera& camera, const FaceData& fd)
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
     
     if(param_.tex_mode){
-        camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
+        camera.updateUniforms(prog_depth, fd.RT(), U_CAMERA_MVP);
         mesh_.update(prog_depth, AT_POSITION);
         
         // NOTE: need to make sure the viewport size matches the framebuffer size
@@ -366,12 +366,12 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     std::vector<glm::vec3> sh;
     for(int i = 0; i < 9; ++i)
     {
-        sh.push_back(glm::vec3(fd.SH(0,i),fd.SH(1,i),fd.SH(2,i)));
+        sh.push_back(glm::vec3(fd.SH()(0,i),fd.SH()(1,i),fd.SH()(2,i)));
     }
     prog_f2f.setUniformData("u_SHCoeffs", sh);
     
     // camera parameters update
-    camera.updateUniforms(prog_f2f, fd.RT, U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
+    camera.updateUniforms(prog_f2f, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW);
     
     // update mesh attributes
     mesh_.update_position(fd.pts_);
@@ -381,7 +381,7 @@ void F2FRenderer::render(int w, int h, const Camera& camera, const FaceData& fd,
     mesh_.update(prog_f2f, AT_POSITION | AT_COLOR | AT_NORMAL);
     
     if(param_.tex_mode){
-        camera.updateUniforms(prog_depth, fd.RT, U_CAMERA_MVP);
+        camera.updateUniforms(prog_depth, fd.RT(), U_CAMERA_MVP);
         mesh_.update(prog_depth, AT_POSITION);
         
         // NOTE: need to make sure the viewport size matches the framebuffer size

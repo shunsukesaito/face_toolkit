@@ -6,8 +6,7 @@
 //  Copyright © 2015 SaitoShunsuke. All rights reserved.
 //
 
-#ifndef hogFeature_hpp
-#define hogFeature_hpp
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -31,4 +30,3 @@ void GetHogFeature(Eigen::MatrixXf& feature,
                    int num_cells = 3,
                    int num_bins = 4);
 
-#endif /* hogFeature_hpp */

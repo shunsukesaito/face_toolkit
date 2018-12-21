@@ -21,25 +21,26 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+
 #pragma once
 
-#define _USE_MATH_DEFINES
-#include <iostream>
-#include <sstream>
-#include <fstream>
 #include <vector>
+#include "EigenHelper.h"
 
-#include <glm/glm.hpp>
+struct Sample
+{
+    Eigen::Vector3f dir_;
+    Eigen::Vector2f spCoord_; // (theta, phi)
+    
+    std::vector<float> shValue_;
+    
+    Sample(const Eigen::Vector3f& dir, Eigen::Vector2f sph) : dir_(dir), spCoord_(sph){}
+};
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <tinyexr.h>
-
-int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest);
-
-void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,float x, float y, float z);
-
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
-void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage* SHBasis, TinyExrImage& result);
-void PanoramaSphericalHarmonicsBlurFromSHImage(const int order, const TinyExrImage* SH, TinyExrImage& source, TinyExrImage& result);
+struct Sampler
+{
+    Sampler(unsigned n); // sqrt of sampling number
+    void computeSH(int band); // band = l, total number of coeff is (l+1)^2
+    
+    std::vector<Sample> samples_;
+};

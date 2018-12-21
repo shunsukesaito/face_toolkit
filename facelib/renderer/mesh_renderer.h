@@ -32,12 +32,8 @@ struct MeshRenderer : public BaseRenderer
     
     void render(const Camera& camera,
                 const Eigen::VectorXf& pts,
-                const Eigen::MatrixX3f& nml);
-    
-    void render(const Camera& camera,
-                const Eigen::Matrix4f& RT,
-                const Eigen::VectorXf& pts,
-                const Eigen::MatrixX3f& nml);
+                const Eigen::MatrixX3f& nml,
+                const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity());
     
 #ifdef FACE_TOOLKIT
     virtual void init(std::string data_dir, std::string shader_dir, FaceModelPtr fm);

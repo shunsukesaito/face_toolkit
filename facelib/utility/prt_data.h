@@ -21,25 +21,25 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+
 #pragma once
 
-#define _USE_MATH_DEFINES
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <vector>
+#include <Eigen/Dense>
 
-#include <glm/glm.hpp>
+#include "sampler.h"
+#include "mesh_data.h"
+#include "bvh_tree.h"
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+struct PRTData : public MeshData
+{
+    Eigen::MatrixXf prt_; // (#N, #SH)
+    
+    void computePRT(int band, int nSample, bool shadow = false, int bounce = 0); // bounce=0 means no interreflection
+    void diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow);
+    void diffuseInterRefPRT(int band, Sampler &sampler, BVHTree &bvh, int bounce);
+    
+#ifdef WITH_IMGUI
+    virtual void updateIMGUI();
+#endif
+};
 
-#include <tinyexr.h>
-
-int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest);
-
-void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,float x, float y, float z);
-
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
-void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage* SHBasis, TinyExrImage& result);
-void PanoramaSphericalHarmonicsBlurFromSHImage(const int order, const TinyExrImage* SH, TinyExrImage& source, TinyExrImage& result);

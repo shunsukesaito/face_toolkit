@@ -21,25 +21,41 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+
 #pragma once
 
-#define _USE_MATH_DEFINES
 #include <iostream>
-#include <sstream>
-#include <fstream>
-#include <vector>
+#include <memory>
 
-#include <glm/glm.hpp>
+#include "bbox.h"
+#include "mesh_data.h"
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+struct BVHNode;
+typedef std::shared_ptr<BVHNode> BVHNodePtr;
 
-#include <tinyexr.h>
+struct BVHNode{
+    bool isLeaf_;
+    
+    BVHNodePtr left_, right_;
+    TrianglePtr f1_, f2_;
+    
+    BBox bbox_;
+    
+    BVHNode(){ init(); }
+    BVHNode(const Triangle& f);
+    BVHNode(const Triangle& f1, const Triangle& f2);
+    
+    void init();
+    bool hit(Ray& ray);
+};
 
-int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest);
-
-void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,float x, float y, float z);
-
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
-void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage* SHBasis, TinyExrImage& result);
-void PanoramaSphericalHarmonicsBlurFromSHImage(const int order, const TinyExrImage* SH, TinyExrImage& source, TinyExrImage& result);
+struct BVHTree{
+    BVHTree(){}
+    void build(MeshData* obj);
+    BVHNodePtr buildBranch(int start, int size, int axis);
+    int split(int start, int size, float pivot, int axis);
+    bool interTest(Ray &ray);
+    
+    std::vector<Triangle> tri_;
+    BVHNodePtr root_;
+};

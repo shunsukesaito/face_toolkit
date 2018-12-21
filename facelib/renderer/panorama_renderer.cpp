@@ -31,51 +31,13 @@ void PanoramaRenderer::init(std::string shader_dir,
 }
 
 void PanoramaRenderer::render(const XSlitCamera& camera,
-                          const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml)
+                              const Eigen::VectorXf& pts,
+                              const Eigen::MatrixX3f& nml,
+                              const Eigen::Matrix4f& RT)
 {
-    GLFWwindow* window = glfwGetCurrentContext();
-    int w = camera.width_;
-    int h = camera.height_;
-
-    if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
-        fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
+    if(!show_)
+        return;
     
-    auto& prog = programs_["mesh"];
-    auto& prog_pl = programs_["plane"];
-    
-    camera.updateUniforms(prog, U_XSCAMERA_MV);
-    
-    mesh_.update_position(pts);
-    mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-
-    prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", fb_->color(0));
-
-    fb_->Bind();
-    glViewport(0, 0, fb_->width(), fb_->height());
-    clearBuffer(COLOR::COLOR_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    prog.draw(wire_);
-    
-    fb_->Unbind();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    prog_pl.draw();
-}
-
-void PanoramaRenderer::render(const XSlitCamera& camera,
-                            const Eigen::Matrix4f& RT,
-                            const Eigen::VectorXf& pts,
-                            const Eigen::MatrixX3f& nml)
-{
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -115,56 +77,12 @@ void PanoramaRenderer::render(const XSlitCamera& camera,
 
 void PanoramaRenderer::render(const std::vector<XSlitCamera>& cameras,
                               const Eigen::VectorXf& pts,
-                              const Eigen::MatrixX3f& nml)
+                              const Eigen::MatrixX3f& nml,
+                              const Eigen::Matrix4f& RT)
 {
-    if(cameras.size() == 0) return;
+    if(!show_)
+        return;
     
-    GLFWwindow* window = glfwGetCurrentContext();
-    int w = cameras[0].width_;
-    int h = cameras[0].height_;
-    
-    if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
-        fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
-    
-    auto& prog = programs_["mesh"];
-    auto& prog_pl = programs_["plane"];
-    
-    mesh_.update_position(pts);
-    mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-
-    int d = fb_->width()/cameras.size();
-    fb_->Bind();
-    glViewport(0, 0, fb_->width(), fb_->height());
-    clearBuffer(COLOR::COLOR_ALPHA);
-    for(int i = 0; i < cameras.size(); ++i)
-    {
-        cameras[i].updateUniforms(prog, U_XSCAMERA_MV);
-        glViewport(d*i, 0, d, fb_->height());
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        prog.draw(wire_);
-    }
-    fb_->Unbind();
-
-    prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", fb_->color(0));
-
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    prog_pl.draw();
-}
-
-void PanoramaRenderer::render(const std::vector<XSlitCamera>& cameras,
-                              const Eigen::Matrix4f& RT,
-                              const Eigen::VectorXf& pts,
-                              const Eigen::MatrixX3f& nml)
-{
     if(cameras.size() == 0) return;
 
     GLFWwindow* window = glfwGetCurrentContext();

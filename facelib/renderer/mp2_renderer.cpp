@@ -121,6 +121,9 @@ void MP2Renderer::render(const Camera& camera,
                          const Eigen::VectorXf& pts,
                          const cv::Mat& img)
 {
+    if(!show_)
+        return;
+    
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -192,9 +195,8 @@ void MP2Renderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
 
 void MP2Renderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id].getRT(),
-               result.fd[frame_id].pts_, result.cap_data[frame_id][cam_id].img_);
+    render(result.cameras[cam_id], result.fd[frame_id].RT(),
+           result.fd[frame_id].pts_, result.cap_data[frame_id][cam_id].img_);
 }
 #endif
 

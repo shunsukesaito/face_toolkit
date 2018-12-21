@@ -21,25 +21,48 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-#pragma once
 
-#define _USE_MATH_DEFINES
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <vector>
+#include "ray.h"
 
-#include <glm/glm.hpp>
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <tinyexr.h>
-
-int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest);
-
-void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,float x, float y, float z);
-
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
-void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage* SHBasis, TinyExrImage& result);
-void PanoramaSphericalHarmonicsBlurFromSHImage(const int order, const TinyExrImage* SH, TinyExrImage& source, TinyExrImage& result);
+bool Ray::rayTriangle(Ray& ray, const Triangle& f)
+{
+    // if ray and triangle are facing in the same direction, don't count interection
+    if(ray.dir_.dot(f.n_) > 1.e-6)
+        return false;
+    
+    Eigen::Vector3f e1 = f.v1_ - f.v0_;
+    Eigen::Vector3f e2 = f.v2_ - f.v0_;
+    
+    Eigen::Vector3f cross = ray.dir_.cross(e2);
+    
+    float dot = e1.dot(cross);
+    
+    if(fabs(dot) < 1.e-10)
+        return false;
+    
+    float inv = 1.0f/dot;
+    
+    Eigen::Vector3f diff = ray.o_ - f.v0_;
+    
+    float u = diff.dot(cross) * inv;
+    if( u < 0.0f || u > 1.0f)
+        return false;
+    
+    Eigen::Vector3f q = diff.cross(e1);
+    
+    float v = ray.dir_.dot(q) * inv;
+    if( v < 0.0f || v > 1.0f)
+        return false;
+    
+    float t = e2.dot(q) * inv;
+    if( t <= 0.0f)
+        return false;
+    
+    if( t < ray.t_)
+    {
+        ray.t_ = t;
+        ray.idx_ = f.idx_;
+    }
+    
+    return true;
+}

@@ -87,8 +87,8 @@ void FaceOptModule::update(FaceResult& result)
         if(std::isnan(fd_[i].idCoeff.sum()) ||
            std::isnan(fd_[i].exCoeff.sum()) ||
            std::isnan(fd_[i].alCoeff.sum()) ||
-           std::isnan(fd_[i].RT.sum()) ||
-           std::isnan(fd_[i].SH.sum())){
+           std::isnan(fd_[i].RT().sum()) ||
+           std::isnan(fd_[i].SH().sum())){
             std::cerr << "FaceOptModule::update() - face gets nan..." << std::endl;
             fd_[i].init();
         }

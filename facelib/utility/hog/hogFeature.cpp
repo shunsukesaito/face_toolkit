@@ -64,7 +64,3 @@ void GetHogFeature(Eigen::MatrixXf& feature,
     feature = Eigen::Map<Eigen::MatrixXf>(hog_descriptors.ptr<float>(0),hog_descriptors.cols,hog_descriptors.rows);
 }
 
-
-
-
-#endif /* hogFeature_hpp */

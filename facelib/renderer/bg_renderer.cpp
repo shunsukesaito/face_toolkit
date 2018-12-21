@@ -42,6 +42,9 @@ void BGRenderer::init(std::string shader_dir,
 
 void BGRenderer::render(const cv::Mat& img, bool mirror)
 {
+    if(!show_)
+        return;
+    
     if(!img.empty()){
         programs_["bg"].updateTexture("u_texture", img);
         if(mirror)
@@ -62,8 +65,7 @@ void BGRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
 
 void BGRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cap_data[frame_id][cam_id].img_);
+    render(result.cap_data[frame_id][cam_id].img_);
 }
 #endif
 

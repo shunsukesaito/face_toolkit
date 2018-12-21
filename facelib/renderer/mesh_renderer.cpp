@@ -39,54 +39,12 @@ void MeshRenderer::init(std::string shader_dir,
 
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml)
+                          const Eigen::MatrixX3f& nml,
+                          const Eigen::Matrix4f& RT)
 {
-    GLFWwindow* window = glfwGetCurrentContext();
-    int w = camera.width_;
-    int h = camera.height_;
-
-    if((sub_samp_*w != fb_->width()) || (sub_samp_*h != fb_->height()))
-        fb_->Resize(sub_samp_*w, sub_samp_*h, 1);
+    if(!show_)
+        return;
     
-    auto& prog = programs_["mesh"];
-    auto& prog_pl = programs_["plane"];
-    
-    camera.updateUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
-    
-    mesh_.update_position(pts);
-    mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
-    
-    prog.setUniformData("u_tessinner", (float)tessInner_);
-    prog.setUniformData("u_tessouter", (float)tessOuter_);
-    prog.setUniformData("u_tessalpha", tessAlpha_);
-
-    prog_pl.setUniformData("u_alpha", alpha_);
-    prog_pl.updateTexture("u_texture", fb_->color(0));
-
-    fb_->Bind();
-    glViewport(0, 0, fb_->width(), fb_->height());
-    clearBuffer(COLOR::COLOR_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    prog.draw(wire_);
-    
-    fb_->Unbind();
-    glfwGetFramebufferSize(window, &w, &h);
-    glViewport(0, 0, w, h);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    prog_pl.draw();
-}
-
-void MeshRenderer::render(const Camera& camera,
-                          const Eigen::Matrix4f& RT,
-                          const Eigen::VectorXf& pts,
-                          const Eigen::MatrixX3f& nml)
-{
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -136,8 +94,7 @@ void MeshRenderer::init(std::string data_dir, std::string shader_dir, FaceModelP
 
 void MeshRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id].getRT(), result.fd[frame_id].pts_, result.fd[frame_id].nml_);
+    render(result.cameras[cam_id], result.fd[frame_id].pts_, result.fd[frame_id].nml_, result.fd[frame_id].RT());
 }
 #endif
 

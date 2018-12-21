@@ -64,6 +64,10 @@ if(BUILD_EXECUTABLE)
   set_target_properties(faceview PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(faceview create-folder)
   
+  add_executable(prt_test main.cpp prt_test.cpp gui.h)
+  set_target_properties(prt_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(prt_test create-folder)
+  
   add_executable(hair_opt main.cpp hair_opt.cpp gui.h)
   set_target_properties(hair_opt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
   add_dependencies(hair_opt create-folder)
@@ -78,6 +82,17 @@ if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
 endif()
 
 target_link_libraries(faceview
+                      FTM::module
+                      FTM::renderer
+                      FTM::utility
+                      FTM::gflags
+                      FTM::OpenCV
+                      ${DLIB_LIBRARIES}
+                      Threads::Threads
+                      ${CMAKE_DL_LIBS}
+                      ${OPENMP_LIB})
+                      
+target_link_libraries(prt_test
                       FTM::module
                       FTM::renderer
                       FTM::utility

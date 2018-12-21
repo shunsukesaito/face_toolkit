@@ -38,13 +38,7 @@ struct MPRenderer : public BaseRenderer
                 const Eigen::MatrixX3i& tri,
                 const Eigen::VectorXf& pts,
                 const Eigen::MatrixX3f& nml,
-                const cv::Mat& img = cv::Mat());
-    
-    void render(const Camera& camera,
-                const Eigen::Matrix4f& RT,
-                const Eigen::MatrixX3i& tri,
-                const Eigen::VectorXf& pts,
-                const Eigen::MatrixX3f& nml,
+                const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity(),
                 const cv::Mat& img = cv::Mat());
     
 #ifdef FACE_TOOLKIT

@@ -91,6 +91,9 @@ void LSGeoRenderer::init(std::string data_dir, std::string shader_dir, FaceModel
 
 void LSGeoRenderer::render(const Camera& camera, const FaceData& fd)
 {
+    if(!show_)
+        return;
+    
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -114,8 +117,8 @@ void LSGeoRenderer::render(const Camera& camera, const FaceData& fd)
     prog_pl.setUniformData("u_alpha", param_.alpha);
 
     // camera parameters update
-    camera.updateUniforms(prog_main, fd.getRT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
-    camera.updateUniforms(prog_depth, fd.getRT(), U_CAMERA_MVP);
+    camera.updateUniforms(prog_main, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
+    camera.updateUniforms(prog_depth, fd.RT(), U_CAMERA_MVP);
     
     // update mesh attributes
     Eigen::MatrixX3f tan, btan;
@@ -163,8 +166,7 @@ void LSGeoRenderer::render(const Camera& camera, const FaceData& fd)
 #ifdef FACE_TOOLKIT
 void LSGeoRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id]);
+    render(result.cameras[cam_id], result.fd[frame_id]);
 }
 #endif
 

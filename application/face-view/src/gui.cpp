@@ -202,7 +202,7 @@ void GUI::keyboard(int key, int s, int a, int m)
     }
     if(key == GLFW_KEY_F && a == GLFW_PRESS){
         std::lock_guard<std::mutex> lock(session.result_mutex_);
-        lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT, getCenter(session.result_.fd[frame_id_].pts_));
+        lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT(), getCenter(session.result_.fd[frame_id_].pts_));
         RT.block<3,3>(0,0) = Eigen::Quaternion<float>(0, 1, 0, 0).toRotationMatrix();
         RT.block<3,1>(0,3) = lookat + Eigen::Vector3f(0,0,50);
     }
@@ -652,7 +652,7 @@ void save_render1(FaceResult& result)
         0, 0, -1, 40.0,
         0, 0, 0, 1;
         result.cameras[0].extrinsic_ = RT;
-        result.fd[0].RT = Eigen::Matrix4f::Identity();
+        result.fd[0].RT_ = Eigen::Matrix4f::Identity();
         result.fd[0].updateAll();
     }
     
@@ -702,7 +702,7 @@ void save_render2(FaceResult& result)
     
     result.cameras[0] = Camera::parseCameraParams(filename.substr(0,filename.find_last_of("/")) + "/KRT.txt", true);
     std::cout << result.cameras[0] << std::endl;
-    result.fd[0].RT = Eigen::Matrix4f::Identity();
+    result.fd[0].RT_ = Eigen::Matrix4f::Identity();
     result.fd[0].updateAll();
     auto r1 = session.renderer_.renderer_["DifferedLS"];
     auto dls_r = std::static_pointer_cast<DifferedLSRenderer>(r1);
@@ -761,7 +761,7 @@ void GUI::loop()
     // update lookat
     session.result_ = *session.result_queue_->front();
     
-    lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT,getCenter(session.result_.fd[frame_id_].pts_));
+    lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT(),getCenter(session.result_.fd[frame_id_].pts_));
     bool init_frame = true;
     while(!glfwWindowShouldClose(session.windows_[MAIN]))
     {

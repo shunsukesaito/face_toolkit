@@ -18,6 +18,9 @@ void P2DRenderer::init(std::string shader_dir)
 
 void P2DRenderer::render(int w, int h, const std::vector<Eigen::Vector2f>& pts)
 {
+    if(!show_)
+        return;
+    
     auto& prog = programs_["p2d"];
     
     p2d_.update(prog, w, h, pts, Eigen::Vector4f(0,1,0,1));
@@ -50,8 +53,7 @@ void P2DRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
 
 void P2DRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id].width_, result.cameras[cam_id].height_, result.cap_data[frame_id][cam_id].q2V_);
+    render(result.cameras[cam_id].width_, result.cameras[cam_id].height_, result.cap_data[frame_id][cam_id].q2V_);
 }
 #endif
 

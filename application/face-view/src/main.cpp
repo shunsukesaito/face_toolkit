@@ -11,8 +11,8 @@
 #include "gui.h"
 
 #include <gflags/gflags.h>
-DEFINE_uint32(win_w, 512, "window width");
-DEFINE_uint32(win_h, 512, "window height");
+DEFINE_uint32(win_w, 800, "window width");
+DEFINE_uint32(win_h, 800, "window height");
 
 int main(int argc, char **argv) try
 {

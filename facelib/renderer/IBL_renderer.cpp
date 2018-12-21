@@ -172,6 +172,9 @@ void IBLRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
 
 void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sphere)
 {
+    if(!show_)
+        return;
+    
     GLFWwindow* window = glfwGetCurrentContext();
     int w = camera.width_;
     int h = camera.height_;
@@ -194,8 +197,8 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
     prog_IBL.updateTexture("u_sample_specHDRI", spec_HDRI_locations_[param_.env_id]);
     
     // camera parameters update
-    camera.updateUniforms(prog_IBL, fd.getRT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
-    camera.updateUniforms(prog_depth, fd.getRT(), U_CAMERA_MVP);
+    camera.updateUniforms(prog_IBL, fd.RT(), U_CAMERA_MVP | U_CAMERA_MV | U_CAMERA_SHADOW | U_CAMERA_WORLD | U_CAMERA_POS);
+    camera.updateUniforms(prog_depth, fd.RT(), U_CAMERA_MVP);
     
     // update mesh attributes
     mesh_.update_position(fd.pts_, fd.tripts());
@@ -250,8 +253,7 @@ void IBLRenderer::render(const Camera& camera, const FaceData& fd, bool draw_sph
 #ifdef FACE_TOOLKIT
 void IBLRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    if(show_)
-        render(result.cameras[cam_id], result.fd[frame_id], show_sphere_);
+    render(result.cameras[cam_id], result.fd[frame_id], show_sphere_);
 }
 #endif
 
