@@ -41,11 +41,11 @@ Eigen::Vector3f getCenter(Eigen::VectorXf& pts);
 
 void computeAABB(const Eigen::VectorXf& pts, Eigen::Vector3f& vMin, Eigen::Vector3f& vMax);
 
-void baryCentric(const Eigen::Vector3f& p,
-                 const Eigen::Vector3f& v1,
-                 const Eigen::Vector3f& v2,
-                 const Eigen::Vector3f& v3,
-                 float &u, float &v, float &w);
+//void baryCentric(const Eigen::Vector3f& p,
+//                 const Eigen::Vector3f& v0,
+//                 const Eigen::Vector3f& v1,
+//                 const Eigen::Vector3f& v2,
+//                 float &u, float &v, float &w);
 
 void calcNormal(Eigen::MatrixX3f& nml,
                 const Eigen::VectorXf& pts,
@@ -57,6 +57,12 @@ void calcTangent(Eigen::MatrixX3f& tan,
                  const Eigen::MatrixX2f& uvs,
                  const Eigen::MatrixX3i& tripts,
                  const Eigen::MatrixX3i& triuv);
+
+// tangent computation without uv
+void calcTangentV2(Eigen::MatrixX3f& tan,
+                   Eigen::MatrixX3f& btan,
+                   const Eigen::MatrixX3f& nml,
+                   const Eigen::RowVector3f& dir = Eigen::RowVector3f(0,1,0));
 
 namespace Eigen{
 	typedef Matrix<float, 6, 1> Vector6f;

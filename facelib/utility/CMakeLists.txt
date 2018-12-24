@@ -9,6 +9,9 @@ FaceToolkitModuleBegin(utility DEPENDS
                     utility/tiny_obj_loader
                     utility/tinyexr)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 file(GLOB_RECURSE all_sources *.cpp *.c)
 file(GLOB_RECURSE all_headers *.h)
 add_library(utility ${all_sources} ${all_headers})

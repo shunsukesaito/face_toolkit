@@ -33,10 +33,13 @@
 struct PRTData : public MeshData
 {
     Eigen::MatrixXf prt_; // (#N, #SH)
+    std::vector<Eigen::MatrixXf> intrRef_; // (#bounce, #N, #SH)
+    std::vector<Eigen::MatrixXf> totPrt_; // (#bounce+1, #N, #SH)
     
     void computePRT(int band, int nSample, bool shadow = false, int bounce = 0); // bounce=0 means no interreflection
     void diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow);
     void diffuseInterRefPRT(int band, Sampler &sampler, BVHTree &bvh, int bounce);
+    void diffusePRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow, int bounce);
     
 #ifdef WITH_IMGUI
     virtual void updateIMGUI();

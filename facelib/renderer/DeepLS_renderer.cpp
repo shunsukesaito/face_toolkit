@@ -160,10 +160,23 @@ void DeepLSRenderer::render(const Camera& camera, const FaceData& fd)
     prog_main.updateTexture("u_sample_spec_env2", spec_env2_locations_[param_.env_id]);
     
     const auto& maps = fd.maps();
-    assert(maps.size() != 0);
-    prog_main.updateTexture("u_sample_disp", (GLuint)maps[0]);
-    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps[1]);
-    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps[2]);
+    if(maps.find("disp") == maps.end()){
+        std::cerr << "LSGeoRenderer::render - displacement map is not set." << std::endl;
+        return;
+    }
+    prog_main.updateTexture("u_sample_disp", (GLuint)maps.at("disp"));
+    
+    if(maps.find("d_albedo") == maps.end()){
+        std::cerr << "LSGeoRenderer::render - diffuse albedo is not set." << std::endl;
+        return;
+    }
+    prog_main.updateTexture("u_sample_diff_albedo", (GLuint)maps.at("d_albedo"));
+    
+    if(maps.find("s_albedo") == maps.end()){
+        std::cerr << "LSGeoRenderer::render - specular albedo is not set." << std::endl;
+        return;
+    }
+    prog_main.updateTexture("u_sample_spec_albedo", (GLuint)maps.at("s_albedo"));
     
     prog_pl.setUniformData("u_alpha", param_.alpha);
 

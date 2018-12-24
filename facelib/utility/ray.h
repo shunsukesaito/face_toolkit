@@ -54,6 +54,7 @@ struct Ray
     
     float t_; // interection param
     int idx_; // interection index
+    float u_, v_;
     
     Ray(){}
     Ray(const Eigen::Vector3f& o, const Eigen::Vector3f& d, float tmin=0.0f, float tmax=1.e10f)

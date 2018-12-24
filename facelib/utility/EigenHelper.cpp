@@ -38,6 +38,47 @@ void computeAABB(const Eigen::VectorXf& pts, Eigen::Vector3f& vMin, Eigen::Vecto
     vMax = p.rowwise().maxCoeff();
 }
 
+//void baryCentric(const Eigen::Vector3f& p,
+//                 const Eigen::Vector3f& v0,
+//                 const Eigen::Vector3f& v1,
+//                 const Eigen::Vector3f& v2,
+//                 float &u, float &v, float &w)
+//{
+//    Eigen::Vector3f x = 100.0f * (v1 - v0);
+//    Eigen::Vector3f y = 100.0f * (v2 - v0);
+//    Eigen::Vector3f pv = 100.0f * (p - v0);
+//    
+//    float A = x.dot(x);
+//    float B = x.dot(y);
+//    float C = y.dot(y);
+//    float E = pv.dot(x);
+//    float F = pv.dot(y);
+//    
+//    float delta = A * C - B * B;
+//    
+//    if(fabs(delta) <= 1.e-10f)
+//    {
+//        std::cout << "baryCentric - vertices are co-linear..." << std::endl;
+//        u = v = w = 1.0f/3.0f;
+//        return;
+//    }
+//    
+//    u = (E * C - B * F)/delta;
+//    v = (A * F - B * E)/delta;
+//    
+//    if(u < 0 || u > 1.0 || v < 0 || v > 1.0){
+//        std::cout << u << " " << v << std::endl;
+//    }
+//    
+//    w = 1.0f - u - v;
+//    
+//    if(std::isnan(u) || std::isnan(v))
+//    {
+//        std::cerr << "baryCentric - value goes NaN..." << std::endl;
+//        u = v = w = 1.0f/3.0f;
+//    }
+//}
+
 void calcNormal(Eigen::MatrixX3f& nml,
                        const Eigen::VectorXf& pts,
                        const Eigen::MatrixX3i& tri)
@@ -112,6 +153,23 @@ void calcTangent(Eigen::MatrixX3f& tan,
     btan = btan.array().colwise() / count.array();
 }
 
+void calcTangentV2(Eigen::MatrixX3f& tan,
+                   Eigen::MatrixX3f& btan,
+                   const Eigen::MatrixX3f& nml,
+                   const Eigen::RowVector3f& dir)
+{
+    tan = Eigen::MatrixX3f::Zero(nml.rows(),3);
+    btan = Eigen::MatrixX3f::Zero(nml.rows(),3);
+
+    for(int i = 0; i < nml.rows(); ++i)
+    {
+        const Eigen::RowVector3f& n = nml.row(i);
+        tan.row(i) = n.cross(dir);
+        tan.row(i).normalize();
+        
+        btan.row(i) = n.cross(tan.row(i));
+    }
+}
 
 namespace Eigen{
     double radiansToDegrees(double x) {

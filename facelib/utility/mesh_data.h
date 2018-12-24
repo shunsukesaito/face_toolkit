@@ -23,6 +23,7 @@
  */
 #pragma once
 
+#include <unordered_map>
 #include <vector>
 #include <Eigen/Dense>
 
@@ -45,7 +46,8 @@ struct MeshData{
     Eigen::MatrixX3i tri_uv_;
     
     // for texture maps
-    std::vector<unsigned> maps_;
+    std::unordered_map<std::string, unsigned> maps_;
+    //std::vector<unsigned> maps_;
     
     Eigen::Matrix4f& RT() { return RT_; }
     Eigen::Matrix3Xf& SH() { return SH_; }
@@ -54,7 +56,7 @@ struct MeshData{
     Eigen::MatrixX3f& nml() { return nml_; }
     Eigen::VectorXf& clr() { return clr_; }
     
-    std::vector<unsigned int>& maps() { return maps_; }
+    std::unordered_map<std::string, unsigned>& maps() { return maps_; }
     Eigen::MatrixX2f& uvs() { return uvs_; }
     Eigen::MatrixX3i& tripts() { return tri_pts_; }
     Eigen::MatrixX3i& triuv() { return tri_uv_; }
@@ -66,7 +68,7 @@ struct MeshData{
     const Eigen::MatrixX3f& nml() const { return nml_; }
     const Eigen::VectorXf& clr() const { return clr_; }
 
-    const std::vector<unsigned int>& maps() const { return maps_; }
+    const std::unordered_map<std::string, unsigned>& maps() const { return maps_; }
     const Eigen::MatrixX2f& uvs() const { return uvs_; }
     const Eigen::MatrixX3i& tripts() const { return tri_pts_; }
     const Eigen::MatrixX3i& triuv() const { return tri_uv_; }

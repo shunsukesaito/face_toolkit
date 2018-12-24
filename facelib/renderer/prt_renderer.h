@@ -21,7 +21,11 @@ struct PRTRenderer : public BaseRenderer
     bool analytial_ = false;
     float alpha_ = 1.0;
     
+    int bounce_ = 0;
+    bool bounceOnly_ = false;
+    
     int sub_samp_ = 1;
+    int location_ = 0;
     
     PRTRenderer(){}
     PRTRenderer(std::string name, bool show) : BaseRenderer(name,show){}

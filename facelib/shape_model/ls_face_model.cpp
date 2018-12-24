@@ -42,14 +42,26 @@ void LinearFaceModel::loadLightStageData(const std::string& data_dir)
     }
     
     loadMeanFromObj(files[0]);
-    maps_.resize(5);
-    for(int i = 0; i < 5; ++i)
-    {
-        cv::Mat_<cv::Vec4f> tmp;
-        loadEXRToCV(files[i+1], tmp);
-        cv::resize(tmp,tmp,cv::Size(3000,3000));
-        maps_[i] = GLTexture::CreateTexture(tmp);
-    }
+    cv::Mat_<cv::Vec4f> tmp;
+    loadEXRToCV(files[1], tmp);
+    cv::resize(tmp,tmp,cv::Size(3000,3000));
+    maps_["disp"] = GLTexture::CreateTexture(tmp);
+
+    loadEXRToCV(files[1], tmp);
+    cv::resize(tmp,tmp,cv::Size(3000,3000));
+    maps_["d_albedo"] = GLTexture::CreateTexture(tmp);
+
+    loadEXRToCV(files[1], tmp);
+    cv::resize(tmp,tmp,cv::Size(3000,3000));
+    maps_["s_albedo"] = GLTexture::CreateTexture(tmp);
+
+    loadEXRToCV(files[1], tmp);
+    cv::resize(tmp,tmp,cv::Size(3000,3000));
+    maps_["d_normal"] = GLTexture::CreateTexture(tmp);
+
+    loadEXRToCV(files[1], tmp);
+    cv::resize(tmp,tmp,cv::Size(3000,3000));
+    maps_["s_normal"] = GLTexture::CreateTexture(tmp);
 }
 
 void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
@@ -66,17 +78,16 @@ void LinearFaceModel::loadDeepLSData(const std::string& data_dir)
     }
     
     loadMeanFromObj(files[0]);
-    maps_.resize(3);
-    
+
     cv::Mat_<cv::Vec4f> disp;
     loadEXRToCV(files[1], disp);
-    maps_[0] = GLTexture::CreateTexture(disp);
+    maps_["disp"] = GLTexture::CreateTexture(disp);
     cv::Mat_<cv::Vec3b> diff = cv::imread(files[2]);
     cv::flip(diff,diff,0);
-    maps_[1] = GLTexture::CreateTexture(diff);
+    maps_["d_albedo"] = GLTexture::CreateTexture(diff);
     cv::Mat_<cv::Vec3b> spec = cv::imread(files[3]);
     cv::flip(spec,spec,0);
-    maps_[2] = GLTexture::CreateTexture(spec);
+    maps_["s_albedo"] = GLTexture::CreateTexture(spec);
 }
 
 FaceModelPtr LinearFaceModel::LoadLSData(const std::string &data_dir, bool deep)

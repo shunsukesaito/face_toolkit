@@ -62,6 +62,8 @@ bool Ray::rayTriangle(Ray& ray, const Triangle& f)
     {
         ray.t_ = t;
         ray.idx_ = f.idx_;
+        ray.u_ = u;
+        ray.v_ = v;
     }
     
     return true;

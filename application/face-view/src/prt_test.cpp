@@ -316,12 +316,15 @@ void GUI::init(int w, int h)
     session.obj_.clr_ = session.obj_.pts_;
     session.obj_.clr_.setOnes();
     
-    // compute PRT
-    session.obj_.computePRT(3, 1000, true);
-    
+    session.obj_.maps_["d_albedo"] = GLTexture::CreateTexture(cv::imread("/Users/shunsuke/Downloads/rp_free_posed_people_OBJ/rp_dennis_posed_004_OBJ/tex/rp_dennis_posed_004_dif.jpg"));
+    session.obj_.maps_["normal"] = GLTexture::CreateTexture(cv::imread("/Users/shunsuke/Downloads/rp_free_posed_people_OBJ/rp_dennis_posed_004_OBJ/tex/rp_dennis_posed_004_norm.jpg"));
+
     session.geoRenderer_.init(data_dir + "shaders", session.obj_.tri_pts_);
     session.prtRenderer_.init(data_dir + "shaders", session.obj_.tri_pts_);
 
+    // compute PRT
+    session.obj_.computePRT(3, 900, true, 3);
+    
     GLFWwindow* window = session.windows_[MAIN];
     
 #ifdef WITH_IMGUI

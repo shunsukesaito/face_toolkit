@@ -1,5 +1,6 @@
 #include "LSGeo_renderer.h"
 
+#include <unordered_map>
 #include <tinyexr.h>
 #include <gl_utility/sh_utils.h>
 
@@ -111,8 +112,11 @@ void LSGeoRenderer::render(const Camera& camera, const FaceData& fd)
     param_.update(prog_main);
     
     const auto& maps = fd.maps();
-    assert(maps.size() != 0);
-    prog_main.updateTexture("u_sample_disp", (GLuint)maps[0]);
+    if(maps.find("disp") == maps.end()){
+        std::cerr << "LSGeoRenderer::render - displacement map is not set." << std::endl;
+        return;
+    }
+    prog_main.updateTexture("u_sample_disp", (GLuint)maps.at("disp"));
     
     prog_pl.setUniformData("u_alpha", param_.alpha);
 

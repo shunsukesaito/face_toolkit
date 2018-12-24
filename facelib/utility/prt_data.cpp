@@ -23,6 +23,7 @@
  */
 
 #include "prt_data.h"
+#include "timer.h"
 
 void PRTData::diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow)
 {
@@ -32,10 +33,12 @@ void PRTData::diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool sh
     
     float weight = 4.0f*(float)M_PI/(float)nSample;
     
+    cxxtimer::Timer timer;
+    timer.start();
 #pragma omp parallel for
     for(int i = 0; i < nVert; ++i)
     {
-        const Eigen::Vector3f& n = nml_.row(i).transpose();
+        const Eigen::RowVector3f& n = nml_.row(i);
         int negSize = 0;
         int noSize = 0; // non-occluded size
         for(int j = 0; j < nSample; ++j)
@@ -52,7 +55,7 @@ void PRTData::diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool sh
             if(shadow)
             {
                 Ray ray(pts_.b3(i), smpl.dir_);
-//                ray.o_ += 2.e-3f * n; // to make sure it won't intersect itself
+                //                ray.o_ += 2.e-3f * n; // to make sure it won't intersect itself
                 if(bvh.interTest(ray))
                     continue;
             }
@@ -64,19 +67,193 @@ void PRTData::diffuseDirectPRT(int band, Sampler &sampler, BVHTree &bvh, bool sh
                 prt_(i,k) += smpl.shValue_[k] * dot;
             }
         }
-        
-        for(int k = 0; k < band2; ++k)
-        {
-            prt_(i,k) *= weight;
-        }
         //std::cout << prt_.row(i) << std::endl;
         //std::cout << "Point: " << i << " total: " << nSample << " neg: " << negSize << " noHit: " << noSize << std::endl;
     }
+    
+    prt_ *= weight;
+    
+    timer.stop();
+    std::cout << "diffusePRT - process time: " << timer.count<std::chrono::seconds>() << std::endl;
 }
 
 void PRTData::diffuseInterRefPRT(int band, Sampler &sampler, BVHTree &bvh, int bounce)
 {
+    int nVert = pts_.size()/3;
+    int band2 = band*band;
+    int nSample = sampler.samples_.size();
     
+    float weight = 4.0f*(float)M_PI/(float)nSample;
+    
+    intrRef_.resize(bounce, Eigen::MatrixXf::Zero(prt_.rows(), prt_.cols()));
+    Eigen::MatrixXf curPrt;
+    
+    Eigen::Vector3f pTmp;
+    float w;
+    
+    for(int b = 0; b < bounce; ++b)
+    {
+        if(b == 0)
+            curPrt = prt_;
+        else
+            curPrt = intrRef_[b-1];
+        
+        cxxtimer::Timer timer;
+        timer.start();
+        
+#pragma omp parallel for
+        for(int i = 0; i < nVert; ++i)
+        {
+            const Eigen::RowVector3f& n = nml_.row(i);
+            const Eigen::Vector3f& p = pts_.b3(i);
+            int negSize = 0;
+            int hitSize = 0; // non-occluded size
+            for(int j = 0; j < nSample; ++j)
+            {
+                const Sample& smpl = sampler.samples_[j];
+                float dot = n.dot(smpl.dir_);
+                
+                if(dot <= 0.0f)
+                {
+                    negSize++;
+                    continue;
+                }
+                
+                Ray ray(p, smpl.dir_);
+                if(!bvh.interTest(ray))
+                    continue;
+            
+                hitSize++;
+                
+                Eigen::RowVectorXf shTmp;
+                shTmp.setZero();
+                
+                w = 1.0f - (ray.u_ + ray.v_);
+                shTmp = ray.u_ * curPrt.row(tri_pts_(ray.idx_,0))
+                      + ray.v_ * curPrt.row(tri_pts_(ray.idx_,1))
+                      + w * curPrt.row(tri_pts_(ray.idx_,2));
+                
+                for(int k = 0; k < band2; ++k)
+                {
+                    intrRef_[b](i,k) += smpl.shValue_[k] * dot * shTmp[k];
+                }
+            }
+            //std::cout << "Point: " << i << " total: " << nSample << " neg: " << negSize << " noHit: " << noSize << std::endl;
+        }
+        
+        intrRef_[b] *= weight;
+        timer.stop();
+        std::cout << "interreflect " << b << " - process time: " << timer.count<std::chrono::seconds>() << std::endl;
+    }
+}
+
+void PRTData::diffusePRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow, int bounce)
+{
+    int nVert = pts_.size()/3;
+    int band2 = band*band;
+    int nSample = sampler.samples_.size();
+    
+    float weight = 4.0f*(float)M_PI/(float)nSample;
+    
+    cxxtimer::Timer timer;
+    timer.start();
+    // store interection info for interreflection
+    std::vector<std::vector<Ray>> hitRays(nVert);
+    std::vector<std::vector<float>> hitDots(nVert);
+    std::vector<std::vector<int>> hitSmpIdxs(nVert);
+    
+#pragma omp parallel for
+    for(int i = 0; i < nVert; ++i)
+    {
+        const Eigen::RowVector3f& n = nml_.row(i);
+        int negSize = 0;
+        int noSize = 0; // non-occluded size
+        std::vector<Ray> rays;
+        std::vector<float> dots;
+        std::vector<int> smpIdxs;
+        for(int j = 0; j < nSample; ++j)
+        {
+            const Sample& smpl = sampler.samples_[j];
+            float dot = n.dot(smpl.dir_);
+            
+            if(dot <= 0.0f)
+            {
+                negSize++;
+                continue;
+            }
+            
+            if(shadow)
+            {
+                Ray ray(pts_.b3(i), smpl.dir_);
+
+                if(bvh.interTest(ray))
+                {
+                    rays.push_back(ray);
+                    dots.push_back(dot);
+                    smpIdxs.push_back(j);
+                    continue;
+                }
+            }
+            
+            noSize++;
+            
+            for(int k = 0; k < band2; ++k)
+            {
+                prt_(i,k) += smpl.shValue_[k] * dot;
+            }
+        }
+        hitRays[i] = rays;
+        hitDots[i] = dots;
+        hitSmpIdxs[i] = smpIdxs;
+
+        //std::cout << "Point: " << i << " total: " << nSample << " neg: " << negSize << " noHit: " << noSize << std::endl;
+    }
+    
+    prt_ *= weight;
+    
+    timer.stop();
+    std::cout << "diffusePRT - process time[s]: " << timer.count<std::chrono::seconds>() << std::endl;
+    
+    intrRef_.resize(bounce, Eigen::MatrixXf::Zero(prt_.rows(), prt_.cols()));
+    Eigen::MatrixXf curPrt;
+    for(int b = 0; b < bounce; ++b)
+    {
+        if(b == 0)
+            curPrt = prt_;
+        else
+            curPrt = intrRef_[b-1];
+        
+        cxxtimer::Timer timer;
+        timer.start();
+        
+#pragma omp parallel for
+        for(int i = 0; i < nVert; ++i)
+        {
+            const std::vector<Ray>& rays = hitRays[i];
+            for(int j = 0; j < rays.size(); ++j)
+            {
+                const Ray& ray = rays[j];
+                const Sample& smpl = sampler.samples_[hitSmpIdxs[i][j]];
+                
+                Eigen::RowVectorXf shTmp;
+                shTmp.setZero();
+                
+                float w = 1.0f - (ray.u_ + ray.v_);
+                shTmp = ray.u_ * curPrt.row(tri_pts_(ray.idx_,0))
+                + ray.v_ * curPrt.row(tri_pts_(ray.idx_,1))
+                + w * curPrt.row(tri_pts_(ray.idx_,2));
+                
+                for(int k = 0; k < band2; ++k)
+                {
+                    intrRef_[b](i,k) += smpl.shValue_[k] * hitDots[i][j] * shTmp[k];
+                }
+            }
+        }
+        
+        intrRef_[b] *= weight;
+        timer.stop();
+        std::cout << "interreflect " << b << " - process time[ms]: " << timer.count<std::chrono::milliseconds>() << std::endl;
+    }
 }
 
 void PRTData::computePRT(int band, int nSample, bool shadow, int bounce)
@@ -92,10 +269,13 @@ void PRTData::computePRT(int band, int nSample, bool shadow, int bounce)
     prt_.resize(pts_.size()/3, band*band);
     prt_.setZero();
     
-    diffuseDirectPRT(band, sampler, bvh, shadow);
-
-    if(bounce > 0){
-        diffuseInterRefPRT(band, sampler, bvh, bounce);
+    diffusePRT(band, sampler, bvh, shadow, bounce);
+    
+    totPrt_.resize(bounce+1);
+    totPrt_[0] = prt_;
+    for(int i = 0; i < bounce; ++i)
+    {
+        totPrt_[i+1] = totPrt_[i] + intrRef_[i];
     }
 }
 

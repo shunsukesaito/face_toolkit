@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <array>
 #include <mutex>
 #include <fstream>
@@ -139,7 +140,7 @@ struct BaseFaceModel
     Eigen::VectorXf mu_id_;
     
     // for rendering 
-    std::vector<unsigned int> maps_;
+    std::unordered_map<std::string,unsigned> maps_;
 
     // contour candidates for fitting
     std::vector<std::vector<int>> cont_candi_;
