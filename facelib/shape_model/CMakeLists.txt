@@ -15,6 +15,7 @@ add_library(shape_model ${all_sources} ${all_headers})
 
 target_link_libraries(shape_model FTM::OpenCV FTM::Eigen3 FTM::gflags FTM::utility FTM::gl_utility)
 if(WITH_IMGUI)
+    FaceToolkitModuleBegin(shape_model DEPENDS utility/imgui)
     target_link_libraries(shape_model FTM::imgui)
     target_compile_definitions(shape_model PUBLIC "WITH_IMGUI")
 endif()

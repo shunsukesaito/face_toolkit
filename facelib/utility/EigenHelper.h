@@ -23,6 +23,7 @@
  */
 #pragma once
 
+#include <fstream>
 #include <iostream>
 #include <math.h>
 
@@ -135,6 +136,19 @@ namespace Eigen{
         fread(mat.data(), sizeof(T), property[0]*property[1], fp);
         
         return mat;
+    }
+    
+    template <class T>
+    void write_to_text(std::string file, const Eigen::Matrix<T,-1,-1>& mat)
+    {
+        std::ofstream fout(file);
+        if(fout.is_open())
+        {
+            fout << mat;
+            fout.close();
+        }
+        else
+            std::cerr << "write_to_text - cannot open " << file << std::endl;
     }
     
     template <class T>

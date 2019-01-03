@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(faceview)
+project(prt_test)
 
 set(ENABLE_CUDA 1 CACHE BOOL "enable CUDA")
 if(ENABLE_CUDA)
@@ -60,16 +60,12 @@ if(BUILD_EXECUTABLE)
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/cache/"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/$<CONFIG>/logs/faceview/")
 
-  add_executable(faceview main.cpp gui.cpp gui.h)
-  set_target_properties(faceview PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-  add_dependencies(faceview create-folder)
-    
-  add_executable(hair_opt main.cpp hair_opt.cpp gui.h)
-  set_target_properties(hair_opt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
-  add_dependencies(hair_opt create-folder)
-
+  add_executable(prt_test main.cpp prt_test.cpp gui.h)
+  set_target_properties(prt_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+  add_dependencies(prt_test create-folder)
+  
 else(BUILD_EXECUTABLE)
-  add_library(faceview STATIC ${all_sources} ${all_headers})
+  add_library(prt_test STATIC ${all_sources} ${all_headers})
 endif(BUILD_EXECUTABLE)
 
 set(OPENMP_LIB "")
@@ -77,20 +73,9 @@ if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
   set(OPENMP_LIB "/usr/local/opt/llvm/lib/libiomp5.dylib")
 endif()
 
-target_link_libraries(faceview
-                      FTM::module
+target_link_libraries(prt_test
                       FTM::renderer
-                      FTM::utility
-                      FTM::gflags
-                      FTM::OpenCV
-                      ${DLIB_LIBRARIES}
-                      Threads::Threads
-                      ${CMAKE_DL_LIBS}
-                      ${OPENMP_LIB})
-                      
-target_link_libraries(hair_opt
-                      FTM::module
-                      FTM::renderer
+                      FTM::gl_utility
                       FTM::utility
                       FTM::gflags
                       FTM::OpenCV
@@ -99,6 +84,6 @@ target_link_libraries(hair_opt
                       ${CMAKE_DL_LIBS}
                       ${OPENMP_LIB})
 
-install(TARGETS faceview
+install(TARGETS prt_test
     RUNTIME DESTINATION bin
     ARCHIVE DESTINATION lib)

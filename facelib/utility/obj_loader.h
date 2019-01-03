@@ -35,6 +35,7 @@ void writeObj(const std::string& filename,
               Eigen::MatrixX3f& nml,
               Eigen::MatrixX2f& uvs,
               Eigen::MatrixX3i& tri_pts,
+              Eigen::MatrixX3i& tri_nml,
               Eigen::MatrixX3i& tri_uv);
 
 void loadObjFile(const std::string& filename,
@@ -42,4 +43,5 @@ void loadObjFile(const std::string& filename,
                  Eigen::MatrixX3f& nml,
                  Eigen::MatrixX2f& uvs,
                  Eigen::MatrixX3i& tri_pts,
+                 Eigen::MatrixX3i& tri_nml,
                  Eigen::MatrixX3i& tri_uv);

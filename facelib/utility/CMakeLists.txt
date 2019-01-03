@@ -5,7 +5,6 @@ FaceToolkitModuleBegin(utility DEPENDS
                     library/Eigen3 
                     library/OpenCV
                     library/OpenMesh
-                    utility/imgui
                     utility/tiny_obj_loader
                     utility/tinyexr)
 
@@ -16,9 +15,10 @@ file(GLOB_RECURSE all_sources *.cpp *.c)
 file(GLOB_RECURSE all_headers *.h)
 add_library(utility ${all_sources} ${all_headers})
 
-target_link_libraries(utility FTM::OpenCV FTM::Eigen3 FTM::OpenMesh FTM::imgui FTM::tiny_obj_loader FTM::tinyexr)
+target_link_libraries(utility FTM::OpenCV FTM::Eigen3 FTM::OpenMesh FTM::tiny_obj_loader FTM::tinyexr)
 
 if(WITH_IMGUI)
+FaceToolkitModuleBegin(utility DEPENDS utility/imgui)
 target_link_libraries(utility FTM::imgui)
 target_compile_definitions(utility PUBLIC "WITH_IMGUI")
 endif()

@@ -135,12 +135,12 @@ void main()
             shading = vec4(evaluateLightingModelHybrid(nC,nH,prt),1.0f);
         else
             shading = vec4(evaluateLightingModel(nH), 1.0f);
-        frag_n_coarse = vec4(nC*0.5+vec3(0.5),1.0f);
         frag_n_fine = vec4(nH*0.5+vec3(0.5),1.0f);
     }
 
     frag_color = clamp(gammaCorrection(diff * shading, 2.2), 0.0, 1.0);
-    frag_shading = clamp(gammaCorrection(shading, 2.2), 0.0, 1.0);
+    frag_shading = clamp(gammaCorrection(shading,2.2), 0.0, 1.0);
+    frag_n_coarse = vec4(nC*0.5+vec3(0.5),1.0f);
     if(u_hasAlphaMap != uint(0))
         frag_color.w = texture(AlphaMap, uv).r;
 }

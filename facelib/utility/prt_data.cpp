@@ -22,6 +22,8 @@
  SOFTWARE.
  */
 
+#include <fstream>
+
 #include "prt_data.h"
 #include "timer.h"
 
@@ -276,6 +278,21 @@ void PRTData::computePRT(int band, int nSample, bool shadow, int bounce)
     for(int i = 0; i < bounce; ++i)
     {
         totPrt_[i+1] = totPrt_[i] + intrRef_[i];
+    }
+}
+
+void PRTData::writePRT(std::string file)
+{
+    std::ofstream fout(file);
+    if(fout.is_open())
+    {
+        fout << prt_;
+        
+        fout.close();
+    }
+    else
+    {
+        std::cerr << "PRTData::writePRT - cannot open " << file << std::endl;
     }
 }
 

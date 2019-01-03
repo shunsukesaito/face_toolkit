@@ -22,6 +22,7 @@ add_library(module ${all_sources} ${all_headers})
 target_link_libraries(module FTM::OpenCV FTM::Eigen3 FTM::gflags FTM::minitrace FTM::face2d-detector FTM::tcpstream FTM::SPSCQueue FTM::utility FTM::gl_utility FTM::shape_model FTM::optimizer FTM::renderer)
 
 if(WITH_IMGUI)
+    FaceToolkitModuleBegin(module DEPENDS utility/imgui)
     target_link_libraries(module FTM::imgui)
     target_compile_definitions(module PUBLIC "WITH_IMGUI")
 endif()

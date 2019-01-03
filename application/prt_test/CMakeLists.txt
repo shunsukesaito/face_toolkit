@@ -1,20 +1,19 @@
 cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
-FaceToolkitModuleBegin(example DEPENDS 
+FaceToolkitModuleBegin(prt_test DEPENDS 
 					library/Eigen3 
 					library/GLEW 
 					library/glfw3 
 					library/gflags 
 					library/OpenCV
 					library/OpenMesh 
-					library/dlib 
 					utility/glm 
 					utility/tiny_obj_loader
 					utility/tinyexr
+					utility/imgui
 					facelib/utility
 					facelib/gl_utility
-					facelib/shape_model
 					facelib/renderer)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
@@ -30,37 +29,24 @@ endif()
 add_subdirectory(src)
 
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
-
-#copyFolder(COPY_data ../../data assets)
-#copyFolder(COPY_shaders ../../shaders assets/shaders)
 copyData(../../data assets)
 createSymlink(../../shaders assets/shaders)
 
-#set_property(TARGET COPY_data PROPERTY FOLDER "COPY/ASSETS")
-#set_property(TARGET COPY_shaders PROPERTY FOLDER "COPY/ASSETS")
-
-#add_dependencies(example COPY_data COPY_shaders)
-#add_dependencies(example2 COPY_data COPY_shaders)
-#add_dependencies(example3 COPY_data COPY_shaders)
-#add_dependencies(example4 COPY_data COPY_shaders)
-
-set(_all_target example)
+set(_all_target prt_test)
 
 install(DIRECTORY "${CMAKE_BINARY_DIR}/assets/" USE_SOURCE_PERMISSIONS DESTINATION assets)
 
 if(BUILD_EXECUTABLE)
-	target_compile_definitions(minitrace PUBLIC "MTR_ENABLED")
-
 	install(DIRECTORY "${CMAKE_BINARY_DIR}/lib/" USE_SOURCE_PERMISSIONS DESTINATION lib)
 
 	# link openmp and fix rpath
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
-		set_property(TARGET example APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
+		set_property(TARGET prt_test APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
 	endif()
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "linux")
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp")
-		set_property(TARGET example APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
+		set_property(TARGET prt_test APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
 	endif()
 else(BUILD_EXECUTABLE)
-	add_library(FTM::example ALIAS example)
+	add_library(FTM::prt_test ALIAS prt_test)
 endif()

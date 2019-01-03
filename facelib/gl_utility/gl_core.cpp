@@ -693,8 +693,13 @@ void GLUniform::setData(uint val)
 
 
 // === GLTexture class functions
-GLuint GLTexture::CreateTexture(const cv::Mat &img)
+GLuint GLTexture::CreateTexture(const cv::Mat &img, bool use_mipmap)
 {
+    if(img.empty()){
+        std::cerr << "GLTexture::CreateTexture - input image is empty." << std::endl;
+        throw std::runtime_error("GLTexture::CreateTexture - input image is empty.");
+    }
+
     GLuint location;
     glGenTextures(1, &location);
     
@@ -755,15 +760,30 @@ GLuint GLTexture::CreateTexture(const cv::Mat &img)
         cerr << "ERROR: Unsupported image type." << endl;
     }
     
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,  GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    CHECK_GL_ERROR();
     glTexImage2D(GL_TEXTURE_2D, 0, mode1, img.cols, img.rows, 0, mode2, type, img.ptr());
-    
-    CHECK_GL_ERROR();
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    if (use_mipmap)
+    {
+        // NOTE: with higher mipmap level, seam of uv atlas gets more artifacts
+        // it won't be an issue for uv parameterization without seam
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,(GLint)3);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        CHECK_GL_ERROR();
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        CHECK_GL_ERROR();
+    }
     
     return location;
 }

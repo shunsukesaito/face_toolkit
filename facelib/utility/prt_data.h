@@ -41,6 +41,8 @@ struct PRTData : public MeshData
     void diffuseInterRefPRT(int band, Sampler &sampler, BVHTree &bvh, int bounce);
     void diffusePRT(int band, Sampler &sampler, BVHTree &bvh, bool shadow, int bounce);
     
+    void writePRT(std::string file);
+    
 #ifdef WITH_IMGUI
     virtual void updateIMGUI();
 #endif

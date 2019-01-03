@@ -115,7 +115,7 @@ struct GLTexture {
     GLTexture(GLProgram* parentProgram_, std::string name_, const cv::Mat& img);
     GLTexture(GLProgram* parentProgram_, std::string name_, GLuint location_, int w, int h);
     
-    static GLuint CreateTexture(const cv::Mat& img);
+    static GLuint CreateTexture(const cv::Mat& img, bool use_mipmap = false);
     static GLuint CreateTexture(const HDRLoaderResult& img);
     static GLuint CreateTexture(const TinyExrImage& img);
     

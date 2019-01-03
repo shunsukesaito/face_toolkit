@@ -76,10 +76,10 @@ void PRTRenderer::render(const Camera& camera,
     calcTangentV2(tan, btan, data.nml());
     
     mesh_.update_position(data.pts(), data.tripts());
-    mesh_.update_normal(data.nml(), data.tripts());
+    mesh_.update_normal(data.nml(), data.trinml());
     mesh_.update_color(data.clr(), data.tripts());
     mesh_.update_uv(data.uvs(), data.triuv());
-    mesh_.update_tangent(tan, btan, data.tripts());
+    mesh_.update_tangent(tan, btan, data.trinml());
     mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_COLOR | AT_UV | AT_TAN);
     
     // update PRTCoeffs

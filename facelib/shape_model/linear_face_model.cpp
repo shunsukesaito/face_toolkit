@@ -394,7 +394,8 @@ void LinearFaceModel::loadOldBinaryModel(const std::string& modelfile, const std
     
     Eigen::VectorXf pts;
     Eigen::MatrixX3f nml;
-    loadObjFile(meshfile, pts, nml, uvs_, tri_pts_, tri_uv_);
+    Eigen::MatrixX3i trinml;
+    loadObjFile(meshfile, pts, nml, uvs_, tri_pts_, trinml, tri_uv_);
     
     computeEdgeBasis(id_edge_, ex_edge_, w_id_, w_ex_, tri_pts_, (int)sigma_id_.size(), (int)sigma_ex_.size());
 }
@@ -558,11 +559,12 @@ void LinearFaceModel::loadModelFromObj(const std::string& obj_dir, int id_size, 
     Eigen::MatrixX3i tri_pts;
     Eigen::MatrixX3i tri_uv;
     Eigen::MatrixX3f nml;
+    Eigen::MatrixX3i tri_nml;
     for(int i = 0; i < id_size; ++i)
     {
         char tmp[256];
         sprintf(tmp, "/id%03d.obj", i);
-        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_uv);
+        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_nml, tri_uv);
         w_id.col(i) = pts - mu_id_;
     }
     
@@ -570,7 +572,7 @@ void LinearFaceModel::loadModelFromObj(const std::string& obj_dir, int id_size, 
     {
         char tmp[256];
         sprintf(tmp, "/ex%03d.obj", i);
-        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_uv);
+        loadObjFile(obj_dir + tmp, pts, nml, uvs, tri_pts, tri_nml, tri_uv);
         w_ex.col(i) = pts - mu_id_;
     }
     

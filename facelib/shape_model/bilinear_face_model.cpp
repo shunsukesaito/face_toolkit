@@ -244,7 +244,8 @@ void BiLinearFaceModel::computeModelFW(const std::string& mesh_dir,
     
     Eigen::VectorXf pts;
     Eigen::MatrixX3f nml;
-    loadObjFile(topo_mesh, pts, nml, uvs_, tri_pts_, tri_uv_);    
+    Eigen::MatrixX3i trinml;
+    loadObjFile(topo_mesh, pts, nml, uvs_, tri_pts_, trinml, tri_uv_);
 }
 
 FaceModelPtr BiLinearFaceModel::LoadModel(const std::string& file, const std::string& fm_type)

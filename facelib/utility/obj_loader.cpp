@@ -34,6 +34,7 @@ void writeObj(const std::string& filename,
               Eigen::MatrixX3f& nml,
               Eigen::MatrixX2f& uvs,
               Eigen::MatrixX3i& tri_pts,
+              Eigen::MatrixX3i& tri_nml,
               Eigen::MatrixX3i& tri_uv)
 {
     std::ofstream fout(filename);
@@ -57,9 +58,9 @@ void writeObj(const std::string& filename,
         assert(tri_pts.size() == tri_uv.size());
         for(int i = 0; i < tri_pts.rows(); ++i)
         {
-            fout << "f " << tri_pts(i,0)+1 << "/" << tri_uv(i,0)+1 << "/" << tri_pts(i,0)+1;
-            fout << " " << tri_pts(i,1)+1 << "/" << tri_uv(i,1)+1 << "/" << tri_pts(i,1)+1;
-            fout << " " << tri_pts(i,2)+1 << "/" << tri_uv(i,2)+1 << "/" << tri_pts(i,2)+1 << std::endl;
+            fout << "f " << tri_pts(i,0)+1 << "/" << tri_uv(i,0)+1 << "/" << tri_nml(i,0)+1;
+            fout << " " << tri_pts(i,1)+1 << "/" << tri_uv(i,1)+1 << "/" << tri_nml(i,1)+1;
+            fout << " " << tri_pts(i,2)+1 << "/" << tri_uv(i,2)+1 << "/" << tri_nml(i,2)+1 << std::endl;
         }
         
         fout.close();
@@ -74,6 +75,7 @@ void loadObjFile(const std::string& filename,
                  Eigen::MatrixX3f& nml,
                  Eigen::MatrixX2f& uvs,
                  Eigen::MatrixX3i& tri_pts,
+                 Eigen::MatrixX3i& tri_nml,
                  Eigen::MatrixX3i& tri_uv)
 {
     tinyobj::attrib_t attrib;
@@ -116,6 +118,14 @@ void loadObjFile(const std::string& filename,
         pts[i*3+2] = attrib.vertices[i*3+2];
     }
     
+    nml.resize(attrib.normals.size()/3,3);
+    for(int i = 0; i < attrib.normals.size()/3; ++i)
+    {
+        nml(i,0) = attrib.normals[i*3+0];
+        nml(i,1) = attrib.normals[i*3+1];
+        nml(i,2) = attrib.normals[i*3+2];
+    }
+    
     if(attrib.texcoords.size() > 0){
         uvs.resize(attrib.texcoords.size()/2,2);
         for(int i = 0; i < attrib.texcoords.size()/2; ++i)
@@ -126,6 +136,7 @@ void loadObjFile(const std::string& filename,
     }
     
     tri_pts.resize(shapes[0].mesh.indices.size()/3, 3);
+    tri_nml.resize(shapes[0].mesh.indices.size()/3, 3);
     tri_uv.resize(shapes[0].mesh.indices.size()/3, 3);
     for (size_t f = 0; f < shapes[0].mesh.indices.size() / 3; f++) {
         tinyobj::index_t idx0 = shapes[0].mesh.indices[3 * f + 0];
@@ -135,6 +146,18 @@ void loadObjFile(const std::string& filename,
         tri_pts(f,0) = idx0.vertex_index;
         tri_pts(f,1) = idx1.vertex_index;
         tri_pts(f,2) = idx2.vertex_index;
+        
+        if(attrib.normals.size() > 0){
+            tri_nml(f,0) = idx0.normal_index;
+            tri_nml(f,1) = idx1.normal_index;
+            tri_nml(f,2) = idx2.normal_index;
+        }
+        else{
+            tri_nml(f,0) = tri_pts(f,0);
+            tri_nml(f,1) = tri_pts(f,1);
+            tri_nml(f,2) = tri_pts(f,2);
+        }
+        
         if(attrib.texcoords.size() > 0){
             tri_uv(f,0) = idx0.texcoord_index;
             tri_uv(f,1) = idx1.texcoord_index;
@@ -146,6 +169,4 @@ void loadObjFile(const std::string& filename,
             tri_uv(f,2) = tri_pts(f,2);
         }
     }
-    
-    calcNormal(nml, pts, tri_pts);
 }

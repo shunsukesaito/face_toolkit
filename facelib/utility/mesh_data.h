@@ -43,6 +43,7 @@ struct MeshData{
     
     // triangle list
     Eigen::MatrixX3i tri_pts_;
+    Eigen::MatrixX3i tri_nml_;
     Eigen::MatrixX3i tri_uv_;
     
     // for texture maps
@@ -59,6 +60,7 @@ struct MeshData{
     std::unordered_map<std::string, unsigned>& maps() { return maps_; }
     Eigen::MatrixX2f& uvs() { return uvs_; }
     Eigen::MatrixX3i& tripts() { return tri_pts_; }
+    Eigen::MatrixX3i& trinml() { return tri_nml_; }
     Eigen::MatrixX3i& triuv() { return tri_uv_; }
 
     const Eigen::Matrix4f& RT() const { return RT_; }
@@ -71,6 +73,7 @@ struct MeshData{
     const std::unordered_map<std::string, unsigned>& maps() const { return maps_; }
     const Eigen::MatrixX2f& uvs() const { return uvs_; }
     const Eigen::MatrixX3i& tripts() const { return tri_pts_; }
+    const Eigen::MatrixX3i& trinml() const { return tri_nml_; }
     const Eigen::MatrixX3i& triuv() const { return tri_uv_; }
     
     void saveObj(const std::string& filename, bool no_uv = false) const;

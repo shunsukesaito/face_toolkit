@@ -481,7 +481,8 @@ void BaseFaceModel::loadContourList(std::string file)
 void BaseFaceModel::loadMeanFromObj(const std::string &filename)
 {
     Eigen::MatrixX3f nml;
-    loadObjFile(filename, mu_id_, nml, uvs_, tri_pts_, tri_uv_);
+    Eigen::MatrixX3i trinml;
+    loadObjFile(filename, mu_id_, nml, uvs_, tri_pts_, trinml, tri_uv_);
 }
 
 

@@ -39,25 +39,23 @@ const static float s_scale_dst2 = s_c3 * s_c_scale_inv;
 const static float s_scale_dst4 = s_c5 * s_c_scale_inv;
 
 // 0 multiplies
-static void OptRotateBand0(float dst[1], const float src[1], const Eigen::Matrix3f& R)
+static void OptRotateBand0(float dst[1], const float x[1], const Eigen::Matrix3f& R)
 {
-    dst[0] = src[0];
+    dst[0] = x[0];
 }
 
 // 9 multiplies
-static void OptRotateBand1(float dst[3], const float src[3], const Eigen::Matrix3f& R)
+static void OptRotateBand1(float dst[3], const float x[3], const Eigen::Matrix3f& R)
 {
     // derived from  SlowRotateBand1
-    dst[0] = ( R(1,1))*src[0] + (-R(1,2))*src[1] + ( R(1,0))*src[2];
-    dst[1] = (-R(2,1))*src[0] + ( R(2,2))*src[1] + (-R(2,0))*src[2];
-    dst[2] = ( R(0,1))*src[0] + (-R(0,2))*src[1] + ( R(0,0))*src[2];
+    dst[0] = ( R(1,1))*x[0] + (-R(1,2))*x[1] + ( R(1,0))*x[2];
+    dst[1] = (-R(2,1))*x[0] + ( R(2,2))*x[1] + (-R(2,0))*x[2];
+    dst[2] = ( R(0,1))*x[0] + (-R(0,2))*x[1] + ( R(0,0))*x[2];
 }
 
 // 48 multiplies
 static void OptRotateBand2(float dst[5], const float x[5],
-                           float m00, float m01, float m02,
-                           float m10, float m11, float m12,
-                           float m20, float m21, float m22)
+                           const Eigen::Matrix3f& R)
 {
     // Sparse matrix multiply
     float sh0 =  x[3] + x[4] + x[4] - x[1];
@@ -67,37 +65,37 @@ static void OptRotateBand2(float dst[5], const float x[5],
     float sh4 = -x[1];
     
     // Rotations.  R0 and R1 just use the raw matrix columns
-    float r2x = m00 + m01;
-    float r2y = m10 + m11;
-    float r2z = m20 + m21;
+    float r2x = R(0,0) + R(0,1);
+    float r2y = R(1,0) + R(1,1);
+    float r2z = R(2,0) + R(2,1);
     
-    float r3x = m00 + m02;
-    float r3y = m10 + m12;
-    float r3z = m20 + m22;
+    float r3x = R(0,0) + R(0,2);
+    float r3y = R(1,0) + R(1,2);
+    float r3z = R(2,0) + R(2,2);
     
-    float r4x = m01 + m02;
-    float r4y = m11 + m12;
-    float r4z = m21 + m22;
+    float r4x = R(0,1) + R(0,2);
+    float r4y = R(1,1) + R(1,2);
+    float r4z = R(2,1) + R(2,2);
     
     // dense matrix multiplication one column at a time
     
     // column 0
-    float sh0_x = sh0 * m00;
-    float sh0_y = sh0 * m10;
-    float d0 = sh0_x * m10;
-    float d1 = sh0_y * m20;
-    float d2 = sh0 * (m20 * m20 + s_c4_div_c3);
-    float d3 = sh0_x * m20;
-    float d4 = sh0_x * m00 - sh0_y * m10;
+    float sh0_x = sh0 * R(0,0);
+    float sh0_y = sh0 * R(1,0);
+    float d0 = sh0_x * R(1,0);
+    float d1 = sh0_y * R(2,0);
+    float d2 = sh0 * (R(2,0) * R(2,0) + s_c4_div_c3);
+    float d3 = sh0_x * R(2,0);
+    float d4 = sh0_x * R(0,0) - sh0_y * R(1,0);
     
     // column 1
-    float sh1_x = sh1 * m02;
-    float sh1_y = sh1 * m12;
-    d0 += sh1_x * m12;
-    d1 += sh1_y * m22;
-    d2 += sh1 * (m22 * m22 + s_c4_div_c3);
-    d3 += sh1_x * m22;
-    d4 += sh1_x * m02 - sh1_y * m12;
+    float sh1_x = sh1 * R(0,2);
+    float sh1_y = sh1 * R(1,2);
+    d0 += sh1_x * R(1,2);
+    d1 += sh1_y * R(2,2);
+    d2 += sh1 * (R(2,2) * R(2,2) + s_c4_div_c3);
+    d3 += sh1_x * R(2,2);
+    d4 += sh1_x * R(0,2) - sh1_y * R(1,2);
     
     // column 2
     float sh2_x = sh2 * r2x;
@@ -229,24 +227,16 @@ void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar, fl
     // R
     OptRotateBand0(&sh_rotated[0],&sh[0],R);
     OptRotateBand1(&sh_rotated[1],&sh[1],R);
-    OptRotateBand2(&sh_rotated[4],&sh[4],
-                   R(0,0),R(0,1),R(0,2),
-                   R(1,0),R(1,1),R(1,2),
-                   R(2,0),R(2,1),R(2,2));
+    OptRotateBand2(&sh_rotated[4],&sh[4],R);
     // G
     OptRotateBand0(&sh_rotated[0+9],&sh[0+9],R);
     OptRotateBand1(&sh_rotated[1+9],&sh[1+9],R);
-    OptRotateBand2(&sh_rotated[4+9],&sh[4+9],
-                   R(0,0),R(0,1),R(0,2),
-                   R(1,0),R(1,1),R(1,2),
-                   R(2,0),R(2,1),R(2,2));
+    OptRotateBand2(&sh_rotated[4+9],&sh[4+9],R);
+
     // B
     OptRotateBand0(&sh_rotated[0+18],&sh[0+18],R);
     OptRotateBand1(&sh_rotated[1+18],&sh[1+18],R);
-    OptRotateBand2(&sh_rotated[4+18],&sh[4+18],
-                   R(0,0),R(0,1),R(0,2),
-                   R(1,0),R(1,1),R(1,2),
-                   R(2,0),R(2,1),R(2,2));
+    OptRotateBand2(&sh_rotated[4+18],&sh[4+18],R);
     
     for(int i = 0; i < 3; ++i)
         for(int j = 0; j < 9; ++j)

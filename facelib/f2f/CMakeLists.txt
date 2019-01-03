@@ -6,7 +6,6 @@ FaceToolkitModuleBegin(f2f DEPENDS
                     library/OpenCV
                     utility/minitrace 
                     utility/spdlog 
-                    utility/imgui
                     facelib/utility 
                     facelib/gl_utility 
                     facelib/shape_model 
@@ -20,6 +19,7 @@ add_library(f2f ${all_sources} ${all_headers})
 target_link_libraries(f2f FTM::OpenCV FTM::Eigen3 FTM::minitrace FTM::spdlog FTM::utility FTM::gl_utility FTM::shape_model FTM::optimizer FTM::renderer)
 
 if(WITH_IMGUI)
+    FaceToolkitModuleBegin(f2f DEPENDS utility/imgui)
     target_link_libraries(f2f FTM::imgui)
     target_compile_definitions(f2f PUBLIC "WITH_IMGUI")
 endif()

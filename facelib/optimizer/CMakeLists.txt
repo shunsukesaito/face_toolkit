@@ -5,8 +5,7 @@ FaceToolkitModuleBegin(optimizer DEPENDS
                     library/Eigen3 
                     library/OpenCV
                     library/gflags 
-                    utility/minitrace 
-                    utility/imgui
+                    utility/minitrace
                     facelib/utility 
                     facelib/gl_utility 
                     facelib/shape_model)
@@ -18,6 +17,7 @@ add_library(optimizer ${all_sources} ${all_headers})
 target_link_libraries(optimizer FTM::OpenCV FTM::Eigen3 FTM::gflags FTM::minitrace FTM::utility FTM::gl_utility FTM::shape_model)
 
 if(WITH_IMGUI)
+    FaceToolkitModuleBegin(optimizer DEPENDS utility/imgui)
     target_link_libraries(optimizer FTM::imgui)
     target_compile_definitions(optimizer PUBLIC "WITH_IMGUI")
 endif()

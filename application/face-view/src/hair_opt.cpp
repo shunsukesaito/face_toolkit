@@ -9,6 +9,7 @@
 #include "gui.h"
 
 #include <memory>
+#include <mutex>
 
 #include <renderer/base_renderer.h>
 #include <renderer/bg_renderer.h>

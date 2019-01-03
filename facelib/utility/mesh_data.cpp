@@ -44,6 +44,7 @@ void MeshData::saveObj(const std::string& filename, bool no_uv) const
         }
         const Eigen::MatrixX2f& uvs = this->uvs();
         const Eigen::MatrixX3i& tri_pts = this->tripts();
+        const Eigen::MatrixX3i& tri_nml = this->trinml();
         const Eigen::MatrixX3i& tri_uv = this->triuv();
         
         if(no_uv){
@@ -61,9 +62,9 @@ void MeshData::saveObj(const std::string& filename, bool no_uv) const
             }
             for(int i = 0; i < tri_pts.rows(); ++i)
             {
-                fout << "f " << tri_pts(i,0)+1 << "/" << tri_uv(i,0)+1 << "/" << tri_pts(i,0)+1;
-                fout << " " << tri_pts(i,1)+1 << "/" << tri_uv(i,1)+1 << "/" << tri_pts(i,1)+1;
-                fout << " " << tri_pts(i,2)+1 << "/" << tri_uv(i,2)+1 << "/" << tri_pts(i,2)+1 << std::endl;
+                fout << "f " << tri_pts(i,0)+1 << "/" << tri_uv(i,0)+1 << "/" << tri_nml(i,0)+1;
+                fout << " " << tri_pts(i,1)+1 << "/" << tri_uv(i,1)+1 << "/" << tri_nml(i,1)+1;
+                fout << " " << tri_pts(i,2)+1 << "/" << tri_uv(i,2)+1 << "/" << tri_nml(i,2)+1 << std::endl;
             }
         }
         fout.close();
@@ -75,7 +76,12 @@ void MeshData::saveObj(const std::string& filename, bool no_uv) const
 
 void MeshData::loadObj(const std::string &filename)
 {
-    loadObjFile(filename, pts_, nml_, uvs_, tri_pts_, tri_uv_);
+    loadObjFile(filename, pts_, nml_, uvs_, tri_pts_, tri_nml_, tri_uv_);
+    
+    // TODO: make it easier to switch between per-tri and per vert attribute managements
+    // for now, orignal normal values are ignored
+    tri_nml_ = tri_pts_;
+    calcNormal(nml_, pts_, tri_nml_);
 }
 
 #ifdef WITH_IMGUI

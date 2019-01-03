@@ -9,6 +9,7 @@
 #include "gui.h"
 
 #include <memory>
+#include <mutex>
 
 #include <renderer/base_renderer.h>
 #include <renderer/mesh_renderer.h>
@@ -33,7 +34,7 @@ DEFINE_string(data_dir, "../assets/", "data directory");
 // for batch rendering
 DEFINE_bool(no_imgui, false, "disable IMGUI");
 
-DEFINE_string(obj_path, "../assets/fw_topo.obj", "obj path");
+DEFINE_string(subject_name, "rp_mei_posed_001", "subject name");
 
 DEFINE_string(camera_file, "", "camera file name");
 DEFINE_uint32(camera_fov, 60, "default camera fov");
@@ -303,8 +304,13 @@ void GUI::init(int w, int h)
     std::cout << "Extrinsic:" << std::endl;
     std::cout << session.camera_.extrinsic_ << std::endl;
     
+    std::string obj_path = FLAGS_data_dir + "/" + FLAGS_subject_name + "_OBJ/" + FLAGS_subject_name + "_30k.OBJ";
+    std::string dif_path = FLAGS_data_dir + "/" + FLAGS_subject_name + "_OBJ/tex/" + FLAGS_subject_name + "_dif.jpg";
+    std::string nml_path = FLAGS_data_dir + "/" + FLAGS_subject_name + "_OBJ/tex/" + FLAGS_subject_name + "_norm.jpg";
+    std::string out_path = FLAGS_data_dir + "/" + FLAGS_subject_name + "_OBJ";
+    
     // load obj file
-    session.obj_.loadObj(FLAGS_obj_path);
+    session.obj_.loadObj(obj_path);
     
     // normalize obj size
     Eigen::Vector3f vmin, vmax;
@@ -316,14 +322,18 @@ void GUI::init(int w, int h)
     session.obj_.clr_ = session.obj_.pts_;
     session.obj_.clr_.setOnes();
     
-    session.obj_.maps_["d_albedo"] = GLTexture::CreateTexture(cv::imread("/Users/shunsuke/Downloads/rp_free_posed_people_OBJ/rp_dennis_posed_004_OBJ/tex/rp_dennis_posed_004_dif.jpg"));
-    session.obj_.maps_["normal"] = GLTexture::CreateTexture(cv::imread("/Users/shunsuke/Downloads/rp_free_posed_people_OBJ/rp_dennis_posed_004_OBJ/tex/rp_dennis_posed_004_norm.jpg"));
+    session.obj_.maps_["d_albedo"] = GLTexture::CreateTexture(cv::imread(dif_path),true);
+//    session.obj_.maps_["normal"] = GLTexture::CreateTexture(cv::imread(nml_path));
 
     session.geoRenderer_.init(data_dir + "shaders", session.obj_.tri_pts_);
     session.prtRenderer_.init(data_dir + "shaders", session.obj_.tri_pts_);
 
     // compute PRT
-    session.obj_.computePRT(3, 900, true, 3);
+    session.obj_.computePRT(3, 1600, true, 10);
+    for(int i = 0; i < session.obj_.totPrt_.size(); ++i)
+    {
+        Eigen::write_to_text(out_path + "/bounce"+std::to_string(i)+".txt",session.obj_.totPrt_[i]);
+    }
     
     GLFWwindow* window = session.windows_[MAIN];
     
@@ -367,6 +377,7 @@ void GUI::loop()
             session.geoRenderer_.updateIMGUI();
             session.prtRenderer_.updateIMGUI();
             session.obj_.updateIMGUI();
+            session.camera_.updateIMGUI();
             
             ImGui::End();
             ImGui::Render();

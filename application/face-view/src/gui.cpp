@@ -9,6 +9,7 @@
 #include "gui.h"
 
 #include <memory>
+#include <mutex>
 
 #include <module/capture_module.h>
 #include <module/preprocess_module.h>
