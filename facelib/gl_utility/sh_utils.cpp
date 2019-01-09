@@ -67,35 +67,7 @@ int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest)
     return true;
 }
 
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff)
-{
-    SHCoeff.resize(3, 9);
-    std::ifstream infile(filepath);
-    std::string line;
-    glm::vec3 tmp;
-    int L = 0;
-    int cnt = 0;
-    while (std::getline(infile, line))
-    {
-        {
-            std::istringstream iss(line);
-            
-            for (int M = 0; M < 2*L+1; M++)
-            {
-                if (!(iss >> SHCoeff(0,cnt) >> SHCoeff(1,cnt) >> SHCoeff(2,cnt)))
-                {
-                    printf("Error reading file\n");
-                    break;
-                } // error
-                cnt++;
-            }
-            L++;
-            if (L > order)
-            break;
-        }
-    }
-    return true;
-}
+
 
 void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage * SHBasis, TinyExrImage & result)
 {

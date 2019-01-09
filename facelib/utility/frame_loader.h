@@ -40,6 +40,8 @@ public:
     
     virtual void load_frame(cv::Mat& frame, int& frame_id, std::string& name, std::string command){ throw std::runtime_error( "Error: Base class (FrameLoader) is called..."); }
     virtual void init(){ throw std::runtime_error( "Error: Base class (FrameLoader) is called..."); }
+    
+    virtual inline int size(){ return 0; }
 };
 
 class EmptyLoader : public FrameLoader
@@ -54,6 +56,7 @@ public:
     static FrameLoaderPtr Create(){
         return FrameLoaderPtr(new EmptyLoader());
     }
+    virtual inline int size(){ return 0; }
 
 private:
     cv::Mat frame_ = cv::Mat(100,100,CV_8UC3,cv::Vec3b(0,0,0));
@@ -74,6 +77,8 @@ public:
     
     static FrameLoaderPtr Create(const std::string &video_path, float scale = 1.0);
     static FrameLoaderPtr Create(int device_id, float scale = 1.0);
+    
+    virtual inline int size(){ return -1; }
     
 private:
     cv::Mat frame_;
@@ -98,6 +103,8 @@ public:
     
     static FrameLoaderPtr Create(const std::string &image_path, float scale = 1.0);
     
+    virtual inline int size(){ return 1; }
+    
 private:
     cv::Mat frame_;
     std::string image_path_;
@@ -119,6 +126,8 @@ public:
     
     static FrameLoaderPtr Create(const std::string &root_dir, const std::string &imgseq_fmt, int begin_id, int end_id, float scale = 1.0);
     static FrameLoaderPtr Create(const std::string &root_dir, const std::string& list_file, float scale = 1.0);
+    
+    virtual inline int size(){ return file_list_.size(); }
 
 private:
     cv::Mat frame_;

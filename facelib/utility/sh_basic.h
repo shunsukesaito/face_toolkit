@@ -31,3 +31,5 @@
 
 float SphericalHarmonic(int M, int L, float theta, float phi);
 void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar, float x, float y, float z);
+bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
+

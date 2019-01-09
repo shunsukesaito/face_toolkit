@@ -344,7 +344,7 @@ float computeJacobianSymmetry(Eigen::Ref<Eigen::VectorXf> Jtr,
                               Eigen::Ref<Eigen::MatrixXf> JtJ,
                               const FaceData& fd,
                               const DOF& dof,
-                              const float& w,
+                              float w,
                               bool withexp)
 {
 	if ((dof.ID == 0 && !withexp) || (dof.ID + dof.EX == 0 && withexp)) return 0.0;
@@ -373,7 +373,7 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const FaceData& fd,
                                    const std::vector< int >& index_list,
                                    const DOF& dof,
-                                   const float w)
+                                   float w)
 {
 	Eigen::Vector3f p12;
 	Eigen::Matrix3Xf dp12 = Eigen::Matrix3Xf::Zero(3, dof.all());

@@ -460,7 +460,15 @@ void GUI::init(int w, int h)
     session.capture_module_ = CaptureModule::Create("capture", data_dir, cam_w, cam_h, frame_loader,
                                                     session.capture_queue_, session.capture_control_queue_);
     if( FLAGS_cam_w <= 0 || FLAGS_cam_w <= 0){
-        glfwSetWindowSize(session.windows_[MAIN], cam_w, cam_h);
+        float asp = (float)cam_h/(float)cam_w;
+        int tmp_w = std::min(cam_w, 1200);
+        int tmp_h = std::min(cam_h, 800);
+        float tmp_asp = (float)tmp_h/(float)tmp_w;
+        if(asp > tmp_asp)
+            tmp_w = tmp_h/asp;
+        else
+            tmp_h = asp * tmp_w;
+        glfwSetWindowSize(session.windows_[MAIN], tmp_w, tmp_h);
     }
 
     if(FLAGS_mode == "preview")
@@ -551,8 +559,11 @@ void save_result(FaceResult& result)
     auto& data = result.cap_data[0][0];
     std::cout << "processing... " << data.name_ << std::endl;
     std::string filename = data.name_;
+    std::cout << "saving " << filename.substr(0,filename.size()-4) + ".obj" << std::endl;
     result.fd[0].saveObj(filename.substr(0,filename.size()-4) + ".obj");
+    std::cout << "saving " << filename.substr(0,filename.size()-4) + "_seg.png" << std::endl;
     cv::imwrite(filename.substr(0,filename.size()-4) + "_seg.png", data.seg_);
+    std::cout << "saving " << filename.substr(0,filename.size()-4) + ".pts" << std::endl;
     write_pts(filename.substr(0,filename.size()-4) + ".pts", data.q2V_);
     auto r = session.renderer_.renderer_["F2F"];
     auto f2f_r = std::static_pointer_cast<F2FRenderer>(r);
@@ -581,6 +592,7 @@ void save_result(FaceResult& result)
     cv::cvtColor(tmp, out, CV_BGRA2BGR);
     out = 255.0 * out;
     out.convertTo(out, CV_8UC3);
+    std::cout << "saving " << filename.substr(0,filename.size()-4) + "_tex.png" << std::endl;
     cv::imwrite(filename.substr(0,filename.size()-4) + "_tex.png", out);
     if (FLAGS_dump_pca){
         cv::cvtColor(outs[4],tmp,CV_RGBA2BGRA);
@@ -595,6 +607,7 @@ void save_result(FaceResult& result)
         cv::cvtColor(tmp, out, CV_BGRA2BGR);
         out = 255.0 * out;
         out.convertTo(out, CV_8UC3);
+        std::cout << "saving " << filename.substr(0,filename.size()-4) + "_tex_inv.png" << std::endl;
         cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_inv.png", out);
         f2f_r->param_.tex_mode = 1;
         f2f_r->param_.enable_mask = 0;
@@ -616,6 +629,7 @@ void save_result(FaceResult& result)
         bgr = 255.0*bgr;
         bgr.convertTo(bgr, CV_8UC3);
         cv::inpaint(bgr, mask, bgr, 3.0, cv::INPAINT_TELEA);
+        std::cout << "saving " << filename.substr(0,filename.size()-4) + "_tex_pca.png" << std::endl;
         cv::imwrite(filename.substr(0,filename.size()-4) + "_tex_pca.png", bgr);
     }
     
@@ -625,6 +639,7 @@ void save_result(FaceResult& result)
     f2f_r->param_.enable_tex = 0;
     f2f_r->param_.cull_offset = 0.0;
     
+    std::cout << "saving " << filename.substr(0,filename.size()-4) + "_params.txt" << std::endl;
     result.saveToTXT(filename.substr(0,filename.size()-4) + "_params.txt");
 }
 
@@ -634,16 +649,15 @@ void save_render1(FaceResult& result)
     auto& data = result.cap_data[0][0];
     std::cout << "processing... " << data.name_ << std::endl;
     std::string filename = data.name_;
-    session.face_model_->maps_.resize(3);
     cv::Mat_<cv::Vec4f> disp;
     loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
-    session.face_model_->maps_[0] = GLTexture::CreateTexture(disp);
+    session.face_model_->maps_["disp"] = GLTexture::CreateTexture(disp);
     cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
     cv::flip(diff,diff,0);
-    session.face_model_->maps_[1] = GLTexture::CreateTexture(diff);
+    session.face_model_->maps_["d_albedo"] = GLTexture::CreateTexture(diff);
     cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
     cv::flip(spec,spec,0);
-    session.face_model_->maps_[2] = GLTexture::CreateTexture(spec);
+    session.face_model_->maps_["s_albedo"] = GLTexture::CreateTexture(spec);
     
     if (FLAGS_center_cam){
         result.cameras[0] = Camera::craeteFromFOV(FLAGS_cam_w, FLAGS_cam_h, 40);
@@ -690,16 +704,15 @@ void save_render2(FaceResult& result)
     std::cout << "processing... " << data.name_ << std::endl;
     std::string filename = data.name_;
     session.face_model_->loadMeanFromObj(filename.substr(0,filename.find_last_of("/")) + "/mesh.obj");
-    session.face_model_->maps_.resize(3);
     cv::Mat_<cv::Vec4f> disp;
     loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
-    session.face_model_->maps_[0] = GLTexture::CreateTexture(disp);
+    session.face_model_->maps_["disp"] = GLTexture::CreateTexture(disp);
     cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
     cv::flip(diff,diff,0);
-    session.face_model_->maps_[1] = GLTexture::CreateTexture(diff);
+    session.face_model_->maps_["d_albedo"] = GLTexture::CreateTexture(diff);
     cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
     cv::flip(spec,spec,0);
-    session.face_model_->maps_[2] = GLTexture::CreateTexture(spec);
+    session.face_model_->maps_["s_albedo"] = GLTexture::CreateTexture(spec);
     
     result.cameras[0] = Camera::parseCameraParams(filename.substr(0,filename.find_last_of("/")) + "/KRT.txt", true);
     std::cout << result.cameras[0] << std::endl;
@@ -756,6 +769,9 @@ void GUI::loop()
         session.preprocess_thread = std::thread([&](){ session.preprocess_module_->Process(); });
     session.face_thread = std::thread([&](){ session.face_module_->Process(); });
     
+    auto frameloader = std::static_pointer_cast<CaptureModule>(session.capture_module_)->get_frame_loader();
+    int n_frame = frameloader->size();
+
     // this makes sure result has some value
     while(!session.result_queue_->front())
         ;
@@ -763,7 +779,7 @@ void GUI::loop()
     session.result_ = *session.result_queue_->front();
     
     lookat = Eigen::ApplyTransform(session.result_.fd[frame_id_].RT(),getCenter(session.result_.fd[frame_id_].pts_));
-    bool init_frame = true;
+    
     while(!glfwWindowShouldClose(session.windows_[MAIN]))
     {
         if(session.result_queue_->front()){
@@ -786,18 +802,27 @@ void GUI::loop()
             if( session.result_.processed_ &&
                (FLAGS_mode.find("brender") != std::string::npos ||
                 FLAGS_mode.find("bopt") != std::string::npos) ){
-                if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == 0){
-                    if(init_frame)
-                        init_frame = false;
-                    else
-                        break;
-                }
+                   int cam_h = session.result_.cameras[cam_id_].height_;
+                   int cam_w = session.result_.cameras[cam_id_].width_;
+                   float asp = (float)cam_h/(float)cam_w;
+                   int tmp_w = std::min(cam_w, 1200);
+                   int tmp_h = std::min(cam_h, 800);
+                   float tmp_asp = (float)tmp_h/(float)tmp_w;
+                   if(asp > tmp_asp)
+                       tmp_w = tmp_h/asp;
+                   else
+                       tmp_h = asp * tmp_w;
+                   glfwSetWindowSize(session.windows_[MAIN], tmp_w, tmp_h);
+
                 if(FLAGS_mode == "brender1")
                     save_render1(session.result_);
                 if(FLAGS_mode == "brender2")
                     save_render2(session.result_);
                 if(FLAGS_mode == "bopt")
                     save_result(session.result_);
+                   
+                if(session.result_.cap_data[cam_id_][frame_id_].frame_id_ == n_frame-1)
+                   break;
             }
         }
         
@@ -810,6 +835,8 @@ void GUI::loop()
         glfwGetFramebufferSize(session.windows_[MAIN], &w, &h);
         glViewport(0, 0, w, h);
         
+        // NOTE: updating background textures every frame for static image is waste of computation
+        // NOTE: f2f rendering becomes too slow if input image is too big
         session.renderer_.draw(session.result_,cam_id_,frame_id_);
         
 #ifdef WITH_IMGUI

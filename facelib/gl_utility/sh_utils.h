@@ -40,6 +40,5 @@ int CreateSphericalHarmonics(int M, int L, TinyExrImage &dest);
 
 void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar,float x, float y, float z);
 
-bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff);
 void ReconstructSHfromSHImage(const int order, Eigen::Matrix3Xf& SHCoeff, const TinyExrImage* SHBasis, TinyExrImage& result);
 void PanoramaSphericalHarmonicsBlurFromSHImage(const int order, const TinyExrImage* SH, TinyExrImage& source, TinyExrImage& result);

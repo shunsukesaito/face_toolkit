@@ -232,6 +232,7 @@ void FaceData::setFaceModel(FaceModelPtr model)
     uvs_ = model_->uvs_;
     tri_pts_ = model_->tri_pts_;
     tri_uv_ = model_->tri_uv_;
+    tri_nml_ = model_->tri_pts_;
     
     init();
 }

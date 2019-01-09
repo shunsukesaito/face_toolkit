@@ -1,6 +1,7 @@
 #include "IBL_renderer.h"
 
 #include <tinyexr.h>
+#include <utility/sh_basic.h>
 #include <gl_utility/sh_utils.h>
 
 void IBLRenderParams::init(GLProgram& prog)

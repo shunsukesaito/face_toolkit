@@ -218,6 +218,20 @@ void createImagePyramidMFMV(const MFMVCaptureData& in, std::vector<MFMVCaptureDa
             
             cv::Mat tmp;
             cv::cvtColor(in.frames_[i].val_[j].img_, tmp, CV_BGR2RGBA);
+            
+            // NOTE: f2f only does low-frequency fitting. thus, high-res image is waste of computation
+            int cam_h = tmp.rows;
+            int cam_w = tmp.cols;
+            float asp = (float)cam_h/(float)cam_w;
+            int tmp_w = std::min(cam_w, 1200);
+            int tmp_h = std::min(cam_h, 800);
+            float tmp_asp = (float)tmp_h/(float)tmp_w;
+            if(asp > tmp_asp)
+                tmp_w = tmp_h/asp;
+            else
+                tmp_h = asp * tmp_w;
+            cv::resize(tmp, tmp, cv::Size(tmp_w, tmp_h));
+            
             tmp.convertTo(img, CV_32F);
             img *= 1.f / 255.f;
             cv::GaussianBlur(img, img, cv::Size(smoothLev * 2 + 1, smoothLev * 2 + 1), 0.0f);
@@ -266,6 +280,18 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
     
     const int w = inputRGB.cols;
     const int h = inputRGB.rows;
+    
+    // NOTE: making sure landmark weights are scale-aware.
+    float xmin = 1.e10, xmax = -1.e10, ymin = 1.e10, ymax = -1.e10;
+    for(int i = 0; i < q2V.size(); ++i)
+    {
+        xmin = std::min(q2V[i](0), xmin);
+        xmax = std::max(q2V[i](0), xmax);
+        ymin = std::min(q2V[i](1), ymin);
+        ymax = std::max(q2V[i](1), ymax);
+    }
+    float s = std::max(xmax-xmin,ymax-ymin);
+    s = 1.e5f/(s*s);
 
     if (params.verbose_)
         logger->info("  Computing Vert-wise Position and its Gradient...");
@@ -310,8 +336,8 @@ static void computeF2FJacobian(Eigen::VectorXf& Jtr,
             logger->info("	Computing Landmark Jacobian...");
         
         // compute landmark jacobian
-        err.p2p += computeJacobianPoint2Point2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2p, params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
-        err.p2l += computeJacobianPoint2Line2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2l, n_p2l, params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
+        err.p2p += computeJacobianPoint2Point2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2p, s*params.w_p2p_/(float)idx_p2p.size(), params.robust_, idx_p2p);
+        err.p2l += computeJacobianPoint2Line2D(Jtr_pos, JtJ_pos, data.pV, data.dpV, q_p2l, n_p2l, s*params.w_p2l_/(float)idx_p2p.size(), params.robust_, idx_p2l);
     }
 }
 

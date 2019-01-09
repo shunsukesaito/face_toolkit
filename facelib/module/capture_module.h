@@ -51,6 +51,8 @@ public:
     void set_command_queue(CmdQueueHandle queue);
     
     void set_frame_loader(FrameLoaderPtr loader);
+    
+    inline FrameLoaderPtr get_frame_loader(){ return frame_loader_; }
 
     // construct a default module
     static ModuleHandle Create(const std::string &name,

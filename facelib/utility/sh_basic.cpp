@@ -21,6 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
+#include <fstream>
 
 #include "sh_basic.h"
 
@@ -241,5 +242,34 @@ void RotateSHCoefficients(const Eigen::Matrix3Xf &src, Eigen::Matrix3Xf &tar, fl
     for(int i = 0; i < 3; ++i)
         for(int j = 0; j < 9; ++j)
             tar(i,j) = sh_rotated[i*9+j];
+}
+
+bool ReadSHCoefficients(std::string filepath, int order, Eigen::Matrix3Xf& SHCoeff)
+{
+    SHCoeff.resize(3, (order+1)*(order+1));
+    std::ifstream infile(filepath);
+    std::string line;
+    int L = 0;
+    int cnt = 0;
+    while (std::getline(infile, line))
+    {
+        {
+            std::istringstream iss(line);
+            
+            for (int M = 0; M < 2*L+1; M++)
+            {
+                if (!(iss >> SHCoeff(0,cnt) >> SHCoeff(1,cnt) >> SHCoeff(2,cnt)))
+                {
+                    printf("Error reading file\n");
+                    break;
+                } // error
+                cnt++;
+            }
+            L++;
+            if (L > order)
+                break;
+        }
+    }
+    return true;
 }
 

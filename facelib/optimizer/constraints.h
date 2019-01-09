@@ -88,7 +88,7 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::Matrix3Xf>& dpV,
                                    const std::vector<Eigen::Vector4f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust);
 
 float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
@@ -97,7 +97,7 @@ float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Matrix3Xf>& dpV,
                                    const std::vector<Eigen::Vector4f>& qV,
                                    const std::vector<Eigen::Vector3f>& nV,
-                                   const float& w,
+                                   float w,
                                    bool robust);
 
 float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
@@ -105,7 +105,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::Matrix2Xf>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust);
 
 float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
@@ -113,7 +113,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::Matrix2Xf>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust,
                                    std::vector<int>& idx);
 
@@ -123,7 +123,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                   const std::vector<Eigen::Matrix2Xf>& dpV,
                                   const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w,
+                                  float w,
                                   bool robust);
 
 float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
@@ -132,7 +132,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                   const std::vector<Eigen::Matrix2Xf>& dpV,
                                   const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w,
+                                  float w,
                                   bool robust,
                                   std::vector<int>& idx);
 

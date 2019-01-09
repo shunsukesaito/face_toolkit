@@ -38,6 +38,8 @@ static Eigen::Vector2f calcLineSegment(const Eigen::Vector2f& p,
     float mindist = 1.e5;
     for(int i = start_idx; i < end_idx; ++i)
     {
+        if(qV[i + 1][2] < 0.2 || qV[i][2] < 0.2)
+            continue;
         l = qV[i + 1].segment<2>(0)-qV[i].segment<2>(0);
         n << l[1], -l[0]; n.normalize();
         pq = p - qV[i].segment<2>(0);
@@ -58,18 +60,35 @@ static Eigen::Vector2f calcLineSegment(const Eigen::Vector2f& p,
     
     // if p doesn't lie in the line segments
     if(mindist == 1.e5){
-        l = (qV[start_idx + 1].segment<2>(0)-qV[start_idx].segment<2>(0));
-        n << l[1], -l[0]; n.normalize();
-    
-        ratio = l.dot(pq);
-        if(ratio < 0){
-            q = qV[start_idx];
-            return n;
+        if(qV[start_idx + 1][2] > 0.2 && qV[start_idx][2] > 0.2)
+        {
+            l = (qV[start_idx + 1].segment<2>(0)-qV[start_idx].segment<2>(0));
+            n << l[1], -l[0]; n.normalize();
+        
+            ratio = l.dot(pq);
+            if(ratio < 0){
+                q = qV[start_idx];
+                return n;
+            }
+            else{
+                q = qV[end_idx];
+                l = (qV[end_idx].segment<2>(0)-qV[end_idx - 1].segment<2>(0));
+                n << l[1], -l[0]; n.normalize();
+                
+                return n;
+            }
         }
-        else{
+        else if(qV[end_idx][2] > 0.2 && qV[end_idx - 1][2] > 0.2){
             q = qV[end_idx];
             l = (qV[end_idx].segment<2>(0)-qV[end_idx - 1].segment<2>(0));
             n << l[1], -l[0]; n.normalize();
+            
+            return n;
+        }
+        else{ // correspondence is not found
+            q = qV[end_idx];
+            q[2] = 0.0;
+            n << 0, 1;
             
             return n;
         }
@@ -218,7 +237,7 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector3f>& pV,
                                    const std::vector<Eigen::Matrix3Xf>& dpV,
                                    const std::vector<Eigen::Vector4f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust)
 {
     if(dpV.size() == 0 || w == 0.0)
@@ -245,6 +264,8 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][3] < 0.2)
+                continue;
             pq = pV[i]-qV[i].segment<3>(0);
             w_all = w * qV[i][3] * exp(-z[i]*z[i]/(2.0*sigmasq));
             
@@ -256,6 +277,8 @@ float computeJacobianPoint2Point3D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][3] < 0.2)
+                continue;
             pq = pV[i]-qV[i].segment<3>(0);
             w_all = w * qV[i][3];
             Jtr += w_all * dpV[i].transpose() * pq;
@@ -274,7 +297,7 @@ float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Matrix3Xf>& dpV,
                                    const std::vector<Eigen::Vector4f>& qV,
                                    const std::vector<Eigen::Vector3f>& nV,
-                                   const float& w,
+                                   float w,
                                    bool robust)
 {
     if(dpV.size() == 0 || w == 0.0)
@@ -302,6 +325,8 @@ float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][3] < 0.2)
+                continue;
             ndp = dpV[i].transpose() * nV[i];
             w_all = w * qV[i][3] * exp(-z[i] * z[i] / (2.0 * sigmasq));
             
@@ -313,6 +338,8 @@ float computeJacobianPoint2Plane3D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][3] < 0.2)
+                continue;
             npq = nV[i].dot(pV[i]-qV[i].segment<3>(0));
             ndp = dpV[i].transpose() * nV[i];
             w_all = w * qV[i][3];
@@ -331,7 +358,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::Matrix2Xf>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust)
 {
     if(dpV.size() == 0 || w == 0.0)
@@ -358,6 +385,8 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             pq = pV[i]-qV[i].segment<2>(0);
             w_all = w * qV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
             
@@ -369,6 +398,8 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             pq = pV[i]-qV[i].segment<2>(0);
             w_all = w * qV[i][2];
             Jtr += w_all * dpV[i].transpose() * pq;
@@ -385,7 +416,7 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                    const std::vector<Eigen::Vector2f>& pV,
                                    const std::vector<Eigen::Matrix2Xf>& dpV,
                                    const std::vector<Eigen::Vector3f>& qV,
-                                   const float& w,
+                                   float w,
                                    bool robust,
                                    std::vector<int>& idx)
 {
@@ -414,6 +445,8 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < qV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             pq = pV[idx[i]]-qV[i].segment<2>(0);
             w_all = w * qV[i][2] * exp(-z[i]*z[i]/(2.0*sigmasq));
             
@@ -425,6 +458,8 @@ float computeJacobianPoint2Point2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < qV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             pq = pV[idx[i]]-qV[i].segment<2>(0);
             w_all = w * qV[i][2];
             
@@ -444,7 +479,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                   const std::vector<Eigen::Matrix2Xf>& dpV,
                                   const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w,
+                                  float w,
                                   bool robust)
 {
     if(dpV.size() == 0 || w == 0.0)
@@ -473,6 +508,8 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             ndp = dpV[i].transpose() * nV[i];
             w_all = w * qV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
             
@@ -484,6 +521,8 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < pV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             npq = nV[i].dot(pV[i]-qV[i].segment<2>(0));
             ndp = dpV[i].transpose() * nV[i];
             w_all = w * qV[i][2];
@@ -504,7 +543,7 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
                                   const std::vector<Eigen::Matrix2Xf>& dpV,
                                   const std::vector<Eigen::Vector3f>& qV,
                                   const std::vector<Eigen::Vector2f>& nV,
-                                  const float& w,
+                                  float w,
                                   bool robust,
                                   std::vector<int>& idx)
 {
@@ -536,6 +575,8 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
         
         for(int i = 0; i < qV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             ndp = dpV[idx[i]].transpose() * nV[i];
             w_all = w * qV[i][2] * exp(-z[i] * z[i] / (2.0 * sigmasq));
             
@@ -547,6 +588,8 @@ float computeJacobianPoint2Line2D(Eigen::Ref<Eigen::VectorXf> Jtr,
     else{
         for(int i = 0; i < qV.size(); ++i)
         {
+            if(qV[i][2] < 0.2)
+                continue;
             npq = nV[i].dot(pV[idx[i]]-qV[i].segment<2>(0));
             ndp = dpV[idx[i]].transpose() * nV[i];
             w_all = w * qV[i][2];

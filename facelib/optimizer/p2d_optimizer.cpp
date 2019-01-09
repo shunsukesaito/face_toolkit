@@ -268,6 +268,18 @@ static void computeP2DJacobian(Eigen::VectorXf& Jtr,
 {
     const DOF& dof = params.dof;
     
+    // NOTE: making sure landmark weights are scale-aware.
+    float xmin = 1.e10, xmax = -1.e10, ymin = 1.e10, ymax = -1.e10;
+    for(int i = 0; i < q2V.size(); ++i)
+    {
+        xmin = std::min(q2V[i](0), xmin);
+        xmax = std::max(q2V[i](0), xmax);
+        ymin = std::min(q2V[i](1), ymin);
+        ymax = std::max(q2V[i](1), ymax);
+    }
+    float s = std::max(xmax-xmin,ymax-ymin);
+    s = 1.e5f/(s*s);
+    
     // if this part shows down, the data below can be wrapped
     std::vector<Eigen::Vector2f> p_p2p, p_p2l;
     std::vector<Eigen::Matrix2Xf> dp_p2p, dp_p2l;
@@ -292,8 +304,8 @@ static void computeP2DJacobian(Eigen::VectorXf& Jtr,
     P2L2DC::updateConstraints(CP2L, q2V, p_p2l, q_p2l, n_p2l);
     
     // compute landmark jacobian
-    err.p2p += computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2p, q_p2p, params.w_p2p_, params.robust_);
-    err.p2l += computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, params.w_p2l_, params.robust_);
+    err.p2p += computeJacobianPoint2Point2D(Jtr, JtJ, p_p2p, dp_p2p, q_p2p, s*params.w_p2p_, params.robust_);
+    err.p2l += computeJacobianPoint2Line2D(Jtr, JtJ, p_p2l, dp_p2l, q_p2l, n_p2l, s*params.w_p2l_, params.robust_);
     
 }
 

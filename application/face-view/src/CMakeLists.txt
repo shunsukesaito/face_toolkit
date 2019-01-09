@@ -79,6 +79,7 @@ endif()
 
 target_link_libraries(faceview
                       FTM::module
+                      FTM::f2f
                       FTM::renderer
                       FTM::utility
                       FTM::gflags
