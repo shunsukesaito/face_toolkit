@@ -21,7 +21,7 @@ void MP2Renderer::init(std::string data_dir,
     
     fb_plane_ = Framebuffer::Create(1, 1, 1); // will be resized based on frame size
     
-    mask_ = cv::imread(data_dir+"fw_mask.png",0);
+    mask_ = cv::imread(data_dir+"render/fw_mask.png",0);
     prog_main.createTexture("u_mask",mask_);
     
     prog_pl.createUniform("u_alpha", DataType::FLOAT);

@@ -22,7 +22,7 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
     param_.mesomap_size = FLAGS_dsl_mesomap_size;
     
     param_.init(prog_main);
-    prog_main.createTexture("u_sample_mask", data_dir + "deepls_mask.png");
+    prog_main.createTexture("u_sample_mask", data_dir + "render/deepls_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     
@@ -45,7 +45,7 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
 
     std::vector<std::string> env_list;
     {
-        std::ifstream fin(data_dir + "LS/env_list.txt");
+        std::ifstream fin(data_dir + "env/env_list.txt");
         if(fin.is_open()){
             while(!fin.eof())
             {
@@ -73,7 +73,7 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
         /*
          **Apply diffuse convolution to the map for lambertian rendering
          */
-        std::string filename = data_dir + "LS/env/diff_" + env_list[i] + ".exr";
+        std::string filename = data_dir + "env/Diffuse/" + env_list[i] + ".exr";
         TinyExrImage diffuseEnv;
         int ret = LoadEXR(&diffuseEnv.buf, &diffuseEnv.width, &diffuseEnv.height, filename.c_str(), &err);
         if (ret != 0)
@@ -82,10 +82,10 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
             throw std::runtime_error("Error: diffEnv file isn't loaded correctly...");
         }
         diffuseEnv.FlipVertical();
-
+        
         std::cout << " diffuse done...";
-
-        filename = data_dir + "LS/env/ward0.15_" + env_list[i] + ".hdr.exr";
+        
+        filename = data_dir + "env/Specular/ward0.15_" + env_list[i] + ".exr";
         TinyExrImage specularEnv1;
         ret = LoadEXR(&specularEnv1.buf, &specularEnv1.width, &specularEnv1.height, filename.c_str(), &err);
         if (ret != 0)
@@ -95,7 +95,7 @@ void DeepLSRenderer::init(std::string data_dir, std::string shader_dir, FaceMode
         }
         specularEnv1.FlipVertical();
         
-        filename = data_dir + "LS/env/ward0.37_" + env_list[i] + ".hdr.exr";
+        filename = data_dir + "env/Specular/ward0.37_" + env_list[i] + ".exr";
         TinyExrImage specularEnv2;
         ret = LoadEXR(&specularEnv2.buf, &specularEnv2.width, &specularEnv2.height, filename.c_str(), &err);
         if (ret != 0)

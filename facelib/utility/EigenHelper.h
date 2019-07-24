@@ -138,8 +138,8 @@ namespace Eigen{
         return mat;
     }
     
-    template <class T>
-    void write_to_text(std::string file, const Eigen::Matrix<T,-1,-1>& mat)
+    template <typename Derived>
+    void write_to_text(std::string file, const Eigen::MatrixBase<Derived>& mat)
     {
         std::ofstream fout(file);
         if(fout.is_open())

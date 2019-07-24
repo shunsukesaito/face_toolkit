@@ -19,7 +19,7 @@ void SphereRenderer::init(std::string data_dir, std::string shader_dir)
     fb_ = Framebuffer::Create(1, 1, 1); // will be resized based on frame size
     
     prog.createUniform("u_uv_view", DataType::UINT);
-    prog.createTexture("u_texture", data_dir + "uv.png");
+    prog.createTexture("u_texture", data_dir + "render/uv.png");
     
     prog_pl.createUniform("u_alpha", DataType::FLOAT);
     

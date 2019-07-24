@@ -63,10 +63,11 @@ cv::Rect GetBBoxFromLandmarks(std::vector<Eigen::Vector3f>& shape)
 }
 
 Face2DDetector::Face2DDetector(std::string data_dir){
-    cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
+    if(!FLAGS_cpm_ip.empty())
+        cpm_tcp_ = std::make_shared<LandmarkCpmTCPStream>(FLAGS_cpm_ip);
 
-    dlib::deserialize(data_dir + FLAGS_sp_name) >> sp_;
-    gab_detector_.LoadModel(data_dir + NPD_MODEL);
+    dlib::deserialize(data_dir + "facedetector/" + FLAGS_sp_name) >> sp_;
+    gab_detector_.LoadModel(data_dir + "facedetector/" + NPD_MODEL);
     gab_detector_.DetectSize = 200;
     
     detector_ = dlib::get_frontal_face_detector();
@@ -315,7 +316,7 @@ bool Face2DDetector::GetFaceLandmarks(const cv::Mat &img,
                                       std::vector<Eigen::Vector3f>& p2d,
                                       bool enable_cpm)
 {
-    if(enable_cpm){
+    if(enable_cpm && cpm_tcp_ != nullptr){
         cpm_tcp_->sendImage(img, rect);
         p2d = cpm_tcp_->getLandmarks();
         return true;

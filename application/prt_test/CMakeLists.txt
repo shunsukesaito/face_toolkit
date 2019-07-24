@@ -29,8 +29,17 @@ endif()
 add_subdirectory(src)
 
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
-copyData(../../data assets)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/assets")
+createSymlink(../../data/camera assets/camera)
+createSymlink(../../data/opt assets/opt)
 createSymlink(../../shaders assets/shaders)
+createSymlink(../../data/geo_data assets/geo_data)
+createSymlink(../../data/FaceWarehouse assets/FaceWarehouse)
+createSymlink(../../data/dde assets/dde)
+createSymlink(../../data/env assets/env)
+createSymlink(../../data/LS assets/LS)
+createSymlink(../../data/render assets/render)
+createSymlink(../../data/image assets/image)
 
 set(_all_target prt_test)
 

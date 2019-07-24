@@ -20,6 +20,8 @@ struct MeshRenderer : public BaseRenderer
     int tessOuter_ = 1;
     float tessAlpha_ = 1.0;
     
+    bool useSpec_ = true;
+    
     float alpha_ = 1.0;
     
     int sub_samp_ = 1;
@@ -33,6 +35,7 @@ struct MeshRenderer : public BaseRenderer
     void render(const Camera& camera,
                 const Eigen::VectorXf& pts,
                 const Eigen::MatrixX3f& nml,
+                const Eigen::VectorXf& clr,
                 const Eigen::Matrix4f& RT = Eigen::Matrix4f::Identity());
     
 #ifdef FACE_TOOLKIT

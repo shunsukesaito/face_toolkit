@@ -74,10 +74,10 @@ void FaceOptModule::init(std::string data_dir,
     
     fd_[0].setFaceModel(fm_);
 
-    P2P2DC::parseConstraints(data_dir + "p2p_const_" + fm->fm_type_ + ".txt", c_p2p_);
-    P2L2DC::parseConstraints(data_dir + "p2l_const_" + fm->fm_type_ + ".txt", c_p2l_);
+    P2P2DC::parseConstraints(data_dir + "opt/p2p_const_" + fm->fm_type_ + ".txt", c_p2p_);
+    P2L2DC::parseConstraints(data_dir + "opt/p2l_const_" + fm->fm_type_ + ".txt", c_p2l_);
     
-    fm_->loadContourList(data_dir + "cont_list_" + fm->fm_type_ + ".txt");
+    fm_->loadContourList(data_dir + "opt/cont_list_" + fm->fm_type_ + ".txt");
 }
 
 void FaceOptModule::update(FaceResult& result)

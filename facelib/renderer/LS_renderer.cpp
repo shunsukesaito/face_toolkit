@@ -72,7 +72,7 @@ void LSRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPtr
     auto& prog_pl = programs_["plane"];
     
     param_.init(prog_main);
-    prog_main.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+    prog_main.createTexture("u_sample_mask", data_dir + "render/f2f_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     fb_depth_ = Framebuffer::Create(1, 1, 0);
     

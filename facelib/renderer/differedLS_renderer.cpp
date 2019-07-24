@@ -41,7 +41,7 @@ void DifferedLSRenderer::init(std::string data_dir, std::string shader_dir, Face
     param_.mesomap_size = FLAGS_dls_mesomap_size;
     
     param_.init(prog_main);
-    prog_main.createTexture("u_sample_mask", data_dir + "deepls_mask.png");
+    prog_main.createTexture("u_sample_mask", data_dir + "render/deepls_mask.png");
     fb_ = Framebuffer::Create(1, 1, RT_NAMES::count); // will be resized based on frame size
     
     prog_pl.createUniform("u_alpha", DataType::FLOAT);

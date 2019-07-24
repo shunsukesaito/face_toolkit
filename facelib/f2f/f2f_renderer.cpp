@@ -241,7 +241,7 @@ void F2FRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
     
     param_.init(prog_f2f);
     prog_f2f.createUniform("u_SHCoeffs", DataType::VECTOR3);
-    prog_f2f.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+    prog_f2f.createTexture("u_sample_mask", data_dir + "render/f2f_mask.png");
      if (!FLAGS_f2f_seg_path.empty())
          prog_f2f.createTexture("u_sample_seg", FLAGS_f2f_seg_path);
      else{

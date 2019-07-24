@@ -12,6 +12,7 @@ FaceToolkitModuleBegin(example DEPENDS
 					utility/glm 
 					utility/tiny_obj_loader
 					utility/tinyexr
+					utility/face2d-detector 
 					facelib/utility
 					facelib/gl_utility
 					facelib/shape_model
@@ -30,27 +31,23 @@ endif()
 add_subdirectory(src)
 
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
-
-#copyFolder(COPY_data ../../data assets)
-#copyFolder(COPY_shaders ../../shaders assets/shaders)
-copyData(../../data assets)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/assets")
+createSymlink(../../data/camera assets/camera)
+createSymlink(../../data/opt assets/opt)
 createSymlink(../../shaders assets/shaders)
-
-#set_property(TARGET COPY_data PROPERTY FOLDER "COPY/ASSETS")
-#set_property(TARGET COPY_shaders PROPERTY FOLDER "COPY/ASSETS")
-
-#add_dependencies(example COPY_data COPY_shaders)
-#add_dependencies(example2 COPY_data COPY_shaders)
-#add_dependencies(example3 COPY_data COPY_shaders)
-#add_dependencies(example4 COPY_data COPY_shaders)
+createSymlink(../../data/geo_data assets/geo_data)
+createSymlink(../../data/FaceWarehouse assets/FaceWarehouse)
+createSymlink(../../data/dde assets/dde)
+createSymlink(../../data/env assets/env)
+createSymlink(../../data/LS assets/LS)
+createSymlink(../../data/render assets/render)
+createSymlink(../../data/image assets/image)
 
 set(_all_target example)
 
 install(DIRECTORY "${CMAKE_BINARY_DIR}/assets/" USE_SOURCE_PERMISSIONS DESTINATION assets)
 
 if(BUILD_EXECUTABLE)
-	target_compile_definitions(minitrace PUBLIC "MTR_ENABLED")
-
 	install(DIRECTORY "${CMAKE_BINARY_DIR}/lib/" USE_SOURCE_PERMISSIONS DESTINATION lib)
 
 	# link openmp and fix rpath

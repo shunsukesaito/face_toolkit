@@ -79,17 +79,17 @@ DEFINE_uint32(cam_w, 0, "camera width");
 DEFINE_uint32(cam_h, 0, "camera height");
 
 struct Session{
-    ModuleHandle capture_module_;
-    ModuleHandle preprocess_module_;
-    ModuleHandle face_module_;
+    ModuleHandle capture_module_ = nullptr;
+    ModuleHandle preprocess_module_ = nullptr;
+    ModuleHandle face_module_ = nullptr;
 
-    CapQueueHandle capture_queue_;
-    CapQueueHandle preprocess_queue_;
-    FaceQueueHandle result_queue_;
+    CapQueueHandle capture_queue_ = nullptr;
+    CapQueueHandle preprocess_queue_ = nullptr;
+    FaceQueueHandle result_queue_ = nullptr;
     
-    CmdQueueHandle capture_control_queue_;
-    CmdQueueHandle preprocess_control_queue_;
-    CmdQueueHandle face_control_queue_;
+    CmdQueueHandle capture_control_queue_ = nullptr;
+    CmdQueueHandle preprocess_control_queue_ = nullptr;
+    CmdQueueHandle face_control_queue_ = nullptr;
     
     
     std::thread capture_thread, preprocess_thread, face_thread;
@@ -366,11 +366,11 @@ void GUI::init(int w, int h)
     session.face_control_queue_ = CmdQueueHandle(new SPSCQueue<std::string>(10));
 
     if( FLAGS_facemodel.find("pinpca") != std::string::npos )
-        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelPCA.bin", "pin_pca");
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "geo_data/PinModelPCA.bin", "pin_pca");
     else if( FLAGS_facemodel.find("pinfacs") != std::string::npos )
-        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "PinModelFACS.bin", "pin_facs");
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "geo_data/PinModelFACS.bin", "pin_facs");
     else if( FLAGS_facemodel.find("bv") != std::string::npos )
-        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "BVModel.bin", "bv");
+        session.face_model_ = LinearFaceModel::LoadModel(data_dir + "geo_data/BVModel.bin", "bv");
     else if(FLAGS_facemodel.find("mesh") != std::string::npos ){
         session.face_model_ = LinearFaceModel::LoadMesh(FLAGS_fm_path);
     }
@@ -387,7 +387,7 @@ void GUI::init(int w, int h)
         session.face_model_ = LinearFaceModel::LoadLSData(data_dir + "LS/" + fm_name + "/" );
     }
     else if(FLAGS_facemodel.find("fwbl") != std::string::npos)
-        session.face_model_ = BiLinearFaceModel::LoadModel(data_dir + "FWModel_BL.bin", "fw");
+        session.face_model_ = BiLinearFaceModel::LoadModel(data_dir + "geo_data/FWModel_BL.bin", "fw");
     else
         throw std::runtime_error("Unrecongnized face model... "+FLAGS_facemodel);
 
@@ -651,13 +651,13 @@ void save_render1(FaceResult& result)
     std::string filename = data.name_;
     cv::Mat_<cv::Vec4f> disp;
     loadEXRToCV(filename.substr(0,filename.find_last_of("/")) + "/disp.exr", disp);
-    session.face_model_->maps_["disp"] = GLTexture::CreateTexture(disp);
+    result.fd[0].maps_["disp"] = GLTexture::CreateTexture(disp);
     cv::Mat_<cv::Vec3b> diff = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/diff.png");
     cv::flip(diff,diff,0);
-    session.face_model_->maps_["d_albedo"] = GLTexture::CreateTexture(diff);
+    result.fd[0].maps_["d_albedo"] = GLTexture::CreateTexture(diff);
     cv::Mat_<cv::Vec3b> spec = cv::imread(filename.substr(0,filename.find_last_of("/")) + "/spec.png");
     cv::flip(spec,spec,0);
-    session.face_model_->maps_["s_albedo"] = GLTexture::CreateTexture(spec);
+    result.fd[0].maps_["s_albedo"] = GLTexture::CreateTexture(spec);
     
     if (FLAGS_center_cam){
         result.cameras[0] = Camera::craeteFromFOV(FLAGS_cam_w, FLAGS_cam_h, 40);
@@ -843,7 +843,8 @@ void GUI::loop()
         if(!FLAGS_no_imgui){
             ImGui_ImplGlfwGL3_NewFrame();
             ImGui::Begin("Control Panel", &show_control_panel_);
-            session.preprocess_module_->updateIMGUI();
+            if(session.preprocess_module_ != nullptr)
+                session.preprocess_module_->updateIMGUI();
             session.face_module_->updateIMGUI();
             session.renderer_.updateIMGUI();
             session.result_.cameras[cam_id_].updateIMGUI();

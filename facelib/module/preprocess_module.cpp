@@ -73,7 +73,8 @@ void PreprocessModule::Stop()
 
 void PreprocessModule::init(Face2DDetectorPtr face_detector, bool run)
 {
-    seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
+    if(!FLAGS_seg_ip.empty())
+        seg_tcp_ = std::make_shared<SegmentationTCPStream>(FLAGS_seg_ip, FLAGS_prob_size);
     
     fdetector_ = face_detector;
     
@@ -108,13 +109,19 @@ void PreprocessModule::update(CaptureResult& result)
     
     bool hasface = true;
     if(param_.update_seg_ || param_.onetime_seg_){
-        if (!param_.update_land_)
-            hasface = fdetector_->GetFaceRect(result.data.img_, rect_, false);
-        
-        if(hasface){
-            seg_tcp_->sendImage(result.data.img_, rect_, 1.8);
-            seg_tcp_->getSegmentation(result.data.seg_);
-            seg_ = result.data.seg_.clone();
+        if (seg_tcp_ == nullptr){
+            seg_ = cv::Mat(result.data.img_.size(),CV_8UC1,cv::Scalar(0));
+            result.data.seg_ = seg_.clone();
+        }
+        else{
+            if (!param_.update_land_)
+                hasface = fdetector_->GetFaceRect(result.data.img_, rect_, false);
+            
+            if(hasface){
+                seg_tcp_->sendImage(result.data.img_, rect_, 1.8);
+                seg_tcp_->getSegmentation(result.data.seg_);
+                seg_ = result.data.seg_.clone();
+            }
         }
         if(param_.onetime_seg_) param_.onetime_seg_ = false;
     }

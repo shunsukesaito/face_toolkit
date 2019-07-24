@@ -31,6 +31,9 @@
 #include <imgui.h>
 #endif
 
+struct MeshData;
+typedef std::shared_ptr<MeshData> MeshDataPtr;
+
 struct MeshData{
     Eigen::Matrix4f RT_ = Eigen::Matrix4f::Identity();
     Eigen::Matrix3Xf SH_ = Eigen::Matrix3Xf::Zero(3,9);
@@ -75,6 +78,8 @@ struct MeshData{
     const Eigen::MatrixX3i& tripts() const { return tri_pts_; }
     const Eigen::MatrixX3i& trinml() const { return tri_nml_; }
     const Eigen::MatrixX3i& triuv() const { return tri_uv_; }
+    
+    void setColorFromScalar(const Eigen::VectorXf& scalar, float vmin = -1.0, float vmax = -1.0);
     
     void saveObj(const std::string& filename, bool no_uv = false) const;
 

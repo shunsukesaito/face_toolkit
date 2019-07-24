@@ -41,15 +41,17 @@ endif()
 add_subdirectory(src)
 
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
-#copyFolder(COPY_data ../../data assets)
-#copyFolder(COPY_shaders ../../shaders assets/shaders)
-copyData(../../data assets)
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/assets")
+createSymlink(../../data/camera assets/camera)
+createSymlink(../../data/opt assets/opt)
 createSymlink(../../shaders assets/shaders)
-
-#set_property(TARGET COPY_data PROPERTY FOLDER "COPY/ASSETS")
-#set_property(TARGET COPY_shaders PROPERTY FOLDER "COPY/ASSETS")
-
-#add_dependencies(faceview COPY_data COPY_shaders)
+createSymlink(../../data/geo_data assets/geo_data)
+createSymlink(../../data/FaceWarehouse assets/FaceWarehouse)
+createSymlink(../../data/dde assets/dde)
+createSymlink(../../data/env assets/env)
+createSymlink(../../data/LS assets/LS)
+createSymlink(../../data/render assets/render)
+createSymlink(../../data/image assets/image)
 
 set(_all_target mp_demo)
 

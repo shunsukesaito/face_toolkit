@@ -55,7 +55,7 @@ void IBLRenderer::init(std::string data_dir, std::string shader_dir, FaceModelPt
     auto& prog_pl = programs_["plane"];
     
     param_.init(prog_IBL);
-    prog_IBL.createTexture("u_sample_mask", data_dir + "f2f_mask.png");
+    prog_IBL.createTexture("u_sample_mask", data_dir + "render/f2f_mask.png");
     
     prog_pl.createUniform("u_alpha", DataType::FLOAT);
     

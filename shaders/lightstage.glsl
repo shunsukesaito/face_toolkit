@@ -26,7 +26,7 @@ vec3 calcTangentNormal(sampler2D mesogeo, vec2 uv, vec3 n, vec4 Qd1, vec4 Qd2, f
 	vec3 e1_world = Qd1.xyz;
 	vec3 e2_world = Qd2.xyz;
 
-	float scaleFactor = 1.0; // [FIXME] adjust this to control the bumpiness of the normal
+	float scaleFactor = 0.5; // [FIXME] adjust this to control the bumpiness of the normal
 	float dxx = texture(mesogeo, vec2(uv.x+ddMeso, uv.y)).r;
 	float xxd = texture(mesogeo, vec2(uv.x-ddMeso, uv.y)).r;
 	float dyy = texture(mesogeo, vec2(uv.x, uv.y+ddMeso)).r;

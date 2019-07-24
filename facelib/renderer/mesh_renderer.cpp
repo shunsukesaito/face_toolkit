@@ -25,13 +25,15 @@ void MeshRenderer::init(std::string shader_dir,
     prog.createUniform("u_tessinner", DataType::FLOAT);
     prog.createUniform("u_tessouter", DataType::FLOAT);
     prog.createUniform("u_tessalpha", DataType::FLOAT);
+    
+    prog.createUniform("u_use_spec", DataType::UINT);
 
     prog_pl.createUniform("u_alpha", DataType::FLOAT);
     
     Camera::initializeUniforms(prog, U_CAMERA_MVP | U_CAMERA_MV);
     
     mesh_.update_tri(tri);
-    mesh_.init(prog, AT_POSITION | AT_NORMAL | AT_TRI);
+    mesh_.init(prog, AT_POSITION | AT_NORMAL | AT_COLOR | AT_TRI);
     
     plane_.init(prog_pl,0.5);
     prog_pl.createTexture("u_texture", fb_->color(0), fb_->width(), fb_->height());
@@ -40,6 +42,7 @@ void MeshRenderer::init(std::string shader_dir,
 void MeshRenderer::render(const Camera& camera,
                           const Eigen::VectorXf& pts,
                           const Eigen::MatrixX3f& nml,
+                          const Eigen::VectorXf& clr,
                           const Eigen::Matrix4f& RT)
 {
     if(!show_)
@@ -59,11 +62,13 @@ void MeshRenderer::render(const Camera& camera,
     
     mesh_.update_position(pts);
     mesh_.update_normal(nml);
-    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_TRI);
+    mesh_.update_color(clr);
+    mesh_.update(prog, AT_POSITION | AT_NORMAL | AT_COLOR | AT_TRI);
     
     prog.setUniformData("u_tessinner", (float)tessInner_);
     prog.setUniformData("u_tessouter", (float)tessOuter_);
     prog.setUniformData("u_tessalpha", tessAlpha_);
+    prog.setUniformData("u_use_spec", (unsigned)useSpec_);
     
     prog_pl.setUniformData("u_alpha", alpha_);
     prog_pl.updateTexture("u_texture", fb_->color(0));
@@ -94,7 +99,7 @@ void MeshRenderer::init(std::string data_dir, std::string shader_dir, FaceModelP
 
 void MeshRenderer::render(const FaceResult& result, int cam_id, int frame_id)
 {
-    render(result.cameras[cam_id], result.fd[frame_id].pts_, result.fd[frame_id].nml_, result.fd[frame_id].RT());
+    render(result.cameras[cam_id], result.fd[frame_id].pts_, result.fd[frame_id].nml_, result.fd[frame_id].clr(), result.fd[frame_id].RT());
 }
 #endif
 
@@ -104,6 +109,7 @@ void MeshRenderer::updateIMGUI()
     if (ImGui::CollapsingHeader(name_.c_str())){
         ImGui::Checkbox("show", &show_);
         ImGui::Checkbox("wire", &wire_);
+        ImGui::Checkbox("AddSpec", &useSpec_);
         ImGui::SliderFloat("Transparency", &alpha_, 0.0, 1.0);
         ImGui::InputInt("TessInner", &tessInner_);
         ImGui::InputInt("TessOuter", &tessOuter_);

@@ -29,6 +29,57 @@
 
 #include "obj_loader.h"
 
+Eigen::Vector3f GetColor(float v, float vmin, float vmax)
+{
+    Eigen::Vector3f c; c.setOnes();
+
+    float dv;
+    
+    if (v < vmin)
+        v = vmin;
+    if (v > vmax)
+        v = vmax;
+    dv = vmax - vmin;
+    
+    if (v < (vmin + 0.25 * dv)) {
+        c[0] = 0;
+        c[1] = 4 * (v - vmin) / dv;
+    } else if (v < (vmin + 0.5 * dv)) {
+        c[0] = 0;
+        c[2] = 1 + 4 * (vmin + 0.25 * dv - v) / dv;
+    } else if (v < (vmin + 0.75 * dv)) {
+        c[0] = 4 * (v - vmin - 0.5 * dv) / dv;
+        c[2] = 0;
+    } else {
+        c[1] = 1 + 4 * (vmin + 0.75 * dv - v) / dv;
+        c[2] = 0;
+    }
+    
+    return c;
+}
+
+void MeshData::setColorFromScalar(const Eigen::VectorXf& scalar, float vmin, float vmax)
+{
+    if(vmin == -1.f)
+        vmin = scalar.array().minCoeff();
+    if(vmax == -1.f)
+        vmax = scalar.array().maxCoeff();
+    
+    if(clr_.size() != pts_.size())
+        clr_.resize(pts_.size());
+    
+    if(scalar.size() != clr_.size()/3)
+    {
+        std::cerr << "MeshData::setColorFromScalr - scalar size doesn't match with the number of vertices." << std::endl;
+        return;
+    }
+                    
+    for(int i = 0; i < pts_.size()/3; ++i)
+    {
+        clr_.b3(i) = GetColor(scalar[i], vmin, vmax);
+    }
+}
+
 void MeshData::saveObj(const std::string& filename, bool no_uv) const
 {
     std::ofstream fout(filename);

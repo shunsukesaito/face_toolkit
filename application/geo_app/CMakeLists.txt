@@ -1,32 +1,20 @@
 cmake_minimum_required(VERSION 3.0)
 
 include(../../ModuleGate.cmake)
-FaceToolkitModuleBegin(faceview DEPENDS 
+FaceToolkitModuleBegin(geo_app DEPENDS 
 					library/Eigen3 
 					library/GLEW 
 					library/glfw3 
 					library/gflags 
 					library/OpenCV
 					library/OpenMesh 
-					library/dlib 
-					utility/spdlog 
 					utility/glm 
-					utility/cereal 
-					utility/tcpstream
-                    utility/face2d-detector 
-					utility/minitrace
 					utility/tiny_obj_loader
-					utility/SPSCQueue
 					utility/tinyexr
 					utility/imgui
 					facelib/utility
 					facelib/gl_utility
-					facelib/shape_model
-					facelib/regressor
-					facelib/optimizer
-					facelib/renderer
-					facelib/f2f
-					facelib/module)
+					facelib/renderer)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -43,33 +31,25 @@ add_subdirectory(src)
 include("${MODULE_MANAGER_ROOT}/cmake-utils/copyFolder.cmake")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/assets")
 createSymlink(../../data/camera assets/camera)
-createSymlink(../../data/opt assets/opt)
+createSymlink(../../data/renderppl assets/renderppl)
 createSymlink(../../shaders assets/shaders)
-createSymlink(../../data/geo_data assets/geo_data)
-createSymlink(../../data/FaceWarehouse assets/FaceWarehouse)
-createSymlink(../../data/dde assets/dde)
 createSymlink(../../data/env assets/env)
-createSymlink(../../data/LS assets/LS)
-createSymlink(../../data/render assets/render)
-createSymlink(../../data/image assets/image)
 
-set(_all_target faceview)
+set(_all_target geo_app)
 
 install(DIRECTORY "${CMAKE_BINARY_DIR}/assets/" USE_SOURCE_PERMISSIONS DESTINATION assets)
 
 if(BUILD_EXECUTABLE)
-	target_compile_definitions(minitrace PUBLIC "MTR_ENABLED")
-
 	install(DIRECTORY "${CMAKE_BINARY_DIR}/lib/" USE_SOURCE_PERMISSIONS DESTINATION lib)
 
 	# link openmp and fix rpath
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "mac")
-		set_property(TARGET faceview APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
+		set_property(TARGET calc_thinkness APPEND PROPERTY INSTALL_RPATH "@loader_path/../lib")
 	endif()
 	if(FACETOOLKIT_OS_SUFFIX STREQUAL "linux")
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fopenmp")
-		set_property(TARGET faceview APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
+		set_property(TARGET calc_thinkness APPEND PROPERTY INSTALL_RPATH "\$ORIGIN/../lib")
 	endif()
 else(BUILD_EXECUTABLE)
-	add_library(FTM::faceview ALIAS faceview)
+	add_library(FTM::geo_app ALIAS geo_app)
 endif()

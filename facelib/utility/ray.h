@@ -48,7 +48,9 @@ struct Ray
     Eigen::Vector3f o_; // origin
     Eigen::Vector3f dir_; // direction
     Eigen::Vector3f inv_;
-    
+
+    bool outside_;
+
     float tmin_;
     float tmax_;
     
@@ -57,8 +59,8 @@ struct Ray
     float u_, v_;
     
     Ray(){}
-    Ray(const Eigen::Vector3f& o, const Eigen::Vector3f& d, float tmin=0.0f, float tmax=1.e10f)
-    : o_(o), dir_(d), tmin_(tmin), tmax_(tmax)
+    Ray(const Eigen::Vector3f& o, const Eigen::Vector3f& d, bool outside=true, float tmin=0.0f, float tmax=1.e10f)
+    : o_(o), dir_(d), outside_(outside), tmin_(tmin), tmax_(tmax)
     {
         normalize();
     }
