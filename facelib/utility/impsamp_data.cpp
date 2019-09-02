@@ -24,7 +24,7 @@
 
 #include <fstream>
 
-#include "imsamp_data.h"
+#include "impsamp_data.h"
 #include "timer.h"
 
 void ImSampData::computeThickness(int nSample)
